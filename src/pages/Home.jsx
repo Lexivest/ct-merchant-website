@@ -36,7 +36,6 @@ import {
   sendPasswordResetCode,
   signInWithGoogleIdToken,
   signInWithPassword,
-  signOutUser,
   verifyRecoveryCodeAndResetPassword,
 } from "../lib/auth"
 import { supabase } from "../lib/supabase"
@@ -630,18 +629,13 @@ function Home() {
       }
 
       const currentProfile = await supabase
-        .from("profiles")
+        .from("vw_user_profiles")
         .select("*")
         .eq("id", signedInUser.id)
         .maybeSingle()
 
       if (currentProfile.error) {
         throw new Error("Could not verify your profile. Please try again.")
-      }
-
-      if (currentProfile.data?.is_suspended === true) {
-        await signOutUser()
-        throw new Error("Your account is suspended. Please contact support.")
       }
 
       const didOpenDashboard = await openDashboardWithTransition({
@@ -784,18 +778,13 @@ function Home() {
       }
 
       const currentProfile = await supabase
-        .from("profiles")
+        .from("vw_user_profiles")
         .select("*")
         .eq("id", signedInUser.id)
         .maybeSingle()
 
       if (currentProfile.error) {
         throw new Error("Could not verify your profile. Please try again.")
-      }
-
-      if (currentProfile.data?.is_suspended === true) {
-        await signOutUser()
-        throw new Error("Your account is suspended. Please contact support.")
       }
 
       const didOpenDashboard = await openDashboardWithTransition({

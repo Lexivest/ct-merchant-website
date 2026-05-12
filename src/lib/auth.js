@@ -207,24 +207,6 @@ async function runSecurityHeartbeat(email, action = "CHECK", fallbackMessage) {
   return getSecurityHeartbeatStatus(data, normalizedEmail)
 }
 
-async function ensureEmailIsNotSuspended(email, options = {}) {
-  const { signOutOnSuspended = false } = options
-  const status = await runSecurityHeartbeat(
-    email,
-    "CHECK",
-    "Could not verify your account access right now. Please try again."
-  )
-
-  if (status.isSuspended) {
-    if (signOutOnSuspended) {
-      await signOutUser()
-    }
-    throw new Error("Your account is suspended. Please contact support.")
-  }
-
-  return status
-}
-
 function isLikelyCredentialFailure(error) {
   const lowerMessage = String(error?.message || "").toLowerCase()
   return (
@@ -240,8 +222,8 @@ function isLikelyCredentialFailure(error) {
 export async function signInWithPassword({ email, password }) {
   const normalizedEmail = normalizeEmail(email)
 
-  await ensureEmailIsNotSuspended(normalizedEmail)
-
+  // No pre-flight CHECK: suspension is enforced by the post-success heartbeat
+  // (signs out + throws if blocked). Saves one round-trip on every login.
   const { data, error } = await supabase.auth.signInWithPassword({
     email: normalizedEmail,
     password,

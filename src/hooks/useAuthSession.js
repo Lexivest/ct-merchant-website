@@ -53,7 +53,13 @@ let globalAuthMemory = {
   profile: null,
   suspended: false,
   profileLoaded: false,
+  primedAt: 0,
 }
+
+// Skip the background network refetch in load() when a fresh prime arrived
+// from the login flow this many ms ago. Eliminates the redundant duplicate
+// fetch right after openDashboardWithTransition primes the cache.
+const PRIME_FRESHNESS_WINDOW_MS = 10 * 1000
 
 const footprintStampedUsers = new Set()
 
@@ -267,6 +273,7 @@ export function primeAuthSessionState({
     profile,
     suspended: suspended || isProfileSuspended(profile),
     profileLoaded,
+    primedAt: Date.now(),
   }
 }
 
@@ -419,6 +426,19 @@ function useAuthSession() {
         })
 
         if (isOfflineNow && !forceNetwork) return
+
+        // If the auth flow just primed us with a fresh profile (within the
+        // freshness window), skip the duplicate background refetch. forceNetwork
+        // bypasses this — used by visibility-change re-checks and explicit refreshes.
+        const wasRecentlyPrimed =
+          cachedProfileForUser &&
+          globalAuthMemory.primedAt > 0 &&
+          Date.now() - globalAuthMemory.primedAt < PRIME_FRESHNESS_WINDOW_MS
+        if (wasRecentlyPrimed && !forceNetwork) {
+          stampSessionFootprintOnce(user.id)
+          return
+        }
+
         stampSessionFootprintOnce(user.id)
 
         try {
@@ -535,6 +555,10 @@ function useAuthSession() {
         profileLoaded: Boolean(cachedProfile),
         error: "",
       })
+
+      // TOKEN_REFRESHED only rotates the session JWT — profile data is unchanged.
+      // Skip the network refetch to save one round-trip per hour-ish per session.
+      if (event === "TOKEN_REFRESHED") return
 
       load({ forceNetwork: true })
     })

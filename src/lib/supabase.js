@@ -77,6 +77,46 @@ function getWindowAuthStorageKey() {
 const authStorageKey = getWindowAuthStorageKey()
 export const currentAuthStorageKey = authStorageKey
 
+// Each window allocates its own auth storage key. When a window closes, its
+// sessionStorage is wiped but the localStorage entry survives. Without
+// cleanup these accumulate forever. Sweep keys with an expired session on
+// startup. Errors are swallowed (storage may be blocked by privacy settings).
+function sweepExpiredAuthStorageKeys() {
+  try {
+    if (typeof window === "undefined" || !window.localStorage) return
+    const storage = window.localStorage
+    const nowSeconds = Math.floor(Date.now() / 1000)
+    const toRemove = []
+
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i)
+      if (!key || !key.startsWith(AUTH_STORAGE_KEY_PREFIX)) continue
+      if (key === authStorageKey) continue
+
+      try {
+        const raw = storage.getItem(key)
+        if (!raw) {
+          toRemove.push(key)
+          continue
+        }
+        const parsed = JSON.parse(raw)
+        const expiresAt = parsed?.expires_at ?? parsed?.currentSession?.expires_at
+        if (!expiresAt || Number(expiresAt) < nowSeconds) {
+          toRemove.push(key)
+        }
+      } catch {
+        toRemove.push(key)
+      }
+    }
+
+    toRemove.forEach((key) => storage.removeItem(key))
+  } catch {
+    // Best-effort cleanup only
+  }
+}
+
+sweepExpiredAuthStorageKeys()
+
 const perWindowAuthStorage = {
   getItem(key) {
     try {
