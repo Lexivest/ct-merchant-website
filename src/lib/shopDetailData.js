@@ -126,7 +126,6 @@ async function fetchShopDetailDataDirect({ shopId, userId = null }) {
 export async function fetchShopDetailData({
   shopId,
   userId = null,
-  recordView = false,
 }) {
   if (!shopId) {
     throw new Error("Shop id is required")
@@ -134,9 +133,11 @@ export async function fetchShopDetailData({
 
   const normalizedShopId = normalizeRecordId(shopId)
 
+  // p_user_id powers the has_liked check inside the RPC.
+  // (View tracking lives in shop_analytics_events, logged elsewhere.)
   const { data, error } = await supabase.rpc("get_shop_detail_payload", {
     p_shop_id: normalizedShopId,
-    p_user_id: recordView ? userId : null,
+    p_user_id: userId,
   })
 
   if (error) {

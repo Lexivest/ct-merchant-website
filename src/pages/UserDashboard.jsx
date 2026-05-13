@@ -357,13 +357,12 @@ function UserDashboard() {
     }
   )
 
-  const { 
-    data: dynamicData, 
-    loading: dynamicLoading, 
-    error: dataError, 
+  const {
+    data: dynamicData,
+    loading: dynamicLoading,
+    error: dataError,
     isOffline: dynamicOffline,
-    isRevalidating: dynamicRevalidating,
-    mutate: mutateDynamic 
+    mutate: mutateDynamic
   } = useCachedFetch(
     dynamicCacheKey,
     () => fetchDashboardDynamicData({ userId: user?.id, cityId }),
@@ -1574,7 +1573,6 @@ function UserDashboard() {
           fetchShopDetailData({
             shopId,
             userId: user?.id || null,
-            recordView: false,
           }),
           loadShopDetailPage(),
         ])
@@ -1638,7 +1636,6 @@ function UserDashboard() {
           fetchShopDetailData({
             shopId,
             userId: user?.id || null,
-            recordView: false,
           }),
           loadServiceProviderPage(),
         ])
