@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
   FaArrowRight,
@@ -115,6 +115,15 @@ function GoldDivider({ label = "City commerce" }) {
   )
 }
 
+function HomeCardShell({ children, className = "" }) {
+  return (
+    <div className={`rounded-[26px] border border-[#C9A84C]/30 bg-[#F7EED8] p-5 text-[#1B1208] shadow-[0_22px_60px_rgba(27,18,8,0.18)] ${className}`}>
+      <div className="mb-4 h-1 w-16 rounded-full bg-pink-600" />
+      {children}
+    </div>
+  )
+}
+
 function ActivityCalendar() {
   const calendarEvents = [
     { date: "APR 20", title: "Merchant Training Webinar", type: "Virtual" },
@@ -123,7 +132,7 @@ function ActivityCalendar() {
   ]
 
   return (
-    <div className="flex flex-col items-center w-full max-w-[280px] mx-auto">
+    <div className="flex w-full flex-col">
       <div className="mb-4 flex items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C9A84C] text-[#140D05] shadow-sm">
           <FaCalendarDays className="text-xs" />
@@ -131,16 +140,16 @@ function ActivityCalendar() {
         <h3 className="text-xs font-black tracking-tight text-[#1B1208] uppercase">Activity Calendar</h3>
       </div>
 
-      <div className="w-full divide-y divide-[#C9A84C]/15 rounded-2xl border border-[#C9A84C]/20 bg-[#0D0800]/75 p-1 shadow-sm overflow-hidden">
+      <div className="w-full divide-y divide-[#C9A84C]/20 overflow-hidden rounded-2xl border border-[#C9A84C]/25 bg-white/80 p-1 shadow-sm">
         {calendarEvents.map((ev, idx) => (
-          <div key={idx} className="flex items-center gap-2.5 p-2.5 transition hover:bg-[#C9A84C]/10">
+          <div key={idx} className="flex items-center gap-2.5 p-2.5 transition hover:bg-[#F2DCA4]/35">
             <div className="flex h-10 w-10 flex-col items-center justify-center rounded-lg bg-[#C9A84C]/15 text-center shrink-0">
-              <span className="text-[8px] font-black text-[#F2DCA4] uppercase tracking-tighter">{ev.date.split(" ")[0]}</span>
-              <span className="text-sm font-black text-[#F7EED8]">{ev.date.split(" ")[1]}</span>
+              <span className="text-[8px] font-black text-[#8A6A2A] uppercase tracking-tighter">{ev.date.split(" ")[0]}</span>
+              <span className="text-sm font-black text-[#1B1208]">{ev.date.split(" ")[1]}</span>
             </div>
             <div className="min-w-0 flex-1 text-left">
-              <div className="text-[11px] font-bold text-[#F7EED8] truncate leading-tight">{ev.title}</div>
-              <div className="mt-0.5 inline-flex rounded-full bg-[#F7EED8]/10 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wider text-[#F0E4C8]/70">
+              <div className="truncate text-[11px] font-bold leading-tight text-[#1B1208]">{ev.title}</div>
+              <div className="mt-0.5 inline-flex rounded-full bg-[#C9A84C]/15 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wider text-[#6A5422]">
                 {ev.type}
               </div>
             </div>
@@ -153,7 +162,7 @@ function ActivityCalendar() {
 
 function OfficeSupportCard() {
   return (
-    <div className="flex flex-col items-center w-full max-w-[280px] mx-auto">
+    <div className="flex w-full flex-col">
       <div className="mb-4 flex items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C9A84C] text-[#140D05] shadow-sm">
           <FaClock className="text-xs" />
@@ -161,16 +170,23 @@ function OfficeSupportCard() {
         <h3 className="text-xs font-black tracking-tight text-[#1B1208] uppercase">Office & Support</h3>
       </div>
 
-      <div className="w-full rounded-2xl border border-[#C9A84C]/20 bg-[#0D0800]/75 p-4 shadow-sm text-center">
+      <div className="w-full rounded-2xl border border-[#C9A84C]/25 bg-white/80 p-4 text-center shadow-sm">
         <div className="flex flex-col items-center gap-1">
-          <div className="text-[#F2DCA4] text-xs"><FaClock /></div>
+          <div className="text-xs text-[#8A6A2A]"><FaClock /></div>
           <div>
-            <div className="text-[10px] font-black text-[#F7EED8] uppercase tracking-tighter">Opening Hours</div>
-            <p className="mt-0.5 text-[10px] font-medium leading-relaxed text-[#F0E4C8]/70">
+            <div className="text-[10px] font-black uppercase tracking-tighter text-[#1B1208]">Opening Hours</div>
+            <p className="mt-0.5 text-[10px] font-medium leading-relaxed text-[#6A5422]">
               Mon - Fri: 8:00 AM - 6:00 PM
             </p>
           </div>
         </div>
+        <Link
+          to="/contact"
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1B1208] px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#F7EED8] transition hover:bg-pink-600"
+        >
+          Contact support
+          <FaArrowRight />
+        </Link>
       </div>
     </div>
   )
@@ -1053,7 +1069,7 @@ function Home() {
             <div className="relative mx-auto mb-4 w-full max-w-7xl lg:hidden">
               <p className="mb-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-[#F2DCA4]">Verified Shops and Services</p>
               <div className="overflow-hidden rounded-[22px] border border-[#C9A84C]/25 bg-[#140D05]/90 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
-                <div className="flex h-[48px] w-full overflow-hidden rounded-[16px] border-[3px] border-transparent bg-[#0D0800]/90 transition focus-within:border-[#C9A84C]">
+                <div className="flex h-[48px] w-full overflow-hidden rounded-[16px] border-[3px] border-[#C9A84C] bg-[#0D0800]/90 shadow-[0_0_0_4px_rgba(201,168,76,0.14)] transition focus-within:border-pink-500 focus-within:shadow-[0_0_0_4px_rgba(219,39,119,0.16)]">
                   <div className="flex items-center border-r border-[#C9A84C]/25 bg-[#F7EED8]/10 pl-4 pr-2 text-sm font-black tracking-[0.12em] text-[#F2DCA4]">
                     CT-
                   </div>
@@ -1107,12 +1123,12 @@ function Home() {
               </div>
 
               <div className="w-full lg:col-start-2">
-                <div className="min-w-0 rounded-[32px] bg-[#C9A84C]/20 p-1 shadow-sm h-full">
-                  <div className="flex h-full flex-col rounded-[28px] border border-[#C9A84C]/25 bg-[#140D05]/92 p-5 shadow-[0_30px_90px_rgba(0,0,0,0.34)] md:p-8">
+                <div className="space-y-4">
+                  <div className="space-y-4">
                   <div className="hidden rounded-[24px] bg-[#C9A84C]/15 p-1 lg:block">
                     <div className="rounded-[20px] border border-[#C9A84C]/20 bg-[#0D0800]/80 p-4">
                       <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#F2DCA4]">Verified Shops and Services</p>
-                      <div className="flex h-[44px] overflow-hidden rounded-2xl border-[3px] border-transparent bg-[#140D05] transition focus-within:border-[#C9A84C]">
+                      <div className="flex h-[44px] overflow-hidden rounded-2xl border-[3px] border-[#C9A84C] bg-[#140D05] shadow-[0_0_0_4px_rgba(201,168,76,0.14)] transition focus-within:border-pink-500 focus-within:shadow-[0_0_0_4px_rgba(219,39,119,0.16)]">
                         <div className="flex items-center border-r border-[#C9A84C]/25 bg-[#F7EED8]/10 pl-4 pr-2 text-sm font-black tracking-[0.12em] text-[#F2DCA4]">
                           CT-
                         </div>
@@ -1141,58 +1157,9 @@ function Home() {
                     </div>
                   </div>
 
-                  <p className="mt-5 max-w-xl text-base font-medium leading-7 text-[#F0E4C8]/75">
-                    Discover businesses and services in your neighbourhood before you step out, bridging digital convenience with physical reality.
-                  </p>
-
-                  {/* Legacy install card retired for the shared PWA install flow.
-                    <div className="mt-2 rounded-[22px] bg-pink-200 p-0.5">
-                      <div className="rounded-[20px] border border-pink-200 bg-[linear-gradient(135deg,#fff7fb_0%,#fff1f2_48%,#fdf2f8_100%)] p-3 shadow-sm">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex min-w-0 items-start gap-3">
-                            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-pink-600 text-white shadow-sm">
-                              <FaMobileScreenButton className="text-lg" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-[12px] font-black uppercase tracking-[0.16em] text-pink-700">
-                                Install <BrandText />
-                              </p>
-                              <p className="mt-1 text-sm font-semibold leading-5 text-slate-700">
-                                {renderBrandedText(canPromptInstall
-                                  ? "Open CTMerchant faster from your home screen with a cleaner full-screen launch."
-                                  : isAppleMobile
-                                    ? "Save CTMerchant to your iPhone home screen for faster access and a cleaner web app experience."
-                                    : "Use your browser menu to install CTMerchant or add it to your home screen.")}
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => dismissInstallCard()}
-                            className="shrink-0 rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 transition hover:bg-white hover:text-slate-600"
-                          >
-                            Later
-                          </button>
-                        </div>
-                        <div className="mt-3 flex items-center justify-between gap-3">
-                          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
-                            {canPromptInstall ? "Fast launch • Home screen access" : "Safari share menu • Add to Home Screen"}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={handleInstallApp}
-                            disabled={installingApp}
-                            className="rounded-2xl bg-pink-600 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:bg-pink-700 disabled:cursor-wait disabled:opacity-70"
-                          >
-                            {installingApp ? "Opening..." : canPromptInstall ? "Install now" : "How to install"}
-                            Fast launch • Homescreen access
-                          </span>
-                        </button>
-                      </div>
-                    </div>
-                  */}
-                  <div className="mt-6 rounded-[26px] bg-[#C9A84C]/25 p-1">
+                  <div className="rounded-[26px] bg-[#C9A84C]/25 p-1">
                     <div className="rounded-[22px] border border-[#C9A84C]/35 bg-[#F7EED8] p-6 text-[#1B1208] shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
+                      <div className="mb-4 h-1 w-16 rounded-full bg-pink-600" />
                       <h2 className="flex items-center gap-2 font-serif text-2xl font-semibold text-[#1B1208]">
                         <FaLock className="text-[#9B7A25]" />
                         <span>Users Login</span>
@@ -1308,40 +1275,44 @@ function Home() {
                           .
                         </p>
 
-                        <div className="mt-4 grid grid-cols-4 gap-1.5 sm:gap-3">
-                          {socialLinks.map((item) => {
-                            const Icon = item.icon
-                            return (
-                              <a
-                                key={item.label}
-                                href={item.href}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="group flex flex-col items-center justify-center gap-1.5 rounded-xl border border-[#C9A84C]/30 bg-white/80 p-2 shadow-sm transition hover:-translate-y-0.5 hover:border-[#C9A84C]/60 hover:shadow-md"
-                              >
-                                <span
-                                  className={`flex h-8 w-8 items-center justify-center rounded-lg text-base text-white sm:h-10 sm:w-10 sm:rounded-xl ${item.accent}`}
-                                >
-                                  <Icon />
-                                </span>
-                                <span className="block text-[8px] font-extrabold text-[#1B1208] sm:text-[10px]">
-                                  {item.label}
-                                </span>
-                              </a>
-                            )
-                          })}
-                        </div>
-                      </div>
-
-                      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                        <div className="flex justify-center w-full">
-                          <ActivityCalendar />
-                        </div>
-                        <div className="flex justify-center w-full border-t border-[#C9A84C]/20 pt-4 sm:border-t-0 sm:pt-0">
-                          <OfficeSupportCard />
-                        </div>
                       </div>
                     </div>
+                  </div>
+
+                  <HomeCardShell>
+                    <h3 className="font-serif text-xl font-semibold text-[#1B1208]">Social Channels</h3>
+                    <div className="mt-4 grid grid-cols-4 gap-1.5 sm:gap-3">
+                      {socialLinks.map((item) => {
+                        const Icon = item.icon
+                        return (
+                          <a
+                            key={item.label}
+                            href={item.href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="group flex flex-col items-center justify-center gap-1.5 rounded-xl border border-[#C9A84C]/30 bg-white/80 p-2 shadow-sm transition hover:-translate-y-0.5 hover:border-pink-300 hover:shadow-md"
+                          >
+                            <span
+                              className={`flex h-8 w-8 items-center justify-center rounded-lg text-base text-white sm:h-10 sm:w-10 sm:rounded-xl ${item.accent}`}
+                            >
+                              <Icon />
+                            </span>
+                            <span className="block text-[8px] font-extrabold text-[#1B1208] sm:text-[10px]">
+                              {item.label}
+                            </span>
+                          </a>
+                        )
+                      })}
+                    </div>
+                  </HomeCardShell>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <HomeCardShell>
+                      <ActivityCalendar />
+                    </HomeCardShell>
+                    <HomeCardShell>
+                      <OfficeSupportCard />
+                    </HomeCardShell>
                   </div>
                 </div>
               </div>

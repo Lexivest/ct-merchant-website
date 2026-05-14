@@ -54,9 +54,8 @@ function Navbar() {
     <header className="sticky top-0 z-50 shadow-md">
       <MarketPulseTicker />
 
-      <div className="relative border-b-2 border-pink-200 bg-white text-slate-800">
-        {/* Adjusted padding: py-2 on mobile, py-3 on desktop */}
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2 md:gap-4 md:py-3">
+      <div className="relative border-b border-pink-200 bg-white text-slate-800">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-1.5 md:gap-4 md:py-2">
           
           <Link
             to="/"
@@ -68,13 +67,13 @@ function Navbar() {
             <StableImage
               src={ctmLogo}
               alt="CTMerchant Logo"
-              containerClassName="h-8 w-8 rounded-lg md:h-10 md:w-10"
+              containerClassName="h-7 w-7 rounded-lg md:h-8 md:w-8"
               className="h-full w-full object-cover"
               loading="eager"
               fetchPriority="high"
             />
             {/* Value Proposition Text */}
-            <span className="truncate text-sm font-extrabold tracking-wide text-slate-900 md:text-base">
+            <span className="truncate text-xs font-extrabold tracking-wide text-slate-900 md:text-sm">
               Best Deals Near You!
             </span>
           </Link>
@@ -100,7 +99,7 @@ function Navbar() {
 
             <Link
               to="/staff-portal"
-              className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white no-underline shadow-sm transition hover:bg-slate-800"
+              className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-1.5 text-sm font-semibold text-white no-underline shadow-sm transition hover:bg-slate-800"
             >
               Staff Portal
             </Link>
@@ -109,7 +108,7 @@ function Navbar() {
           <button
             type="button"
             onClick={() => setMobileOpen((prev) => !prev)}
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 md:py-2 lg:hidden"
+            className="rounded-md border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 transition hover:bg-slate-100 lg:hidden"
             aria-label="Toggle mobile menu"
             aria-expanded={mobileOpen}
           >
