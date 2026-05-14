@@ -20,7 +20,6 @@ import AuthInput from "../components/auth/AuthInput"
 import AuthButton from "../components/auth/AuthButton"
 import PageSeo from "../components/common/PageSeo"
 import PwaAddToHomePrompt from "../components/common/PwaAddToHomePrompt"
-import HeaderMarquee from "../components/common/HeaderMarquee"
 import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import BrandText from "../components/common/BrandText"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
@@ -67,12 +66,6 @@ import { isServiceCategory, isServiceShop } from "../lib/serviceCategories"
 // --- LOCAL ASSET IMPORT ---
 import banner from "../assets/images/banner.jpg"
 
-const phrases = [
-  "City Commerce",
-  "Digital Convenience",
-  "Physical Reality",
-]
-
 const CONTACT_MESSAGE_WORD_LIMIT = 300
 
 const socialLinks = [
@@ -107,14 +100,14 @@ const editorialTexture = {
     "radial-gradient(circle at 18% 18%, rgba(201,168,76,0.16), transparent 30%), radial-gradient(circle at 86% 8%, rgba(219,39,119,0.10), transparent 28%), linear-gradient(180deg, #0D0800 0%, #150C04 48%, #090600 100%)",
 }
 
-const darkFieldClass =
-  "w-full rounded-2xl border border-[#C9A84C]/25 bg-[#0D0800]/80 px-5 py-3 text-sm font-semibold text-[#F7EED8] outline-none transition placeholder:text-[#F0E4C8]/45 focus:border-[#F2DCA4] focus:bg-[#171007] focus:ring-4 focus:ring-[#C9A84C]/10"
+const lightFieldClass =
+  "w-full rounded-2xl border border-[#C9A84C]/35 bg-white/80 px-5 py-3 text-sm font-semibold text-[#1B1208] outline-none transition placeholder:text-[#8A6A2A]/55 focus:border-[#9B7A25] focus:bg-white focus:ring-4 focus:ring-[#C9A84C]/15"
 
 function GoldDivider({ label = "City commerce" }) {
   return (
     <div className="flex items-center gap-4">
       <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#C9A84C]/70 to-[#C9A84C]/20" />
-      <span className="font-serif text-[0.68rem] uppercase tracking-[0.42em] text-[#F2DCA4]">
+      <span className="font-serif text-[0.68rem] uppercase tracking-[0.42em] text-[#8A6A2A]">
         {label}
       </span>
       <span className="h-px flex-1 bg-gradient-to-l from-transparent via-[#C9A84C]/70 to-[#C9A84C]/20" />
@@ -233,15 +226,15 @@ function HomeFeedbackSection() {
   }
 
   return (
-    <div className="h-full rounded-[28px] border border-[#C9A84C]/25 bg-[#140D05]/90 p-5 shadow-[0_28px_80px_rgba(0,0,0,0.35)] md:p-7">
+    <div className="h-full rounded-[28px] border border-[#C9A84C]/30 bg-[#F7EED8] p-5 text-[#1B1208] shadow-[0_22px_60px_rgba(27,18,8,0.18)] md:p-7">
       <div className="mb-4">
-        <span className="inline-block rounded-full border border-[#C9A84C]/35 bg-[#C9A84C]/10 px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-[#F2DCA4]">
+        <span className="inline-block rounded-full border border-[#C9A84C]/45 bg-[#C9A84C]/15 px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-[#6A5422]">
           Share Your Feedback
         </span>
-        <h2 className="mt-2 font-serif text-2xl font-semibold text-[#F7EED8] md:text-3xl">
+        <h2 className="mt-2 font-serif text-2xl font-semibold text-[#1B1208] md:text-3xl">
           Help Us Improve Your Experience
         </h2>
-        <p className="mt-1 text-sm font-medium text-[#F0E4C8]/70">
+        <p className="mt-1 text-sm font-medium text-[#6A5422]">
           Have a suggestion or encountered an issue? We'd love to hear from you.
         </p>
       </div>
@@ -249,36 +242,36 @@ function HomeFeedbackSection() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-[#F2DCA4]">Full Name</label>
+            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-[#8A6A2A]">Full Name</label>
             <input
               type="text"
               name="fullName"
               value={formData.fullName}
               onChange={handleChange}
               placeholder="e.g. John Doe"
-              className={darkFieldClass}
+              className={lightFieldClass}
             />
           </div>
           <div>
-            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-[#F2DCA4]">Email Address</label>
+            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-[#8A6A2A]">Email Address</label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
               placeholder="name@example.com"
-              className={darkFieldClass}
+              className={lightFieldClass}
             />
           </div>
         </div>
 
         <div>
-          <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-[#F2DCA4]">Subject</label>
+          <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-[#8A6A2A]">Subject</label>
           <select
             name="subject"
             value={formData.subject}
             onChange={handleChange}
-            className={darkFieldClass}
+            className={lightFieldClass}
           >
             <option>General Inquiry</option>
             <option>Merchant Feedback</option>
@@ -289,8 +282,8 @@ function HomeFeedbackSection() {
 
         <div>
           <div className="mb-2 flex items-center justify-between gap-3">
-            <label className="block text-[10px] font-black uppercase tracking-widest text-[#F2DCA4]">Message</label>
-            <WordLimitCounter value={formData.message} limit={CONTACT_MESSAGE_WORD_LIMIT} className="text-[#F0E4C8]/65" />
+            <label className="block text-[10px] font-black uppercase tracking-widest text-[#8A6A2A]">Message</label>
+            <WordLimitCounter value={formData.message} limit={CONTACT_MESSAGE_WORD_LIMIT} className="text-[#8A6A2A]" />
           </div>
           <textarea
             name="message"
@@ -298,7 +291,7 @@ function HomeFeedbackSection() {
             value={formData.message}
             onChange={handleChange}
             placeholder="Tell us what's on your mind..."
-            className={`${darkFieldClass} resize-none`}
+            className={`${lightFieldClass} resize-none`}
           />
         </div>
 
@@ -351,44 +344,45 @@ function NewsletterSection() {
   }
 
   return (
-    <section className="border-y border-[#C9A84C]/20 bg-[#0D0800] py-10 text-[#F7EED8] md:py-16" style={editorialTexture}>
+    <section className="border-y border-[#C9A84C]/25 bg-[#F7EED8] py-10 text-[#1B1208] md:py-16">
       <div className="mx-auto max-w-7xl px-4">
         <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
           <div>
             <GoldDivider label="Market brief" />
-            <div className="mt-6 inline-flex rounded-full bg-[#C9A84C]/10 px-4 py-2 text-xs font-black uppercase tracking-widest text-[#F2DCA4] ring-1 ring-[#C9A84C]/30">
-              <BrandText /> Insider
+            <div className="mt-6 inline-flex items-center gap-1 rounded-full bg-[#C9A84C]/15 px-4 py-2 text-xs font-black uppercase tracking-widest text-[#6A5422] ring-1 ring-[#C9A84C]/35">
+              <BrandText />
+              <span>Insider</span>
             </div>
             <h2 className="mt-4 font-serif text-4xl font-semibold tracking-tight md:text-5xl">
               Stay Ahead of the <br />
-              <span className="text-[#F2DCA4]">Market Pulse</span>
+              <span className="text-[#8A6A2A]">Market Pulse</span>
             </h2>
-            <p className="mt-4 max-w-md text-lg font-medium leading-relaxed text-[#F0E4C8]/75">
+            <p className="mt-4 max-w-md text-lg font-medium leading-relaxed text-[#6A5422]">
               Join our newsletter to receive weekly insights, new merchant alerts, and exclusive community updates directly in your inbox.
             </p>
           </div>
 
-          <div className="rounded-[32px] border border-[#C9A84C]/25 bg-[#140D05]/90 p-6 shadow-[0_28px_80px_rgba(0,0,0,0.35)] md:p-8 backdrop-blur-sm">
+          <div className="rounded-[32px] border border-[#C9A84C]/30 bg-white/75 p-6 shadow-[0_22px_60px_rgba(27,18,8,0.16)] md:p-8 backdrop-blur-sm">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#F2DCA4]">Full Name</label>
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A6A2A]">Full Name</label>
                   <input
                     type="text"
                     value={formData.fullName}
                     onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
                     placeholder="John Doe"
-                    className="w-full rounded-2xl border border-[#C9A84C]/25 bg-[#0D0800]/80 px-6 py-4 text-base font-bold text-[#F7EED8] outline-none transition placeholder:text-[#F0E4C8]/45 focus:border-[#F2DCA4] focus:bg-[#171007] focus:ring-2 focus:ring-[#C9A84C]/25"
+                    className="w-full rounded-2xl border border-[#C9A84C]/35 bg-white px-6 py-4 text-base font-bold text-[#1B1208] outline-none transition placeholder:text-[#8A6A2A]/55 focus:border-[#9B7A25] focus:ring-2 focus:ring-[#C9A84C]/20"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#F2DCA4]">Email Address</label>
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A6A2A]">Email Address</label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                     placeholder="john@example.com"
-                    className="w-full rounded-2xl border border-[#C9A84C]/25 bg-[#0D0800]/80 px-6 py-4 text-base font-bold text-[#F7EED8] outline-none transition placeholder:text-[#F0E4C8]/45 focus:border-[#F2DCA4] focus:bg-[#171007] focus:ring-2 focus:ring-[#C9A84C]/25"
+                    className="w-full rounded-2xl border border-[#C9A84C]/35 bg-white px-6 py-4 text-base font-bold text-[#1B1208] outline-none transition placeholder:text-[#8A6A2A]/55 focus:border-[#9B7A25] focus:ring-2 focus:ring-[#C9A84C]/20"
                   />
                 </div>
               </div>
@@ -402,7 +396,7 @@ function NewsletterSection() {
                 {!isSubmitting && <FaArrowRight />}
               </button>
               
-              <p className="text-center text-[10px] font-medium text-[#F0E4C8]/55">
+              <p className="text-center text-[10px] font-medium text-[#8A6A2A]">
                 We respect your privacy. Unsubscribe at any time.
               </p>
             </form>
@@ -507,10 +501,6 @@ function Home() {
   )
 
 
-  const [phraseIndex, setPhraseIndex] = useState(0)
-  const [charIndex, setCharIndex] = useState(0)
-  const [isDeleting, setIsDeleting] = useState(false)
-
   const [loginForm, setLoginForm] = useState({ email: "", password: "" })
   const [loginErrors, setLoginErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
@@ -585,30 +575,6 @@ function Home() {
       email: prev.email || prefillEmail,
     }))
   }, [location.state])
-
-  useEffect(() => {
-    const currentPhrase = phrases[phraseIndex]
-    const timeout = isDeleting ? 50 : 100
-
-    if (!isDeleting && charIndex === currentPhrase.length) {
-      const timer = setTimeout(() => setIsDeleting(true), 1800)
-      return () => clearTimeout(timer)
-    }
-
-    if (isDeleting && charIndex === 0) {
-      const timer = setTimeout(() => {
-        setIsDeleting(false)
-        setPhraseIndex((prev) => (prev + 1) % phrases.length)
-      }, 400)
-      return () => clearTimeout(timer)
-    }
-
-    const timer = setTimeout(() => {
-      setCharIndex((prev) => prev + (isDeleting ? -1 : 1))
-    }, timeout)
-
-    return () => clearTimeout(timer)
-  }, [charIndex, isDeleting, phraseIndex])
 
   // --- GOOGLE CALLBACK ---
   const googleCallbackRef = useRef()
@@ -730,10 +696,6 @@ function Home() {
     }
   }, [])
 
-  const currentPhraseText = useMemo(
-    () => phrases[phraseIndex].slice(0, charIndex),
-    [phraseIndex, charIndex]
-  )
   const homeStructuredData = useMemo(() => {
     return {
       "@context": "https://schema.org",
@@ -1089,7 +1051,7 @@ function Home() {
           <section className="relative overflow-x-hidden bg-[#0D0800] px-4 py-4 text-[#F7EED8] md:py-8" style={editorialTexture}>
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(242,220,164,0.13),transparent_34%)]" />
             <div className="relative mx-auto mb-4 w-full max-w-7xl lg:hidden">
-              <p className="mb-1.5 ml-1 text-[10px] font-bold uppercase tracking-wider text-[#F2DCA4]">view shops/store in your city/area</p>
+              <p className="mb-1.5 ml-1 text-[10px] font-bold uppercase tracking-wider text-[#F2DCA4]">Verified Shops and Services</p>
               <div className="overflow-hidden rounded-[22px] border border-[#C9A84C]/25 bg-[#140D05]/90 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
                 <div className="flex h-[48px] w-full overflow-hidden rounded-[16px] border-[3px] border-transparent bg-[#0D0800]/90 transition focus-within:border-[#C9A84C]">
                   <div className="flex items-center border-r border-[#C9A84C]/25 bg-[#F7EED8]/10 pl-4 pr-2 text-sm font-black tracking-[0.12em] text-[#F2DCA4]">
@@ -1104,7 +1066,7 @@ function Home() {
                     }}
                     inputMode="numeric"
                     pattern="[0-9]*"
-                    placeholder="Enter Store ID"
+                    placeholder="Enter Merchant ID"
                     className="min-w-0 flex-1 border-none bg-transparent px-3 text-base font-medium text-[#F7EED8] outline-none placeholder:text-[#F0E4C8]/45"
                   />
                   <button
@@ -1136,16 +1098,6 @@ function Home() {
                       fetchPriority="high"
                       placeholderClassName="bg-gradient-to-br from-[#0D0800] via-[#2B1A08] to-[#140D05]"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0D0800] via-[#0D0800]/45 to-transparent" />
-                    <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
-                      <GoldDivider label="Repository of commerce" />
-                      <h1 className="mt-5 font-serif text-2xl font-semibold leading-tight text-[#F7EED8] sm:text-4xl md:text-5xl">
-                        Discover real shops, services, and local offers before you step out.
-                      </h1>
-                      <p className="mt-3 max-w-xl text-sm font-semibold leading-6 text-[#F0E4C8]/80 sm:text-base">
-                        A city-by-city marketplace built around verified physical presence, local trust, and faster discovery.
-                      </p>
-                    </div>
                   </div>
                 </div>
 
@@ -1154,19 +1106,12 @@ function Home() {
                 </div>
               </div>
 
-              {/* Mobile Only Ticker - positioned just below the hero image */}
-              <div className="lg:hidden w-full px-1">
-                <div className="rounded-[22px] border border-[#C9A84C]/20 bg-[#140D05]/85 px-2 py-3 text-[#F7EED8] shadow-sm overflow-hidden">
-                  <HeaderMarquee brandClassName="text-[#F7EED8]" textClassName="text-[#F2DCA4]" />
-                </div>
-              </div>
-
               <div className="w-full lg:col-start-2">
                 <div className="min-w-0 rounded-[32px] bg-[#C9A84C]/20 p-1 shadow-sm h-full">
                   <div className="flex h-full flex-col rounded-[28px] border border-[#C9A84C]/25 bg-[#140D05]/92 p-5 shadow-[0_30px_90px_rgba(0,0,0,0.34)] md:p-8">
                   <div className="hidden rounded-[24px] bg-[#C9A84C]/15 p-1 lg:block">
                     <div className="rounded-[20px] border border-[#C9A84C]/20 bg-[#0D0800]/80 p-4">
-                      <p className="mb-2 ml-0.5 text-[10px] font-bold uppercase tracking-wider text-[#F2DCA4]">view shops/store in your city/area</p>
+                      <p className="mb-2 ml-0.5 text-[10px] font-bold uppercase tracking-wider text-[#F2DCA4]">Verified Shops and Services</p>
                       <div className="flex h-[44px] overflow-hidden rounded-2xl border-[3px] border-transparent bg-[#140D05] transition focus-within:border-[#C9A84C]">
                         <div className="flex items-center border-r border-[#C9A84C]/25 bg-[#F7EED8]/10 pl-4 pr-2 text-sm font-black tracking-[0.12em] text-[#F2DCA4]">
                           CT-
@@ -1180,7 +1125,7 @@ function Home() {
                           }}
                           inputMode="numeric"
                           pattern="[0-9]*"
-                          placeholder="Enter Store ID"
+                          placeholder="Enter Merchant ID"
                           className="min-w-0 flex-1 border-none bg-transparent px-3 text-base text-[#F7EED8] outline-none placeholder:text-[#F0E4C8]/45"
                         />
                         <button
@@ -1196,12 +1141,7 @@ function Home() {
                     </div>
                   </div>
 
-                  <div className="mt-5 min-h-[28px] font-serif text-2xl font-semibold leading-tight text-[#F2DCA4] md:min-h-[38px] md:text-4xl">
-                    {currentPhraseText}
-                    <span className="ml-1 inline-block animate-pulse text-[#C9A84C]">|</span>
-                  </div>
-
-                  <p className="mt-3 max-w-xl text-base font-medium leading-7 text-[#F0E4C8]/75">
+                  <p className="mt-5 max-w-xl text-base font-medium leading-7 text-[#F0E4C8]/75">
                     Discover businesses and services in your neighbourhood before you step out, bridging digital convenience with physical reality.
                   </p>
 
@@ -1414,13 +1354,6 @@ function Home() {
               </div>
             </div>
           </section>
-
-          {/* Desktop Only Ticker */}
-          <div className="hidden border-y border-[#C9A84C]/20 bg-[#0D0800] py-3 text-[#F7EED8] lg:block">
-            <div className="mx-auto max-w-7xl px-4">
-              <HeaderMarquee brandClassName="text-[#F7EED8]" textClassName="text-[#F2DCA4]" />
-            </div>
-          </div>
 
           <NewsletterSection />
           {resetEmailOpen ? (

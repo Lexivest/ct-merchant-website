@@ -8,21 +8,15 @@ import ctmLogo from "../../assets/images/logo.jpg"
 
 function MarketPulseTicker() {
   const cities = ["Jos", "Kaduna", "Lokoja", "Minna", "Asaba", "Enugu", "Makurdi"]
-  const message = "city commerce- discover business and offerings in your neighbourhood before you step out- bridging the gap between digital convenience and physical reality"
-  
-  const tickerText = `${cities.join("  |  ").toUpperCase()}  |  ${message.toUpperCase()}`
+  const tickerText = cities.join("  |  ").toUpperCase()
 
   return (
-    <div className="bg-slate-950 py-2.5 text-white">
+    <div className="border-b border-[#C9A84C]/25 bg-[#0D0800] py-2.5 text-[#F7EED8]">
       <div className="mx-auto flex max-w-7xl items-center px-4">
-        <div className="mr-4 flex shrink-0 items-center gap-1.5 border-r border-white/20 pr-4 text-[9px] font-black uppercase tracking-tighter text-emerald-400">
-          <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-          Live
-        </div>
         <div className="min-w-0 flex-1">
           <ScrollingTicker
             text={tickerText}
-            textClassName="text-[10px] font-mono font-bold tracking-wider text-slate-300"
+            textClassName="font-serif text-[11px] font-semibold uppercase tracking-[0.36em] text-[#F2DCA4]"
             speedFactor={0.15}
           />
         </div>
