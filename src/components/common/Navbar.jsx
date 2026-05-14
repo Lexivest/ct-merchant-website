@@ -10,6 +10,21 @@ function MarketPulseTicker() {
   const cities = ["Jos", "Kaduna", "Lokoja", "Minna", "Asaba", "Enugu", "Makurdi"]
   const message = "city commerce - discover business and offerings in your neighbourhood before you step out - bridging the gap between digital convenience and physical reality"
   const tickerText = `${cities.join("  |  ").toUpperCase()}  |  ${message.toUpperCase()}`
+  const locationIcon = (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className="h-3 w-3 text-pink-500"
+      aria-hidden="true"
+    >
+      <path
+        fillRule="evenodd"
+        d="M9.69 18.933l.003.002.004.002a.7.7 0 0 0 .606 0l.004-.002.003-.002.01-.006.033-.02.115-.073a20.372 20.372 0 0 0 1.685-1.214C14.136 16.02 17 13.23 17 9A7 7 0 1 0 3 9c0 4.23 2.864 7.02 4.847 8.62a20.381 20.381 0 0 0 1.8 1.287l.033.02.01.006ZM10 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"
+        clipRule="evenodd"
+      />
+    </svg>
+  )
 
   return (
     <div className="border-b border-[#C9A84C]/25 bg-[#0D0800] py-2.5 text-[#F7EED8]">
@@ -29,7 +44,21 @@ function MarketPulseTicker() {
             text={tickerText}
             textClassName="font-serif text-[11px] font-semibold uppercase tracking-[0.28em] text-[#F2DCA4]"
             speedFactor={0.15}
-          />
+          >
+            <span className="inline-flex items-center gap-4">
+              {cities.map((city) => (
+                <span
+                  key={city}
+                  className="inline-flex items-center gap-1.5"
+                >
+                  {locationIcon}
+                  <span>{city.toUpperCase()}</span>
+                </span>
+              ))}
+              <span className="text-[#C9A84C]/60">|</span>
+              <span>{message.toUpperCase()}</span>
+            </span>
+          </ScrollingTicker>
         </div>
       </div>
     </div>

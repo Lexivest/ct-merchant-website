@@ -2,14 +2,18 @@ import { memo } from "react"
 
 function ScrollingTicker({
   text,
+  children,
   className = "",
   textClassName = "",
   minDuration = 24,
   speedFactor = 0.18,
 }) {
-  if (!text) return null
+  const content = children || text
 
-  const duration = Math.max(minDuration, Math.round(text.length * speedFactor))
+  if (!content) return null
+
+  const durationBasis = typeof text === "string" ? text.length : 120
+  const duration = Math.max(minDuration, Math.round(durationBasis * speedFactor))
 
   return (
     <div className={`ctm-marquee ${className}`.trim()}>
@@ -17,12 +21,14 @@ function ScrollingTicker({
         className="ctm-marquee-track"
         style={{ "--ctm-ticker-duration": `${duration}s` }}
       >
-        <span className={`ctm-marquee-copy ${textClassName}`.trim()}>{text}</span>
+        <span className={`ctm-marquee-copy ${textClassName}`.trim()}>
+          {content}
+        </span>
         <span
           className={`ctm-marquee-copy ${textClassName}`.trim()}
           aria-hidden="true"
         >
-          {text}
+          {content}
         </span>
       </div>
     </div>
