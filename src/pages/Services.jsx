@@ -74,12 +74,12 @@ const grainTexture = {
 
 function GoldDivider({ label }) {
   return (
-    <div className="flex items-center gap-4 py-7 text-[#8A6A2A]">
-      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#8A6A2A] to-transparent" />
+    <div className="flex items-center gap-4 py-7 text-[#C9A84C]">
+      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent" />
       <span className="shrink-0 text-[0.65rem] font-black uppercase tracking-[0.32em]">
         {label}
       </span>
-      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#8A6A2A] to-transparent" />
+      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent" />
     </div>
   )
 }
@@ -121,7 +121,7 @@ function Services() {
 
         <div className="relative z-10 mx-auto max-w-6xl">
           <header
-            className="mx-auto max-w-3xl border-b border-[#8A6A2A]/80 px-1 pb-10 pt-6 text-center opacity-0 sm:pb-12 sm:pt-10"
+            className="mx-auto max-w-3xl border-b border-[#C9A84C]/70 px-1 pb-10 pt-6 text-center opacity-0 sm:pb-12 sm:pt-10"
             style={{ animation: "ctmServicesFadeUp 900ms ease forwards" }}
           >
             <button
@@ -138,7 +138,7 @@ function Services() {
             <h1 className="text-[clamp(2.4rem,7vw,4.8rem)] font-black leading-[0.98] tracking-tight text-[#F5EDD8]">
               Services built for <span className="font-normal italic text-[#E8C97A]">real commerce</span>
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-[1.05rem] italic leading-8 text-[#C0A87A] sm:text-[1.18rem]">
+            <p className="mx-auto mt-6 max-w-2xl text-[1.05rem] italic leading-8 text-[#F2DCA4] sm:text-[1.18rem]">
               A refined discovery layer for city markets, verified service providers, and the everyday businesses people need to find with confidence.
             </p>
           </header>
@@ -148,7 +148,7 @@ function Services() {
               className="mx-auto max-w-3xl opacity-0"
               style={{ animation: "ctmServicesFadeUp 900ms ease forwards", animationDelay: "120ms" }}
             >
-              <p className="text-center text-[1.05rem] leading-9 text-[#D8C8A8] sm:text-[1.12rem]">
+              <p className="text-center text-[1.05rem] leading-9 text-[#F0E4C8] sm:text-[1.12rem]">
                 <BrandText /> is not trying to replace the marketplace on the street. It organizes it. The goal is simple: help people locate trustworthy shops and service providers while giving merchants a professional digital presence they can maintain.
               </p>
 
@@ -202,7 +202,7 @@ function Services() {
                     <h2 className="text-[0.75rem] font-black uppercase tracking-[0.28em] text-[#C9A84C]">
                       {service.title}
                     </h2>
-                    <p className="mt-4 text-[1rem] leading-8 text-[#D8C8A8]">
+                    <p className="mt-4 text-[1rem] leading-8 text-[#F0E4C8]">
                       {service.text}
                     </p>
                   </div>
@@ -211,7 +211,7 @@ function Services() {
             </section>
 
             <section
-              className="mt-10 border-y border-[#8A6A2A]/80 px-4 py-10 text-center opacity-0 sm:mt-14 sm:px-8 sm:py-14"
+              className="mt-10 border-y border-[#C9A84C]/70 px-4 py-10 text-center opacity-0 sm:mt-14 sm:px-8 sm:py-14"
               style={{ animation: "ctmServicesFadeUp 900ms ease forwards", animationDelay: "820ms" }}
             >
               <p className="mb-4 text-[0.68rem] font-black uppercase tracking-[0.34em] text-[#C9A84C]">
@@ -220,10 +220,6 @@ function Services() {
               <h2 className="mx-auto max-w-3xl text-[clamp(1.9rem,5vw,3rem)] font-black leading-tight text-[#E8C97A]">
                 A professional directory for shops, services, and city discovery.
               </h2>
-              <p className="mx-auto mt-5 max-w-2xl text-[1.04rem] leading-8 text-[#D8C8A8]">
-                This design direction can be extended into other public pages, but testing it here first lets us judge readability, performance, and brand fit before a wider refactor.
-              </p>
-
               <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                 <Link
                   to="/contact"
