@@ -8,7 +8,7 @@ import ctmLogo from "../../assets/images/logo.jpg"
 
 function MarketPulseTicker() {
   const cities = ["Jos", "Kaduna", "Lokoja", "Minna", "Asaba", "Enugu", "Makurdi"]
-  const message = "city commerce - discover business and offerings in your neighbourhood before you step out - bridging the gap between digital convenience and physical reality"
+  const message = "city commerce - discover business and services in your neighbourhood before you step out - bridging the gap between digital convenience and physical reality"
   const tickerText = `${cities.join("  |  ").toUpperCase()}  |  ${message.toUpperCase()}`
   const locationIcon = (
     <svg
