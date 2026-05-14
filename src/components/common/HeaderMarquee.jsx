@@ -1,6 +1,9 @@
 import BrandText from "./BrandText"
 
-function HeaderMarquee() {
+function HeaderMarquee({
+  brandClassName = "text-slate-900",
+  textClassName = "text-amber-600",
+}) {
   const items = [
     "Repository of shops, products and services.",
     "Register for free and see verified merchants in your city and area.",
@@ -17,9 +20,9 @@ function HeaderMarquee() {
         {marqueeItems.map((text, index) => (
           <div
             key={index}
-            className="flex shrink-0 items-center gap-2 pr-12 text-[11px] font-extrabold uppercase tracking-wide text-amber-600"
+            className={`flex shrink-0 items-center gap-2 pr-12 text-[11px] font-extrabold uppercase tracking-wide ${textClassName}`}
           >
-            <BrandText className="normal-case text-slate-900" />
+            <BrandText className={`normal-case ${brandClassName}`} />
 
             <div className="flex h-[9px] w-[13px] flex-col overflow-hidden rounded-[1px]">
               <div className="flex-1 bg-green-600"></div>

@@ -1,12 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
-  FaArrowDown,
   FaArrowRight,
-  FaArrowUp,
   FaCalendarDays,
-  FaChartLine,
-  FaCircleInfo,
   FaClock,
   FaEnvelope,
   FaEye,
@@ -15,18 +11,14 @@ import {
   FaHashtag,
   FaLock,
   FaMagnifyingGlass,
-  FaNewspaper,
-  FaPhone,
   FaTelegram,
   FaXTwitter,
   FaYoutube,
 } from "react-icons/fa6"
 import MainLayout from "../layouts/MainLayout"
-import ScrollingTicker from "../components/common/ScrollingTicker"
 import AuthInput from "../components/auth/AuthInput"
 import AuthButton from "../components/auth/AuthButton"
 import PageSeo from "../components/common/PageSeo"
-import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import PwaAddToHomePrompt from "../components/common/PwaAddToHomePrompt"
 import HeaderMarquee from "../components/common/HeaderMarquee"
 import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
@@ -110,6 +102,26 @@ const socialLinks = [
   },
 ]
 
+const editorialTexture = {
+  backgroundImage:
+    "radial-gradient(circle at 18% 18%, rgba(201,168,76,0.16), transparent 30%), radial-gradient(circle at 86% 8%, rgba(219,39,119,0.10), transparent 28%), linear-gradient(180deg, #0D0800 0%, #150C04 48%, #090600 100%)",
+}
+
+const darkFieldClass =
+  "w-full rounded-2xl border border-[#C9A84C]/25 bg-[#0D0800]/80 px-5 py-3 text-sm font-semibold text-[#F7EED8] outline-none transition placeholder:text-[#F0E4C8]/45 focus:border-[#F2DCA4] focus:bg-[#171007] focus:ring-4 focus:ring-[#C9A84C]/10"
+
+function GoldDivider({ label = "City commerce" }) {
+  return (
+    <div className="flex items-center gap-4">
+      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#C9A84C]/70 to-[#C9A84C]/20" />
+      <span className="font-serif text-[0.68rem] uppercase tracking-[0.42em] text-[#F2DCA4]">
+        {label}
+      </span>
+      <span className="h-px flex-1 bg-gradient-to-l from-transparent via-[#C9A84C]/70 to-[#C9A84C]/20" />
+    </div>
+  )
+}
+
 function ActivityCalendar() {
   const calendarEvents = [
     { date: "APR 20", title: "Merchant Training Webinar", type: "Virtual" },
@@ -120,22 +132,22 @@ function ActivityCalendar() {
   return (
     <div className="flex flex-col items-center w-full max-w-[280px] mx-auto">
       <div className="mb-4 flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white shadow-sm">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C9A84C] text-[#140D05] shadow-sm">
           <FaCalendarDays className="text-xs" />
         </div>
-        <h3 className="text-xs font-black tracking-tight text-slate-900 uppercase">Activity Calendar</h3>
+        <h3 className="text-xs font-black tracking-tight text-[#1B1208] uppercase">Activity Calendar</h3>
       </div>
 
-      <div className="w-full divide-y divide-slate-100 rounded-2xl border border-slate-100 bg-white p-1 shadow-sm overflow-hidden">
+      <div className="w-full divide-y divide-[#C9A84C]/15 rounded-2xl border border-[#C9A84C]/20 bg-[#0D0800]/75 p-1 shadow-sm overflow-hidden">
         {calendarEvents.map((ev, idx) => (
-          <div key={idx} className="flex items-center gap-2.5 p-2.5 transition hover:bg-slate-50">
-            <div className="flex h-10 w-10 flex-col items-center justify-center rounded-lg bg-pink-50 text-center shrink-0">
-              <span className="text-[8px] font-black text-pink-600 uppercase tracking-tighter">{ev.date.split(" ")[0]}</span>
-              <span className="text-sm font-black text-slate-900">{ev.date.split(" ")[1]}</span>
+          <div key={idx} className="flex items-center gap-2.5 p-2.5 transition hover:bg-[#C9A84C]/10">
+            <div className="flex h-10 w-10 flex-col items-center justify-center rounded-lg bg-[#C9A84C]/15 text-center shrink-0">
+              <span className="text-[8px] font-black text-[#F2DCA4] uppercase tracking-tighter">{ev.date.split(" ")[0]}</span>
+              <span className="text-sm font-black text-[#F7EED8]">{ev.date.split(" ")[1]}</span>
             </div>
             <div className="min-w-0 flex-1 text-left">
-              <div className="text-[11px] font-bold text-slate-900 truncate leading-tight">{ev.title}</div>
-              <div className="mt-0.5 inline-flex rounded-full bg-slate-100 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wider text-slate-500">
+              <div className="text-[11px] font-bold text-[#F7EED8] truncate leading-tight">{ev.title}</div>
+              <div className="mt-0.5 inline-flex rounded-full bg-[#F7EED8]/10 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wider text-[#F0E4C8]/70">
                 {ev.type}
               </div>
             </div>
@@ -150,18 +162,18 @@ function OfficeSupportCard() {
   return (
     <div className="flex flex-col items-center w-full max-w-[280px] mx-auto">
       <div className="mb-4 flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500 text-white shadow-sm">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C9A84C] text-[#140D05] shadow-sm">
           <FaClock className="text-xs" />
         </div>
-        <h3 className="text-xs font-black tracking-tight text-slate-900 uppercase">Office & Support</h3>
+        <h3 className="text-xs font-black tracking-tight text-[#1B1208] uppercase">Office & Support</h3>
       </div>
 
-      <div className="w-full rounded-2xl border border-slate-100 bg-white p-4 shadow-sm text-center">
+      <div className="w-full rounded-2xl border border-[#C9A84C]/20 bg-[#0D0800]/75 p-4 shadow-sm text-center">
         <div className="flex flex-col items-center gap-1">
-          <div className="text-amber-500 text-xs"><FaClock /></div>
+          <div className="text-[#F2DCA4] text-xs"><FaClock /></div>
           <div>
-            <div className="text-[10px] font-black text-slate-900 uppercase tracking-tighter">Opening Hours</div>
-            <p className="mt-0.5 text-[10px] font-medium leading-relaxed text-slate-500">
+            <div className="text-[10px] font-black text-[#F7EED8] uppercase tracking-tighter">Opening Hours</div>
+            <p className="mt-0.5 text-[10px] font-medium leading-relaxed text-[#F0E4C8]/70">
               Mon - Fri: 8:00 AM - 6:00 PM
             </p>
           </div>
@@ -221,15 +233,15 @@ function HomeFeedbackSection() {
   }
 
   return (
-    <div className="h-full rounded-[24px] border border-pink-100 bg-white p-5 md:p-7">
+    <div className="h-full rounded-[28px] border border-[#C9A84C]/25 bg-[#140D05]/90 p-5 shadow-[0_28px_80px_rgba(0,0,0,0.35)] md:p-7">
       <div className="mb-4">
-        <span className="inline-block rounded-full border border-pink-200 bg-pink-50 px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-pink-700">
+        <span className="inline-block rounded-full border border-[#C9A84C]/35 bg-[#C9A84C]/10 px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-[#F2DCA4]">
           Share Your Feedback
         </span>
-        <h2 className="mt-2 text-2xl font-extrabold text-slate-900 md:text-3xl">
+        <h2 className="mt-2 font-serif text-2xl font-semibold text-[#F7EED8] md:text-3xl">
           Help Us Improve Your Experience
         </h2>
-        <p className="mt-1 text-sm font-medium text-slate-500">
+        <p className="mt-1 text-sm font-medium text-[#F0E4C8]/70">
           Have a suggestion or encountered an issue? We'd love to hear from you.
         </p>
       </div>
@@ -237,36 +249,36 @@ function HomeFeedbackSection() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-500">Full Name</label>
+            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-[#F2DCA4]">Full Name</label>
             <input
               type="text"
               name="fullName"
               value={formData.fullName}
               onChange={handleChange}
               placeholder="e.g. John Doe"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-pink-500 focus:bg-white"
+              className={darkFieldClass}
             />
           </div>
           <div>
-            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-500">Email Address</label>
+            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-[#F2DCA4]">Email Address</label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
               placeholder="name@example.com"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-pink-500 focus:bg-white"
+              className={darkFieldClass}
             />
           </div>
         </div>
 
         <div>
-          <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-500">Subject</label>
+          <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-[#F2DCA4]">Subject</label>
           <select
             name="subject"
             value={formData.subject}
             onChange={handleChange}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-pink-500 focus:bg-white"
+            className={darkFieldClass}
           >
             <option>General Inquiry</option>
             <option>Merchant Feedback</option>
@@ -277,8 +289,8 @@ function HomeFeedbackSection() {
 
         <div>
           <div className="mb-2 flex items-center justify-between gap-3">
-            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500">Message</label>
-            <WordLimitCounter value={formData.message} limit={CONTACT_MESSAGE_WORD_LIMIT} />
+            <label className="block text-[10px] font-black uppercase tracking-widest text-[#F2DCA4]">Message</label>
+            <WordLimitCounter value={formData.message} limit={CONTACT_MESSAGE_WORD_LIMIT} className="text-[#F0E4C8]/65" />
           </div>
           <textarea
             name="message"
@@ -286,14 +298,14 @@ function HomeFeedbackSection() {
             value={formData.message}
             onChange={handleChange}
             placeholder="Tell us what's on your mind..."
-            className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-pink-500 focus:bg-white"
+            className={`${darkFieldClass} resize-none`}
           />
         </div>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex w-full items-center justify-center gap-3 rounded-2xl bg-[#0F1111] px-6 py-4 text-sm font-black text-white transition hover:bg-slate-800 disabled:opacity-70"
+          className="flex w-full items-center justify-center gap-3 rounded-2xl bg-[#C9A84C] px-6 py-4 text-sm font-black text-[#140D05] transition hover:bg-[#F2DCA4] disabled:opacity-70"
         >
           {isSubmitting ? "Sending Message..." : "Submit Feedback"}
           {!isSubmitting && <FaArrowRight />}
@@ -339,43 +351,44 @@ function NewsletterSection() {
   }
 
   return (
-    <section className="bg-slate-900 py-10 md:py-16 text-white">
+    <section className="border-y border-[#C9A84C]/20 bg-[#0D0800] py-10 text-[#F7EED8] md:py-16" style={editorialTexture}>
       <div className="mx-auto max-w-7xl px-4">
         <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
           <div>
-            <div className="inline-flex rounded-full bg-pink-600/20 px-4 py-2 text-xs font-black uppercase tracking-widest text-pink-400 ring-1 ring-pink-500/30">
+            <GoldDivider label="Market brief" />
+            <div className="mt-6 inline-flex rounded-full bg-[#C9A84C]/10 px-4 py-2 text-xs font-black uppercase tracking-widest text-[#F2DCA4] ring-1 ring-[#C9A84C]/30">
               <BrandText /> Insider
             </div>
-            <h2 className="mt-4 text-4xl font-black tracking-tight md:text-5xl">
+            <h2 className="mt-4 font-serif text-4xl font-semibold tracking-tight md:text-5xl">
               Stay Ahead of the <br />
-              <span className="text-pink-500">Market Pulse</span>
+              <span className="text-[#F2DCA4]">Market Pulse</span>
             </h2>
-            <p className="mt-4 max-w-md text-lg font-medium leading-relaxed text-slate-400">
+            <p className="mt-4 max-w-md text-lg font-medium leading-relaxed text-[#F0E4C8]/75">
               Join our newsletter to receive weekly insights, new merchant alerts, and exclusive community updates directly in your inbox.
             </p>
           </div>
 
-          <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 md:p-8 backdrop-blur-sm">
+          <div className="rounded-[32px] border border-[#C9A84C]/25 bg-[#140D05]/90 p-6 shadow-[0_28px_80px_rgba(0,0,0,0.35)] md:p-8 backdrop-blur-sm">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Full Name</label>
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#F2DCA4]">Full Name</label>
                   <input
                     type="text"
                     value={formData.fullName}
                     onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
                     placeholder="John Doe"
-                    className="w-full rounded-2xl border border-white/10 bg-white/10 px-6 py-4 text-base font-bold text-white outline-none transition focus:bg-white/20 focus:ring-2 focus:ring-pink-500"
+                    className="w-full rounded-2xl border border-[#C9A84C]/25 bg-[#0D0800]/80 px-6 py-4 text-base font-bold text-[#F7EED8] outline-none transition placeholder:text-[#F0E4C8]/45 focus:border-[#F2DCA4] focus:bg-[#171007] focus:ring-2 focus:ring-[#C9A84C]/25"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Email Address</label>
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#F2DCA4]">Email Address</label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                     placeholder="john@example.com"
-                    className="w-full rounded-2xl border border-white/10 bg-white/10 px-6 py-4 text-base font-bold text-white outline-none transition focus:bg-white/20 focus:ring-2 focus:ring-pink-500"
+                    className="w-full rounded-2xl border border-[#C9A84C]/25 bg-[#0D0800]/80 px-6 py-4 text-base font-bold text-[#F7EED8] outline-none transition placeholder:text-[#F0E4C8]/45 focus:border-[#F2DCA4] focus:bg-[#171007] focus:ring-2 focus:ring-[#C9A84C]/25"
                   />
                 </div>
               </div>
@@ -383,13 +396,13 @@ function NewsletterSection() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex w-full items-center justify-center gap-3 rounded-2xl bg-pink-600 px-8 py-4 text-base font-black text-white transition hover:bg-pink-700 disabled:opacity-70"
+                className="flex w-full items-center justify-center gap-3 rounded-2xl bg-[#C9A84C] px-8 py-4 text-base font-black text-[#140D05] transition hover:bg-[#F2DCA4] disabled:opacity-70"
               >
                 {isSubmitting ? "Joining..." : "Join Newsletter"}
                 {!isSubmitting && <FaArrowRight />}
               </button>
               
-              <p className="text-center text-[10px] font-medium text-slate-500">
+              <p className="text-center text-[10px] font-medium text-[#F0E4C8]/55">
                 We respect your privacy. Unsubscribe at any time.
               </p>
             </form>
@@ -1073,12 +1086,13 @@ function Home() {
             structuredData={homeStructuredData}
           />
           <PwaAddToHomePrompt />
-          <section className="overflow-x-hidden bg-pink-50 px-4 py-3 md:py-6">
-            <div className="mx-auto mb-4 w-full max-w-7xl lg:hidden">
-              <p className="mb-1.5 ml-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">view shops/store in your city/area</p>
-              <div className="overflow-hidden rounded-[22px] border border-pink-100 bg-white p-2 shadow-sm">
-                <div className="flex h-[48px] w-full overflow-hidden rounded-[16px] border-[3px] border-transparent bg-pink-50 transition focus-within:border-pink-600">
-                  <div className="flex items-center border-r border-pink-100 bg-white/70 pl-4 pr-2 text-sm font-black tracking-[0.12em] text-pink-600">
+          <section className="relative overflow-x-hidden bg-[#0D0800] px-4 py-4 text-[#F7EED8] md:py-8" style={editorialTexture}>
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(242,220,164,0.13),transparent_34%)]" />
+            <div className="relative mx-auto mb-4 w-full max-w-7xl lg:hidden">
+              <p className="mb-1.5 ml-1 text-[10px] font-bold uppercase tracking-wider text-[#F2DCA4]">view shops/store in your city/area</p>
+              <div className="overflow-hidden rounded-[22px] border border-[#C9A84C]/25 bg-[#140D05]/90 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+                <div className="flex h-[48px] w-full overflow-hidden rounded-[16px] border-[3px] border-transparent bg-[#0D0800]/90 transition focus-within:border-[#C9A84C]">
+                  <div className="flex items-center border-r border-[#C9A84C]/25 bg-[#F7EED8]/10 pl-4 pr-2 text-sm font-black tracking-[0.12em] text-[#F2DCA4]">
                     CT-
                   </div>
                   <input
@@ -1091,13 +1105,13 @@ function Home() {
                     inputMode="numeric"
                     pattern="[0-9]*"
                     placeholder="Enter Store ID"
-                    className="min-w-0 flex-1 border-none bg-transparent px-3 text-base font-medium text-[#0F1111] outline-none placeholder:text-slate-500"
+                    className="min-w-0 flex-1 border-none bg-transparent px-3 text-base font-medium text-[#F7EED8] outline-none placeholder:text-[#F0E4C8]/45"
                   />
                   <button
                     type="button"
                     onClick={handleRepoSearch}
                     disabled={repoSearchLoading || !repoSearchValue.trim()}
-                    className="flex w-[56px] items-center justify-center bg-pink-600 text-white transition hover:bg-pink-700"
+                    className="flex w-[56px] items-center justify-center bg-[#C9A84C] text-[#140D05] transition hover:bg-[#F2DCA4] disabled:opacity-60"
                     aria-label="Search repository"
                   >
                     {repoSearchLoading ? "..." : <FaMagnifyingGlass />}
@@ -1106,13 +1120,13 @@ function Home() {
               </div>
             </div>
 
-            <div className="mx-auto flex flex-col gap-4 lg:grid lg:max-w-7xl lg:grid-cols-2 lg:items-start lg:gap-6">
+            <div className="relative mx-auto flex flex-col gap-4 lg:grid lg:max-w-7xl lg:grid-cols-2 lg:items-start lg:gap-6">
               <div className="w-full lg:col-start-1 lg:flex lg:flex-col lg:gap-4">
-                <div className="overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg">
-                  {/* bg-pink-100 is the branded fallback colour shown while the
+                <div className="overflow-hidden rounded-[30px] border border-[#C9A84C]/25 bg-[#140D05] shadow-[0_30px_90px_rgba(0,0,0,0.38)]">
+                  {/* The deep fallback colour keeps the hero stable while the
                       bundled banner.jpg is still downloading on slow networks.
                       StableImage's inner shimmer layer covers it once mounted. */}
-                  <div className="relative h-[220px] w-full overflow-hidden bg-pink-100 sm:h-[300px] md:h-[400px]">
+                  <div className="relative h-[260px] w-full overflow-hidden bg-[#140D05] sm:h-[340px] md:h-[440px]">
                     <StableImage
                       src={banner}
                       alt="Commerce Banner"
@@ -1120,31 +1134,41 @@ function Home() {
                       className="h-full w-full object-cover object-center"
                       loading="eager"
                       fetchPriority="high"
-                      placeholderClassName="bg-gradient-to-br from-pink-100 via-slate-100 to-pink-50"
+                      placeholderClassName="bg-gradient-to-br from-[#0D0800] via-[#2B1A08] to-[#140D05]"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0D0800] via-[#0D0800]/45 to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
+                      <GoldDivider label="Repository of commerce" />
+                      <h1 className="mt-5 font-serif text-2xl font-semibold leading-tight text-[#F7EED8] sm:text-4xl md:text-5xl">
+                        Discover real shops, services, and local offers before you step out.
+                      </h1>
+                      <p className="mt-3 max-w-xl text-sm font-semibold leading-6 text-[#F0E4C8]/80 sm:text-base">
+                        A city-by-city marketplace built around verified physical presence, local trust, and faster discovery.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="hidden rounded-[28px] bg-pink-200 p-1 shadow-sm lg:block">
+                <div className="hidden rounded-[32px] bg-[#C9A84C]/20 p-1 shadow-sm lg:block">
                   <HomeFeedbackSection />
                 </div>
               </div>
 
               {/* Mobile Only Ticker - positioned just below the hero image */}
               <div className="lg:hidden w-full px-1">
-                <div className="bg-white py-3 text-slate-900 border border-pink-100 rounded-[22px] shadow-sm px-2 overflow-hidden">
-                  <HeaderMarquee />
+                <div className="rounded-[22px] border border-[#C9A84C]/20 bg-[#140D05]/85 px-2 py-3 text-[#F7EED8] shadow-sm overflow-hidden">
+                  <HeaderMarquee brandClassName="text-[#F7EED8]" textClassName="text-[#F2DCA4]" />
                 </div>
               </div>
 
               <div className="w-full lg:col-start-2">
-                <div className="min-w-0 rounded-[28px] bg-pink-200 p-1 shadow-sm h-full">
-                  <div className="flex h-full flex-col rounded-[24px] border border-pink-100 bg-white p-5 md:p-8">
-                  <div className="hidden rounded-[22px] bg-pink-200 p-1 lg:block">
-                    <div className="rounded-[18px] border border-pink-100 bg-slate-50 p-4">
-                      <p className="mb-2 ml-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">view shops/store in your city/area</p>
-                      <div className="flex h-[42px] overflow-hidden rounded-md border-[3px] border-transparent bg-white transition focus-within:border-pink-600">
-                        <div className="flex items-center border-r border-pink-100 bg-white pl-4 pr-2 text-sm font-black tracking-[0.12em] text-pink-600">
+                <div className="min-w-0 rounded-[32px] bg-[#C9A84C]/20 p-1 shadow-sm h-full">
+                  <div className="flex h-full flex-col rounded-[28px] border border-[#C9A84C]/25 bg-[#140D05]/92 p-5 shadow-[0_30px_90px_rgba(0,0,0,0.34)] md:p-8">
+                  <div className="hidden rounded-[24px] bg-[#C9A84C]/15 p-1 lg:block">
+                    <div className="rounded-[20px] border border-[#C9A84C]/20 bg-[#0D0800]/80 p-4">
+                      <p className="mb-2 ml-0.5 text-[10px] font-bold uppercase tracking-wider text-[#F2DCA4]">view shops/store in your city/area</p>
+                      <div className="flex h-[44px] overflow-hidden rounded-2xl border-[3px] border-transparent bg-[#140D05] transition focus-within:border-[#C9A84C]">
+                        <div className="flex items-center border-r border-[#C9A84C]/25 bg-[#F7EED8]/10 pl-4 pr-2 text-sm font-black tracking-[0.12em] text-[#F2DCA4]">
                           CT-
                         </div>
                         <input
@@ -1157,13 +1181,13 @@ function Home() {
                           inputMode="numeric"
                           pattern="[0-9]*"
                           placeholder="Enter Store ID"
-                          className="min-w-0 flex-1 border-none px-3 text-base text-[#0F1111] outline-none placeholder:text-slate-500"
+                          className="min-w-0 flex-1 border-none bg-transparent px-3 text-base text-[#F7EED8] outline-none placeholder:text-[#F0E4C8]/45"
                         />
                         <button
                           type="button"
                           onClick={handleRepoSearch}
                           disabled={repoSearchLoading || !repoSearchValue.trim()}
-                          className="flex w-[52px] items-center justify-center bg-pink-600 text-white transition hover:bg-pink-700"
+                          className="flex w-[52px] items-center justify-center bg-[#C9A84C] text-[#140D05] transition hover:bg-[#F2DCA4] disabled:opacity-60"
                           aria-label="Search repository"
                         >
                           {repoSearchLoading ? "..." : <FaMagnifyingGlass />}
@@ -1172,13 +1196,13 @@ function Home() {
                     </div>
                   </div>
 
-                  <div className="mt-2 min-h-[28px] text-lg font-extrabold leading-tight text-slate-900 md:min-h-[32px] md:text-2xl">
+                  <div className="mt-5 min-h-[28px] font-serif text-2xl font-semibold leading-tight text-[#F2DCA4] md:min-h-[38px] md:text-4xl">
                     {currentPhraseText}
-                    <span className="ml-1 inline-block animate-pulse text-pink-600">|</span>
+                    <span className="ml-1 inline-block animate-pulse text-[#C9A84C]">|</span>
                   </div>
 
-                  <p className="mt-1 max-w-xl text-base font-medium leading-7 text-slate-600">
-                    Discover business and offerings in your neighbourhood before you step out—bridging the gap between digital convenience and physical reality.
+                  <p className="mt-3 max-w-xl text-base font-medium leading-7 text-[#F0E4C8]/75">
+                    Discover businesses and services in your neighbourhood before you step out, bridging digital convenience with physical reality.
                   </p>
 
                   {/* Legacy install card retired for the shared PWA install flow.
@@ -1227,10 +1251,10 @@ function Home() {
                       </div>
                     </div>
                   */}
-                  <div className="mt-4 rounded-[22px] bg-pink-200 p-1">
-                    <div className="rounded-[18px] border border-pink-200 bg-pink-50 p-6">
-                      <h2 className="flex items-center gap-2 text-xl font-extrabold text-slate-900">
-                        <FaLock className="text-pink-600" />
+                  <div className="mt-6 rounded-[26px] bg-[#C9A84C]/25 p-1">
+                    <div className="rounded-[22px] border border-[#C9A84C]/35 bg-[#F7EED8] p-6 text-[#1B1208] shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
+                      <h2 className="flex items-center gap-2 font-serif text-2xl font-semibold text-[#1B1208]">
+                        <FaLock className="text-[#9B7A25]" />
                         <span>Users Login</span>
                       </h2>
 
@@ -1273,7 +1297,7 @@ function Home() {
                             <button
                               type="button"
                               onClick={() => setShowPassword((prev) => !prev)}
-                              className="rounded-full p-2 text-slate-400 transition hover:bg-white hover:text-pink-600"
+                              className="rounded-full p-2 text-slate-400 transition hover:bg-white hover:text-[#9B7A25]"
                               aria-label={showPassword ? "Hide password" : "Show password"}
                             >
                               {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -1285,36 +1309,36 @@ function Home() {
                           <button
                             type="button"
                             onClick={openResetFlow}
-                            className="text-sm font-semibold text-slate-600 transition hover:text-pink-600"
+                            className="text-sm font-semibold text-[#6A5422] transition hover:text-[#1B1208]"
                           >
                             Forgot password?
                           </button>
                         </div>
 
-                        <AuthButton type="submit" loading={loginLoading}>
+                        <AuthButton type="submit" loading={loginLoading} className="!bg-[#1B1208] !text-[#F7EED8] hover:!bg-[#2D1D0D]">
                           <span>Secure Sign In</span>
                           <FaArrowRight />
                         </AuthButton>
                       </form>
 
-                      <div className="my-3 flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        <div className="h-px flex-1 bg-pink-200" />
+                      <div className="my-3 flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-[#8A6A2A]">
+                        <div className="h-px flex-1 bg-[#C9A84C]/35" />
                         <span>New to <BrandText className="normal-case" />?</span>
-                        <div className="h-px flex-1 bg-pink-200" />
+                        <div className="h-px flex-1 bg-[#C9A84C]/35" />
                       </div>
 
                       <button
                         type="button"
                         onClick={openCreateAccountWithTransition}
-                        className="w-full rounded-xl border-2 border-pink-200 bg-white px-4 py-3 text-base font-bold text-slate-900 transition hover:bg-pink-100"
+                        className="w-full rounded-xl border-2 border-[#C9A84C]/40 bg-white/70 px-4 py-3 text-base font-bold text-[#1B1208] transition hover:bg-[#F2DCA4]/55"
                       >
                         Create Account
                       </button>
 
-                      <div className="my-3 flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        <div className="h-px flex-1 bg-pink-200" />
+                      <div className="my-3 flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-[#8A6A2A]">
+                        <div className="h-px flex-1 bg-[#C9A84C]/35" />
                         <span>Or continue with</span>
-                        <div className="h-px flex-1 bg-pink-200" />
+                        <div className="h-px flex-1 bg-[#C9A84C]/35" />
                       </div>
 
                       <div className="space-y-2">
@@ -1332,13 +1356,13 @@ function Home() {
                           ) : null}
                         </div>
 
-                        <p className="px-2 text-center text-[0.75rem] leading-relaxed text-slate-500">
+                        <p className="px-2 text-center text-[0.75rem] leading-relaxed text-[#6A5422]">
                           By continuing with Google, you agree to <BrandText />'s{' '}
-                          <Link to="/terms" className="font-semibold text-slate-600 underline transition hover:text-pink-600">
+                          <Link to="/terms" className="font-semibold text-[#1B1208] underline transition hover:text-[#9B7A25]">
                             Terms of Use
                           </Link>{' '}
                           and{' '}
-                          <Link to="/privacy" className="font-semibold text-slate-600 underline transition hover:text-pink-600">
+                          <Link to="/privacy" className="font-semibold text-[#1B1208] underline transition hover:text-[#9B7A25]">
                             Privacy Policy
                           </Link>
                           .
@@ -1353,14 +1377,14 @@ function Home() {
                                 href={item.href}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="group flex flex-col items-center justify-center gap-1.5 rounded-xl border border-pink-100 bg-white p-2 shadow-sm transition hover:-translate-y-0.5 hover:border-pink-200 hover:shadow-md"
+                                className="group flex flex-col items-center justify-center gap-1.5 rounded-xl border border-[#C9A84C]/30 bg-white/80 p-2 shadow-sm transition hover:-translate-y-0.5 hover:border-[#C9A84C]/60 hover:shadow-md"
                               >
                                 <span
                                   className={`flex h-8 w-8 items-center justify-center rounded-lg text-base text-white sm:h-10 sm:w-10 sm:rounded-xl ${item.accent}`}
                                 >
                                   <Icon />
                                 </span>
-                                <span className="block text-[8px] font-extrabold text-slate-900 sm:text-[10px]">
+                                <span className="block text-[8px] font-extrabold text-[#1B1208] sm:text-[10px]">
                                   {item.label}
                                 </span>
                               </a>
@@ -1373,7 +1397,7 @@ function Home() {
                         <div className="flex justify-center w-full">
                           <ActivityCalendar />
                         </div>
-                        <div className="flex justify-center w-full border-t border-slate-50 pt-4 sm:border-t-0 sm:pt-0">
+                        <div className="flex justify-center w-full border-t border-[#C9A84C]/20 pt-4 sm:border-t-0 sm:pt-0">
                           <OfficeSupportCard />
                         </div>
                       </div>
@@ -1384,7 +1408,7 @@ function Home() {
             </div>
 
               <div className="w-full lg:hidden">
-                <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm h-full">
+                <div className="rounded-[32px] bg-[#C9A84C]/20 p-1 shadow-sm h-full">
                   <HomeFeedbackSection />
                 </div>
               </div>
@@ -1392,9 +1416,9 @@ function Home() {
           </section>
 
           {/* Desktop Only Ticker */}
-          <div className="hidden lg:block bg-white py-3 text-slate-900 border-y border-slate-100">
+          <div className="hidden border-y border-[#C9A84C]/20 bg-[#0D0800] py-3 text-[#F7EED8] lg:block">
             <div className="mx-auto max-w-7xl px-4">
-              <HeaderMarquee />
+              <HeaderMarquee brandClassName="text-[#F7EED8]" textClassName="text-[#F2DCA4]" />
             </div>
           </div>
 
