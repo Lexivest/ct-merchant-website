@@ -1051,7 +1051,7 @@ function Home() {
           <section className="relative overflow-x-hidden bg-[#0D0800] px-4 py-4 text-[#F7EED8] md:py-8" style={editorialTexture}>
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(242,220,164,0.13),transparent_34%)]" />
             <div className="relative mx-auto mb-4 w-full max-w-7xl lg:hidden">
-              <p className="mb-1.5 ml-1 text-[10px] font-bold uppercase tracking-wider text-[#F2DCA4]">Verified Shops and Services</p>
+              <p className="mb-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-[#F2DCA4]">Verified Shops and Services</p>
               <div className="overflow-hidden rounded-[22px] border border-[#C9A84C]/25 bg-[#140D05]/90 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
                 <div className="flex h-[48px] w-full overflow-hidden rounded-[16px] border-[3px] border-transparent bg-[#0D0800]/90 transition focus-within:border-[#C9A84C]">
                   <div className="flex items-center border-r border-[#C9A84C]/25 bg-[#F7EED8]/10 pl-4 pr-2 text-sm font-black tracking-[0.12em] text-[#F2DCA4]">
@@ -1111,7 +1111,7 @@ function Home() {
                   <div className="flex h-full flex-col rounded-[28px] border border-[#C9A84C]/25 bg-[#140D05]/92 p-5 shadow-[0_30px_90px_rgba(0,0,0,0.34)] md:p-8">
                   <div className="hidden rounded-[24px] bg-[#C9A84C]/15 p-1 lg:block">
                     <div className="rounded-[20px] border border-[#C9A84C]/20 bg-[#0D0800]/80 p-4">
-                      <p className="mb-2 ml-0.5 text-[10px] font-bold uppercase tracking-wider text-[#F2DCA4]">Verified Shops and Services</p>
+                      <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#F2DCA4]">Verified Shops and Services</p>
                       <div className="flex h-[44px] overflow-hidden rounded-2xl border-[3px] border-transparent bg-[#140D05] transition focus-within:border-[#C9A84C]">
                         <div className="flex items-center border-r border-[#C9A84C]/25 bg-[#F7EED8]/10 pl-4 pr-2 text-sm font-black tracking-[0.12em] text-[#F2DCA4]">
                           CT-

@@ -8,15 +8,26 @@ import ctmLogo from "../../assets/images/logo.jpg"
 
 function MarketPulseTicker() {
   const cities = ["Jos", "Kaduna", "Lokoja", "Minna", "Asaba", "Enugu", "Makurdi"]
-  const tickerText = cities.join("  |  ").toUpperCase()
+  const message = "city commerce - discover business and offerings in your neighbourhood before you step out - bridging the gap between digital convenience and physical reality"
+  const tickerText = `${cities.join("  |  ").toUpperCase()}  |  ${message.toUpperCase()}`
 
   return (
     <div className="border-b border-[#C9A84C]/25 bg-[#0D0800] py-2.5 text-[#F7EED8]">
       <div className="mx-auto flex max-w-7xl items-center px-4">
+        <div className="mr-4 flex shrink-0 items-center gap-2 border-r border-[#C9A84C]/25 pr-4">
+          <div className="flex h-[12px] w-[18px] flex-col overflow-hidden rounded-[2px] border border-white/20">
+            <div className="flex-1 bg-green-600" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-green-600" />
+          </div>
+          <span className="text-[9px] font-black uppercase tracking-[0.22em] text-[#F2DCA4]">
+            NG
+          </span>
+        </div>
         <div className="min-w-0 flex-1">
           <ScrollingTicker
             text={tickerText}
-            textClassName="font-serif text-[11px] font-semibold uppercase tracking-[0.36em] text-[#F2DCA4]"
+            textClassName="font-serif text-[11px] font-semibold uppercase tracking-[0.28em] text-[#F2DCA4]"
             speedFactor={0.15}
           />
         </div>
