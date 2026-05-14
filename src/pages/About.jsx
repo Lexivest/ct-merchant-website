@@ -1,84 +1,7 @@
-import { useNavigate, useSearchParams } from "react-router-dom"
+﻿import { useNavigate, useSearchParams } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
 import BrandText from "../components/common/BrandText"
 import PageSeo from "../components/common/PageSeo"
-
-const grainTexture = {
-  backgroundImage:
-    'url("data:image/svg+xml,%3Csvg viewBox=%270 0 512 512%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cfilter id=%27noise%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%270.75%27 numOctaves=%274%27 stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23noise)%27 opacity=%270.08%27/%3E%3C/svg%3E")',
-}
-
-const identityCards = [
-  {
-    eyebrow: "Vision",
-    title: "A trusted map of local commerce",
-    text: "To serve as a definitive digital architecture for urban commercial discovery, making physical storefronts and service providers accessible to modern consumers.",
-  },
-  {
-    eyebrow: "Mission",
-    title: "Structure, verify, and expose real businesses",
-    text: "To deploy a location-aware repository that gives merchants professional visibility while preserving direct merchant-customer relationships.",
-  },
-]
-
-const departments = [
-  { tier: "Governing Body", title: "Board of Directors" },
-  { tier: "Director General", title: "Chief Executive Officer" },
-  { tier: "Operations Management", title: "Chief Operating Officer" },
-  { tier: "Technology", title: "ICT & Engineering", subRole: "Developers & Support" },
-  { tier: "Finance", title: "Finance & Accounts" },
-  { tier: "Field Operations", title: "Regional Operations", subRole: "City Administrators" },
-  { tier: "Growth", title: "Marketing Directorate", subRole: "Field Marketers" },
-]
-
-function GoldDivider({ label }) {
-  return (
-    <div className="flex items-center gap-4 py-7 text-[#C9A84C]">
-      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent" />
-      <span className="shrink-0 text-[0.65rem] font-black uppercase tracking-[0.32em]">
-        {label}
-      </span>
-      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent" />
-    </div>
-  )
-}
-
-function AboutIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01" />
-    </svg>
-  )
-}
-
-function OrgCard({ tier, title, subRole, index }) {
-  return (
-    <article
-      className="opacity-0"
-      style={{
-        animation: "ctmAboutFadeUp 760ms ease forwards",
-        animationDelay: `${260 + index * 70}ms`,
-      }}
-    >
-      <div className="h-full border border-[#C9A84C]/25 bg-[#F5EDD8]/[0.045] p-5 text-center shadow-[0_20px_60px_rgba(0,0,0,0.14)] transition hover:-translate-y-1 hover:border-[#E8C97A]/70">
-        <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center border border-[#C9A84C]/40 bg-[#0D0800]/70 text-[#E8C97A]">
-          <AboutIcon />
-        </div>
-        <div className="text-[0.62rem] font-black uppercase tracking-[0.28em] text-[#C9A84C]">
-          {tier}
-        </div>
-        <h3 className="mt-3 text-xl font-black leading-7 text-[#F5EDD8]">
-          {title}
-        </h3>
-        {subRole ? (
-          <p className="mt-3 border-t border-[#C9A84C]/20 pt-3 text-sm font-bold text-[#F0E4C8]">
-            {subRole}
-          </p>
-        ) : null}
-      </div>
-    </article>
-  )
-}
 
 function About() {
   const navigate = useNavigate()
@@ -100,136 +23,477 @@ function About() {
         description="Learn how CTMerchant organizes verified physical shops, products, and services into a trusted local discovery network."
         canonicalPath="/about"
       />
+      <section className="bg-pink-50 px-4 py-5 md:py-6">
+        <div className="mx-auto max-w-7xl">
+          <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm">
+            <div className="rounded-[24px] border border-pink-100 bg-white">
+              <div className="border-b border-pink-100 bg-slate-950 px-5 py-4 text-white md:px-6">
+                <div className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white transition hover:bg-pink-600"
+                    aria-label="Go back"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className="h-5 w-5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15 18l-6-6 6-6"
+                      />
+                    </svg>
+                  </button>
 
-      <style>
-        {`
-          @keyframes ctmAboutFadeUp {
-            from { opacity: 0; transform: translateY(24px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-        `}
-      </style>
-
-      <section className="relative isolate min-h-screen overflow-hidden bg-[#0D0800] px-4 py-8 text-[#F5EDD8] [font-family:Georgia,serif] sm:py-12">
-        <div className="pointer-events-none absolute inset-0 opacity-50" style={grainTexture} />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(201,168,76,0.2),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(29,78,216,0.18),transparent_34%)]" />
-
-        <div className="relative z-10 mx-auto max-w-6xl">
-          <header
-            className="mx-auto max-w-3xl border-b border-[#C9A84C]/70 px-1 pb-10 pt-6 text-center opacity-0 sm:pb-12 sm:pt-10"
-            style={{ animation: "ctmAboutFadeUp 900ms ease forwards" }}
-          >
-            <button
-              type="button"
-              onClick={handleBack}
-              className="mx-auto mb-8 inline-flex items-center justify-center rounded-full border border-[#C9A84C]/30 bg-[#C9A84C]/10 px-4 py-2 text-[0.7rem] font-black uppercase tracking-[0.22em] text-[#E8C97A] transition hover:border-[#E8C97A] hover:bg-[#C9A84C]/20"
-            >
-              Back
-            </button>
-
-            <p className="mb-5 text-[0.72rem] font-black uppercase tracking-[0.38em] text-[#C9A84C]">
-              Corporate Profile
-            </p>
-            <h1 className="text-[clamp(2.4rem,7vw,4.8rem)] font-black leading-[0.98] tracking-tight text-[#F5EDD8]">
-              About <span className="font-normal italic text-[#E8C97A]"><BrandText /></span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-[1.05rem] italic leading-8 text-[#F2DCA4] sm:text-[1.18rem]">
-              Bridging localized commerce and digital accessibility across Nigeria's urban centers.
-            </p>
-          </header>
-
-          <main className="mx-auto max-w-5xl py-6 sm:py-9">
-            <section
-              className="mx-auto max-w-3xl opacity-0"
-              style={{ animation: "ctmAboutFadeUp 900ms ease forwards", animationDelay: "120ms" }}
-            >
-              <div className="border-l-4 border-[#C9A84C] bg-[#C9A84C]/[0.075] px-6 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.18)] sm:px-8">
-                <p className="m-0 text-[1.12rem] leading-9 text-[#F0E4C8]">
-                  <BrandText /> is a specialized information technology company building critical data infrastructure for local trade ecosystems. We translate real business locations, listings, and service providers into a structured discovery experience.
-                </p>
-              </div>
-            </section>
-
-            <GoldDivider label="Identity" />
-
-            <section className="grid gap-5 md:grid-cols-2">
-              {identityCards.map((card, index) => (
-                <article
-                  key={card.eyebrow}
-                  className="opacity-0"
-                  style={{
-                    animation: "ctmAboutFadeUp 800ms ease forwards",
-                    animationDelay: `${220 + index * 100}ms`,
-                  }}
-                >
-                  <div className="h-full border border-[#C9A84C]/25 bg-gradient-to-br from-[#C9A84C]/[0.09] to-white/[0.025] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.14)]">
-                    <p className="text-[0.68rem] font-black uppercase tracking-[0.3em] text-[#C9A84C]">
-                      {card.eyebrow}
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.25em] text-pink-300">
+                      Corporate Profile
                     </p>
-                    <h2 className="mt-4 text-2xl font-black leading-tight text-[#E8C97A]">
-                      {card.title}
-                    </h2>
-                    <p className="mt-4 text-[1rem] leading-8 text-[#F0E4C8]">
-                      {card.text}
-                    </p>
+                    <h1 className="text-xl font-extrabold md:text-2xl">
+                      About <BrandText />
+                    </h1>
                   </div>
-                </article>
-              ))}
-            </section>
-
-            <GoldDivider label="Institutional Profile" />
-
-            <section
-              className="opacity-0"
-              style={{ animation: "ctmAboutFadeUp 900ms ease forwards", animationDelay: "420ms" }}
-            >
-              <div className="border border-[#C9A84C]/25 bg-[#F5EDD8]/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.18)] sm:p-8">
-                <div className="mb-6 flex h-12 w-12 items-center justify-center border border-[#C9A84C]/40 bg-[#0D0800]/70 text-[#E8C97A]">
-                  <AboutIcon />
-                </div>
-                <div className="space-y-5 text-[1.03rem] leading-9 text-[#F0E4C8]">
-                  <p>
-                    Our operational framework prioritizes <strong className="text-[#F5EDD8]">data accuracy</strong>, <strong className="text-[#F5EDD8]">merchant verification</strong>, and <strong className="text-[#F5EDD8]">discovery optimization</strong>. The goal is to reduce friction in local commerce while keeping the traditional merchant-customer relationship intact.
-                  </p>
-                  <p>
-                    <BrandText /> operates strictly as a neutral information repository. We remain independent of financial settlements and logistics so the platform can focus on search quality, identity integrity, and trustworthy local visibility.
-                  </p>
                 </div>
               </div>
-            </section>
 
-            <section
-              className="mt-6 border border-[#C9A84C]/30 bg-[#C9A84C]/[0.075] p-6 opacity-0 sm:p-8"
-              style={{ animation: "ctmAboutFadeUp 900ms ease forwards", animationDelay: "520ms" }}
-            >
-              <p className="text-[0.68rem] font-black uppercase tracking-[0.3em] text-[#C9A84C]">
-                Legal Registration
-              </p>
-              <p className="mt-4 text-[1rem] leading-8 text-[#F0E4C8]">
-                CT-MERCHANT LTD is registered with the Corporate Affairs Commission (CAC) of Nigeria under the Companies and Allied Matters Act 2020 (CAMA), RC Number 8879163.
-              </p>
-              <p className="mt-4 text-[1rem] leading-8 text-[#F0E4C8]">
-                The company is registered with Dun & Bradstreet (D&B) and assigned a Data Universal Numbering System (DUNS) number.
-              </p>
-            </section>
+              <div className="p-5 md:p-7">
+                <div className="rounded-2xl border border-pink-200 bg-pink-50 p-5 md:p-6">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-pink-600 text-white shadow-sm">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="h-5 w-5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 16v5m0-5a4 4 0 10-4-4m4 4a4 4 0 104-4m-4 4V3m0 0H8m4 0h4"
+                        />
+                      </svg>
+                    </div>
 
-            <GoldDivider label="Organizational Structure" />
+                    <div>
+                      <h2 className="text-base font-extrabold text-slate-900 md:text-lg">
+                        Corporate Identity
+                      </h2>
+                      <p className="mt-2 text-sm leading-7 text-slate-600 md:text-[15px]">
+                        Bridging the gap between localized commerce and digital
+                        accessibility across Nigeria’s urban centers.
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-            <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {departments.map((department, index) => (
-                <OrgCard
-                  key={`${department.tier}-${department.title}`}
-                  index={index}
-                  tier={department.tier}
-                  title={department.title}
-                  subRole={department.subRole}
-                />
-              ))}
-            </section>
-          </main>
+                <div className="mt-6 grid gap-6 md:grid-cols-2">
+                  <div className="rounded-3xl bg-pink-200 p-1 shadow-sm">
+                    <div className="h-full rounded-[22px] border border-pink-100 bg-white p-6">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-pink-50 text-pink-600">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            className="h-5 w-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M2.062 12.348a1 1 0 010-.696 10 10 0 0118.876 0 1 1 0 010 .696 10 10 0 01-18.876 0z"
+                            />
+                            <circle cx="12" cy="12" r="3" />
+                          </svg>
+                        </div>
+
+                        <h2 className="text-lg font-extrabold text-pink-600">
+                          Vision
+                        </h2>
+                      </div>
+
+                      <p className="mt-4 text-sm leading-7 text-slate-600 md:text-[15px]">
+                        To serve as the definitive digital architecture for
+                        urban commercial discovery, ensuring every physical
+                        storefront is accessible to the modern digital consumer.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-3xl bg-pink-200 p-1 shadow-sm">
+                    <div className="h-full rounded-[22px] border border-pink-100 bg-white p-6">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-50 text-sky-700">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            className="h-5 w-5"
+                          >
+                            <circle cx="12" cy="12" r="9" />
+                            <circle cx="12" cy="12" r="3" />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 2v3m0 14v3m10-10h-3M5 12H2"
+                            />
+                          </svg>
+                        </div>
+
+                        <h2 className="text-lg font-extrabold text-slate-900">
+                          Mission
+                        </h2>
+                      </div>
+
+                      <p className="mt-4 text-sm leading-7 text-slate-600 md:text-[15px]">
+                        Deploying a comprehensive, location-aware repository
+                        that empowers physical merchants with institutional-grade
+                        visibility and structured data integrity.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 rounded-3xl bg-pink-200 p-1 shadow-sm">
+                  <div className="rounded-[22px] border border-pink-100 bg-white p-6 md:p-7">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-800">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="h-5 w-5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"
+                          />
+                        </svg>
+                      </div>
+
+                      <h2 className="text-xl font-extrabold text-slate-900">
+                        Institutional Profile
+                      </h2>
+                    </div>
+
+                    <div className="mt-5 space-y-4 text-sm leading-7 text-slate-600 md:text-[15px]">
+                      <p>
+                        <BrandText /> is a specialized information technology firm
+                        providing critical data infrastructure for Nigeria’s
+                        local trade ecosystems. We facilitate the digital
+                        translation of physical inventory and merchant
+                        locations, providing a structured ecosystem for consumer
+                        exploration.
+                      </p>
+
+                      <p>
+                        Our operational framework prioritizes{" "}
+                        <span className="font-extrabold text-slate-900">
+                          Data Accuracy
+                        </span>{" "}
+                        and{" "}
+                        <span className="font-extrabold text-slate-900">
+                          Discovery Optimization
+                        </span>
+                        , reducing friction in local commerce while preserving
+                        the traditional merchant–customer relationship.
+                      </p>
+
+                      <p>
+                        <BrandText /> operates strictly as a neutral information
+                        repository. We remain independent of financial
+                        settlements and logistics to maintain data integrity and
+                        search excellence.
+                      </p>
+                    </div>
+
+                    <div className="mt-8 mb-[-1.5rem] mx-[-1.5rem] md:mb-[-1.75rem] md:mx-[-1.75rem] rounded-b-[21px] bg-slate-900 p-6 text-slate-300 shadow-2xl border-t border-white/10 backdrop-blur-xl md:p-8">
+                      <p className="leading-7 md:text-[15px]">
+                        CT-MERCHANT LTD is a registered company with the Corporate Affairs Commission (CAC) of Nigeria under the Companies and Allied Matters Act 2020 (CAMA) with RC Number 8879163, incorporated <span className="text-white font-black italic">"TO CARRY ON THE BUSINESS OF E- COMMERCE AND ONLINE MARKETPLACE BY PROVIDING A DIGITAL PLATFORM FOR BUYERS AND SELLERS TO CONNECT, TRADE, AND TRANSACT; TO ENGAGE IN THE BUSINESS OF INFORMATION AND COMMUNICATION TECHNOLOGY SERVICES INCLUDING SOFTWARE AND MOBILE APPLICATION DEVELOPMENT, WEBSITE DESIGN AND DIGITAL MARKETING."</span>
+                      </p>
+                      <p className="mt-4 leading-7 md:text-[15px]">
+                        The company is registered with Dun & Bradstreet (D&B) and assigned a Data Universal Numbering System (DUNS) number.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 rounded-3xl bg-pink-200 p-1 shadow-sm">
+                  <div className="rounded-[22px] border border-pink-100 bg-slate-50 p-6 md:p-7">
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-pink-600 shadow-sm">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="h-5 w-5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3 3h18v5H3zm0 8h8v10H3zm10 0h8v4h-8zm0 7h8v3h-8z"
+                          />
+                        </svg>
+                      </div>
+
+                      <h2 className="text-center text-xl font-extrabold text-slate-900">
+                        Organizational Structure
+                      </h2>
+                    </div>
+
+                    <div className="mt-8 flex flex-col items-center">
+                      <OrgCard
+                        tier="top"
+                        title="Board of Directors"
+                        role="Governing Body"
+                        icon={
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            className="h-5 w-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8zm11 14v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"
+                            />
+                          </svg>
+                        }
+                      />
+
+                      <Connector />
+
+                      <OrgCard
+                        tier="exec"
+                        title="Chief Executive Officer"
+                        role="Director General"
+                        icon={
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            className="h-5 w-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 9a7 7 0 0114 0"
+                            />
+                          </svg>
+                        }
+                      />
+
+                      <Connector />
+
+                      <OrgCard
+                        tier="exec"
+                        title="Chief Operating Officer"
+                        role="Operations Management"
+                        icon={
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            className="h-5 w-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M14 9V5a2 2 0 00-2-2H5a2 2 0 00-2 2v7a2 2 0 002 2h4m5-5h5m0 0l-2-2m2 2l-2 2m-5 2v4a2 2 0 002 2h5a2 2 0 002-2v-5a2 2 0 00-2-2h-4"
+                            />
+                          </svg>
+                        }
+                      />
+
+                      <Connector />
+
+                      <div className="relative mt-2 w-full">
+                        <div className="hidden md:block">
+                          <div className="mx-auto h-6 w-px bg-slate-300" />
+                          <div className="mx-auto h-px w-3/4 bg-slate-300" />
+                        </div>
+
+                        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+                          <OrgCard
+                            tier="dept"
+                            title="ICT & Engineering"
+                            role="Head of Technology"
+                            subRole="Developers & Support"
+                            icon={
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                className="h-5 w-5"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M4 7h16M7 4v16m10-9h3m-3 4h3M4 17h5"
+                                />
+                              </svg>
+                            }
+                          />
+
+                          <OrgCard
+                            tier="dept"
+                            title="Finance & Accounts"
+                            role="Head of Department"
+                            icon={
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                className="h-5 w-5"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7H14.5a3.5 3.5 0 010 7H6"
+                                />
+                              </svg>
+                            }
+                          />
+
+                          <OrgCard
+                            tier="dept"
+                            title="Regional Operations"
+                            role="City Administrators"
+                            subRole="Zonal Reps"
+                            icon={
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                className="h-5 w-5"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M3 21h18M5 21V8l7-4 7 4v13M9 12h.01M15 12h.01M9 16h.01M15 16h.01"
+                                />
+                              </svg>
+                            }
+                          />
+
+                          <OrgCard
+                            tier="dept"
+                            title="Marketing Directorate"
+                            role="Head of Marketing"
+                            subRole="Field Marketers"
+                            icon={
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                className="h-5 w-5"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M3 11l18-5v12l-18-5v-2zm0 0v6"
+                                />
+                              </svg>
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </MainLayout>
+  )
+}
+
+function Connector() {
+  return <div className="h-6 w-px bg-slate-300" />
+}
+
+function OrgCard({ tier, title, role, icon, subRole }) {
+  const tierStyles = {
+    top: {
+      border: "border-t-slate-900",
+      iconWrap: "bg-slate-100 text-slate-900",
+    },
+    exec: {
+      border: "border-t-pink-600",
+      iconWrap: "bg-pink-50 text-pink-600",
+    },
+    dept: {
+      border: "border-t-sky-700",
+      iconWrap: "bg-sky-50 text-sky-700",
+    },
+  }
+
+  const currentTier = tierStyles[tier]
+
+  return (
+    <div className="relative mx-auto w-full max-w-[280px]">
+      {tier === "dept" ? (
+        <div className="mx-auto h-6 w-px bg-slate-300 md:hidden" />
+      ) : null}
+
+      <div
+        className={`rounded-2xl border border-slate-200 border-t-4 ${currentTier.border} bg-white p-5 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md`}
+      >
+        <div
+          className={`mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full ${currentTier.iconWrap}`}
+        >
+          {icon}
+        </div>
+
+        <div className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500">
+          {role}
+        </div>
+
+        <div className="mt-2 text-base font-extrabold leading-6 text-slate-900">
+          {title}
+        </div>
+
+        {subRole ? (
+          <div className="mt-4 border-t border-dashed border-slate-200 pt-3 text-sm font-bold text-slate-600">
+            ↳ {subRole}
+          </div>
+        ) : null}
+      </div>
+    </div>
   )
 }
 

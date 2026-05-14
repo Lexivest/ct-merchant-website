@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom"
+﻿import { Link, useNavigate } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
 import BrandText from "../components/common/BrandText"
 import PageSeo from "../components/common/PageSeo"
@@ -6,83 +6,125 @@ import PageSeo from "../components/common/PageSeo"
 const services = [
   {
     title: "Business & Product Indexing",
-    text: "Structured cataloging of physical shops, services, and available listings so every city has a cleaner local discovery layer.",
+    text: "Structured cataloging of physical shops and their available products, enabling accurate digital representation and city-wide searchability.",
     icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7l9-4 9 4-9 4-9-4zm0 0v10l9 4 9-4V7m-9 4v10" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="h-5 w-5"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M3 7l9-4 9 4-9 4-9-4zm0 0v10l9 4 9-4V7m-9 4v10"
+        />
       </svg>
     ),
   },
   {
     title: "Data Accuracy Framework",
-    text: "A practical review process that keeps business identity, city, area, contacts, and marketplace visibility consistent over time.",
+    text: "A standardized process for maintaining up-to-date listings through merchant-submitted updates and periodic data consistency checks.",
     icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="h-5 w-5"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"
+        />
       </svg>
     ),
   },
   {
     title: "Availability Signaling",
-    text: "Merchants can signal active inventory and active services without CTMerchant becoming an intermediary in the transaction.",
+    text: "Optional indicators that allow merchants to signal item availability, helping users plan visits without facilitating transactions or payments.",
     icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 18V6m4 8V6m4 12V6m4 8V6m4 12V6" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="h-5 w-5"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M4 18V6m4 8V6m4 12V6m4 8V6m4 12V6"
+        />
       </svg>
     ),
   },
   {
     title: "Catalog Management Tools",
-    text: "A controlled vendor workspace for products, services, pricing, media, banners, news, and storefront presentation.",
+    text: "A controlled merchant interface for maintaining product listings, descriptions, pricing ranges, and storefront visibility.",
     icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M14.7 6.3l3 3M7 21l-4-4 11-11 4 4L7 21z" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="h-5 w-5"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M14.7 6.3l3 3M7 21l-4-4 11-11 4 4L7 21z"
+        />
       </svg>
     ),
   },
   {
     title: "Merchant Enablement",
-    text: "Onboarding guidance that helps real businesses publish accurate profiles, complete KYC, and remain discoverable.",
+    text: "Onboarding guidance and ongoing support to help physical businesses maintain accurate digital visibility with minimal disruption.",
     icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M17 8a5 5 0 00-10 0v2H5a2 2 0 00-2 2v2a7 7 0 0014 0v-2a2 2 0 00-2-2h-2V8zm0 6h4m-2-2v4" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="h-5 w-5"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M17 8a5 5 0 00-10 0v2H5a2 2 0 00-2 2v2a7 7 0 0014 0v-2a2 2 0 00-2-2h-2V8zm0 6h4m-2-2v4"
+        />
       </svg>
     ),
   },
   {
     title: "Discovery Insights",
-    text: "Aggregated visibility signals that help vendors understand how people find their shops, services, and listings.",
+    text: "Aggregated, non-transactional insights that help merchants understand how users discover their storefronts and listings.",
     icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 19V5m5 14V9m5 10V3m5 16v-6" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="h-5 w-5"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M4 19V5m5 14V9m5 10V3m5 16v-6"
+        />
       </svg>
     ),
   },
 ]
-
-const principles = [
-  "Real businesses first",
-  "City and area aware",
-  "No hidden transaction layer",
-  "Staff-reviewed trust signals",
-]
-
-const grainTexture = {
-  backgroundImage:
-    'url("data:image/svg+xml,%3Csvg viewBox=%270 0 512 512%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cfilter id=%27noise%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%270.75%27 numOctaves=%274%27 stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23noise)%27 opacity=%270.08%27/%3E%3C/svg%3E")',
-}
-
-function GoldDivider({ label }) {
-  return (
-    <div className="flex items-center gap-4 py-7 text-[#C9A84C]">
-      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent" />
-      <span className="shrink-0 text-[0.65rem] font-black uppercase tracking-[0.32em]">
-        {label}
-      </span>
-      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent" />
-    </div>
-  )
-}
 
 function Services() {
   const navigate = useNavigate()
@@ -105,137 +147,124 @@ function Services() {
         description="Explore CTMerchant's marketplace services for merchant indexing, product visibility, data accuracy, and discovery insights."
         canonicalPath="/services"
       />
+      <section className="bg-pink-50 px-4 py-5 md:py-6">
+        <div className="mx-auto max-w-7xl">
+          <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm">
+            <div className="rounded-[24px] border border-pink-100 bg-white">
+              <div className="border-b border-pink-100 bg-slate-950 px-5 py-4 text-white md:px-6">
+                <div className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white transition hover:bg-pink-600"
+                    aria-label="Go back"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className="h-5 w-5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15 18l-6-6 6-6"
+                      />
+                    </svg>
+                  </button>
 
-      <style>
-        {`
-          @keyframes ctmServicesFadeUp {
-            from { opacity: 0; transform: translateY(24px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-        `}
-      </style>
-
-      <section className="relative isolate min-h-screen overflow-hidden bg-[#0D0800] px-4 py-8 text-[#F5EDD8] [font-family:Georgia,serif] sm:py-12">
-        <div className="pointer-events-none absolute inset-0 opacity-50" style={grainTexture} />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(201,168,76,0.18),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(219,39,119,0.18),transparent_32%)]" />
-
-        <div className="relative z-10 mx-auto max-w-6xl">
-          <header
-            className="mx-auto max-w-3xl border-b border-[#C9A84C]/70 px-1 pb-10 pt-6 text-center opacity-0 sm:pb-12 sm:pt-10"
-            style={{ animation: "ctmServicesFadeUp 900ms ease forwards" }}
-          >
-            <button
-              type="button"
-              onClick={handleBack}
-              className="mx-auto mb-8 inline-flex items-center justify-center rounded-full border border-[#C9A84C]/30 bg-[#C9A84C]/10 px-4 py-2 text-[0.7rem] font-black uppercase tracking-[0.22em] text-[#E8C97A] transition hover:border-[#E8C97A] hover:bg-[#C9A84C]/20"
-            >
-              Back
-            </button>
-
-            <p className="mb-5 text-[0.72rem] font-black uppercase tracking-[0.38em] text-[#C9A84C]">
-              Platform Capabilities
-            </p>
-            <h1 className="text-[clamp(2.4rem,7vw,4.8rem)] font-black leading-[0.98] tracking-tight text-[#F5EDD8]">
-              Services built for <span className="font-normal italic text-[#E8C97A]">real commerce</span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-[1.05rem] italic leading-8 text-[#F2DCA4] sm:text-[1.18rem]">
-              A refined discovery layer for city markets, verified service providers, and the everyday businesses people need to find with confidence.
-            </p>
-          </header>
-
-          <main className="mx-auto max-w-5xl py-6 sm:py-9">
-            <section
-              className="mx-auto max-w-3xl opacity-0"
-              style={{ animation: "ctmServicesFadeUp 900ms ease forwards", animationDelay: "120ms" }}
-            >
-              <p className="text-center text-[1.05rem] leading-9 text-[#F0E4C8] sm:text-[1.12rem]">
-                <BrandText /> is not trying to replace the marketplace on the street. It organizes it. The goal is simple: help people locate trustworthy shops and service providers while giving merchants a professional digital presence they can maintain.
-              </p>
-
-              <div className="mt-8 border-l-4 border-[#C9A84C] bg-[#C9A84C]/[0.07] px-6 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.18)] sm:px-8">
-                <p className="m-0 text-[1.18rem] italic leading-8 text-[#E8C97A]">
-                  The platform remains a discovery and visibility system. Customers contact businesses directly, staff protect trust signals, and city listings stay clean.
-                </p>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.25em] text-pink-300">
+                      Platform Capabilities
+                    </p>
+                    <h1 className="text-xl font-extrabold md:text-2xl">
+                      Our Services
+                    </h1>
+                  </div>
+                </div>
               </div>
-            </section>
 
-            <GoldDivider label="Operating Principles" />
-
-            <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {principles.map((principle, index) => (
-                <div
-                  key={principle}
-                  className="opacity-0"
-                  style={{
-                    animation: "ctmServicesFadeUp 800ms ease forwards",
-                    animationDelay: `${220 + index * 80}ms`,
-                  }}
-                >
-                  <div className="h-full border border-[#C9A84C]/25 bg-[#F5EDD8]/[0.04] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.14)]">
-                    <div className="mb-4 text-[0.62rem] font-black uppercase tracking-[0.32em] text-[#C9A84C]">
-                      0{index + 1}
+              <div className="p-5 md:p-7">
+                <div className="rounded-2xl border border-pink-200 bg-pink-50 p-5 md:p-6">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-pink-600 text-white shadow-sm">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="h-5 w-5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M3 6h18M3 12h18M3 18h18"
+                        />
+                      </svg>
                     </div>
-                    <div className="text-xl font-bold leading-7 text-[#F5EDD8]">
-                      {principle}
+
+                    <div>
+                      <h2 className="text-base font-extrabold text-slate-900 md:text-lg">
+                        Our Services
+                      </h2>
+                      <p className="mt-2 text-sm leading-7 text-slate-600 md:text-[15px]">
+                        Institutional-grade digital services focused on
+                        cataloging, structuring, and exposing real-world commerce
+                        for accurate local discovery.
+                      </p>
                     </div>
                   </div>
                 </div>
-              ))}
-            </section>
 
-            <GoldDivider label="Service Stack" />
+                <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                  {services.map((service) => (
+                    <div
+                      key={service.title}
+                      className="rounded-3xl bg-pink-200 p-1 shadow-sm"
+                    >
+                      <div className="h-full rounded-[22px] border border-pink-100 bg-white p-6 transition hover:-translate-y-0.5 hover:shadow-md">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-sky-700">
+                          {service.icon}
+                        </div>
 
-            <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {services.map((service, index) => (
-                <article
-                  key={service.title}
-                  className="opacity-0"
-                  style={{
-                    animation: "ctmServicesFadeUp 800ms ease forwards",
-                    animationDelay: `${360 + index * 80}ms`,
-                  }}
-                >
-                  <div className="group h-full border border-[#C9A84C]/25 bg-gradient-to-br from-[#C9A84C]/[0.08] to-white/[0.02] p-6 transition duration-300 hover:-translate-y-1 hover:border-[#E8C97A]/70 hover:bg-[#C9A84C]/[0.1]">
-                    <div className="mb-5 flex h-12 w-12 items-center justify-center border border-[#C9A84C]/40 bg-[#0D0800]/70 text-[#E8C97A] transition group-hover:scale-105">
-                      {service.icon}
+                        <h2 className="mt-4 text-lg font-extrabold leading-6 text-slate-900">
+                          {service.title}
+                        </h2>
+
+                        <p className="mt-3 text-sm leading-7 text-slate-600">
+                          {service.text}
+                        </p>
+                      </div>
                     </div>
-                    <h2 className="text-[0.75rem] font-black uppercase tracking-[0.28em] text-[#C9A84C]">
-                      {service.title}
-                    </h2>
-                    <p className="mt-4 text-[1rem] leading-8 text-[#F0E4C8]">
-                      {service.text}
-                    </p>
-                  </div>
-                </article>
-              ))}
-            </section>
+                  ))}
+                </div>
 
-            <section
-              className="mt-10 border-y border-[#C9A84C]/70 px-4 py-10 text-center opacity-0 sm:mt-14 sm:px-8 sm:py-14"
-              style={{ animation: "ctmServicesFadeUp 900ms ease forwards", animationDelay: "820ms" }}
-            >
-              <p className="mb-4 text-[0.68rem] font-black uppercase tracking-[0.34em] text-[#C9A84C]">
-                Marketplace Discipline
-              </p>
-              <h2 className="mx-auto max-w-3xl text-[clamp(1.9rem,5vw,3rem)] font-black leading-tight text-[#E8C97A]">
-                A professional directory for shops, services, and city discovery.
-              </h2>
-              <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-                <Link
-                  to="/contact"
-                  className="inline-flex items-center justify-center border border-[#E8C97A] bg-[#E8C97A] px-6 py-3 text-sm font-black uppercase tracking-[0.18em] text-[#1A0F00] transition hover:-translate-y-0.5 hover:bg-[#F5EDD8]"
-                >
-                  Contact Support
-                </Link>
-                <Link
-                  to="/"
-                  className="inline-flex items-center justify-center border border-[#C9A84C]/40 bg-transparent px-6 py-3 text-sm font-black uppercase tracking-[0.18em] text-[#E8C97A] transition hover:-translate-y-0.5 hover:bg-[#C9A84C]/10"
-                >
-                  Visit Marketplace
-                </Link>
+                <div className="mt-6 rounded-3xl bg-pink-200 p-1 shadow-sm">
+                  <div className="rounded-[22px] border border-pink-100 bg-slate-50 p-6 text-center md:p-8">
+                    <h2 className="text-xl font-extrabold text-slate-900 md:text-2xl">
+                      Reliable Discovery for Every Neighborhood
+                    </h2>
+
+                    <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600 md:text-[15px]">
+                      <BrandText /> operates as a neutral discovery layer—
+                      connecting people to real places without intermediating
+                      commerce.
+                    </p>
+
+                    <Link
+                      to="/contact"
+                      className="mt-6 inline-flex items-center justify-center rounded-xl bg-pink-600 px-6 py-3 text-sm font-extrabold text-white shadow-[0_2px_5px_rgba(219,39,119,0.3)] transition hover:-translate-y-0.5 hover:bg-pink-700"
+                    >
+                      Contact Support
+                    </Link>
+                  </div>
+                </div>
               </div>
-            </section>
-          </main>
+            </div>
+          </div>
         </div>
       </section>
     </MainLayout>
