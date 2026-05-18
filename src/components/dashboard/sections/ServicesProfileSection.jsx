@@ -17,14 +17,14 @@ import {
 import { Suspense, lazy } from "react"
 import { UPLOAD_RULES, getAcceptValue, getRuleLabel } from "../../../lib/uploadRules";
 import { renderBrandedText } from "../../common/BrandText"
-import AboutDashboardView from "../../../features/dashboard/views/AboutDashboardView"
-import ServicesDashboardView from "../../../features/dashboard/views/ServicesDashboardView"
-import CareersDashboardView from "../../../features/dashboard/views/CareersDashboardView"
-import SupportDashboardView from "../../../features/dashboard/views/SupportDashboardView"
-import AbuseReportDashboardView from "../../../features/dashboard/views/AbuseReportDashboardView"
-import FaqDashboardView from "../../../features/dashboard/views/FaqDashboardView"
+import AboutDashboardView from "../views/AboutDashboardView"
+import ServicesDashboardView from "../views/ServicesDashboardView"
+import CareersDashboardView from "../views/CareersDashboardView"
+import SupportDashboardView from "../views/SupportDashboardView"
+import AbuseReportDashboardView from "../views/AbuseReportDashboardView"
+import FaqDashboardView from "../views/FaqDashboardView"
 
-const WishlistDashboardView = lazy(() => import("../../../features/dashboard/views/WishlistDashboardView"))
+const WishlistDashboardView = lazy(() => import("../views/WishlistDashboardView"))
 
 const AVATAR_RULE = UPLOAD_RULES.avatars
 const AVATAR_ACCEPT = getAcceptValue(AVATAR_RULE, "image/jpeg,image/png")

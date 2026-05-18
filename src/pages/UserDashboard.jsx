@@ -46,7 +46,7 @@ const loadServiceProviderPage = () => import("./ServiceProvider")
 const loadShopIndexPage = () => import("./ShopIndex")
 const loadDiscoveryDetailPage = () => import("./DiscoveryDetail")
 const loadWishlistDashboardView = () =>
-  import("../features/dashboard/views/WishlistDashboardView")
+  import("../components/dashboard/views/WishlistDashboardView")
 
 const ServicesProfileSection = lazy(loadServicesProfileSection)
 
