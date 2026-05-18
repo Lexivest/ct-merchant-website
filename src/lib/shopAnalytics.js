@@ -6,6 +6,9 @@ function getNavigatorUserAgent() {
   return navigator.userAgent || ""
 }
 
+// eventType: 'shop_view' | 'contact_whatsapp' | 'contact_phone'
+// eventSource: 'shop_detail' | 'service_provider' | 'repo_search' | 'product_detail'
+// contactStatus: 'opened' | 'requested' | 'failed' | null
 export async function logShopAnalyticsEvent({
   shopId,
   eventType,
