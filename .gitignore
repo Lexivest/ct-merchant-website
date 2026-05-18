@@ -34,8 +34,9 @@ ctm_app_mobile/
 ctm_mobile_react/
 mobile_app/
 
-# Supabase server artifacts are applied manually, not deployed with Cloudflare
-supabase/
+# Supabase - ignore CLI-generated temp files only; functions and config are tracked
+supabase/.temp/
+supabase/.branches/
 
 # Backup folder
 Prod V1/

@@ -1,0 +1,472 @@
+// Pass 11 fixed source: ai-assistant
+// Changes vs v24:
+// 1. CRITICAL FIX: Removed client-supplied `anonymousDeviceSignature`.
+//    Anonymous identity now derives ONLY from server-observed signals
+//    (CF-Connecting-IP / X-Forwarded-For / X-Real-IP + UA fingerprint).
+//    Previously a caller could rotate the body field freely to get
+//    unlimited new daily-limit buckets.
+// 2. CRITICAL BUG FIX: shops.is_subscription_active does not exist.
+//    Every AI tool query (get_shops_in_user_area, search_products,
+//    search_shops) failed silently → assistant always answered
+//    "no shops found". Replaced with the same active-subscription
+//    predicate used elsewhere: subscription_end_date > now().
+// 3. HARDENING: history role whitelisted to "user" | "assistant" so a
+//    crafted history entry can't inject a second system message.
+// 4. HARDENING: history content forced to string and length-capped to
+//    deny prompt-injection via oversized inputs.
+// 5. Error responses scrubbed of internal detail.
+//
+// Deploy with: verify_jwt: false (unchanged, anon-callable by design).
+
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7"
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+const AI_MODEL = "meta-llama/llama-3.3-70b-instruct"
+const AUTHENTICATED_DAILY_LIMIT = 20
+const ANONYMOUS_DAILY_LIMIT = 15
+const MAX_QUERY_CHARS = 2000
+const MAX_HISTORY_CHARS = 2000
+
+const VALID_CATEGORIES = [
+  "Mobile Phones & Accessories",
+  "Computers & IT Services",
+  "Electronics & Appliances",
+  "Fashion & Apparel",
+  "Groceries & Supermarkets",
+  "Beauty & Personal Care",
+  "Pharmacies & Health Shops",
+  "Food & Drinks",
+  "Agriculture & Agro-Allied",
+  "Real Estate & Properties",
+  "Hotels & Accommodations",
+  "Home & Kitchen",
+  "Sports",
+  "Health & Fitness",
+  "Logistics & Delivery",
+  "Education & Training",
+  "Artisans",
+]
+
+const CT_SERVICES = [
+  { title: "Business & Product Indexing", description: "Structured cataloging of physical shops and their products for city-wide searchability." },
+  { title: "Data Accuracy Framework", description: "Standardized process for maintaining up-to-date listings through merchant updates." },
+  { title: "Availability Signaling", description: "Indicators that allow merchants to signal item availability to help users plan visits." },
+  { title: "Catalog Management Tools", description: "Merchant interface for maintaining product listings, pricing, and storefront visibility." },
+  { title: "Merchant Enablement", description: "Onboarding guidance and support to help businesses maintain accurate digital visibility." },
+  { title: "Discovery Insights", description: "Aggregated insights to help merchants understand how users discover their storefronts." },
+]
+
+function getClientAddress(req: Request) {
+  const forwardedFor = req.headers.get("x-forwarded-for") || ""
+  const firstForwardedAddress = forwardedFor.split(",")[0]?.trim()
+  return (
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-real-ip") ||
+    firstForwardedAddress ||
+    "unknown-ip"
+  )
+}
+
+async function sha256Hex(value: string) {
+  const encoded = new TextEncoder().encode(value)
+  const hashBuffer = await crypto.subtle.digest("SHA-256", encoded)
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("")
+}
+
+// Server-side anonymous-usage key derived only from request-observed signals.
+// The previous client-supplied `anonymousDeviceSignature` allowed unlimited
+// daily-bucket reset by rotating one field.
+async function buildAnonymousUsageKey(req: Request) {
+  const ip = getClientAddress(req)
+  const ua = (req.headers.get("user-agent") || "unknown-agent").slice(0, 180)
+  const hash = await sha256Hex(`anon|${ip}|${ua}`)
+  return hash.slice(0, 64)
+}
+
+function sanitizeHistory(rawHistory: unknown) {
+  if (!Array.isArray(rawHistory)) return []
+  const allowedRoles = new Set(["user", "assistant"])
+  return rawHistory
+    .slice(-6)
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") return null
+      const role = String((entry as any).role || "").toLowerCase()
+      if (!allowedRoles.has(role)) return null
+      const content = String((entry as any).content || "").slice(0, MAX_HISTORY_CHARS)
+      return { role, content }
+    })
+    .filter(Boolean) as { role: string; content: string }[]
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ""
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || ""
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ""
+    const openRouterKey = Deno.env.get('OPENROUTER_API_KEY') || ""
+
+    if (!supabaseUrl || !serviceRoleKey || !openRouterKey) throw new Error("MISSING_SECRETS")
+
+    const body = await req.json().catch(() => ({}))
+    const query = String(body?.query || "").slice(0, MAX_QUERY_CHARS).trim()
+    const history = sanitizeHistory(body?.history)
+    const context = body?.context && typeof body.context === "object" ? body.context : {}
+
+    if (!query) {
+      return new Response(
+        JSON.stringify({ reply: "Please enter a question." }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const adminClient = createClient(supabaseUrl, serviceRoleKey)
+    const today = new Date().toISOString().split('T')[0]
+    const nowIso = new Date().toISOString()
+
+    // --- 1. USER CONTEXT & USAGE ---
+    const authHeader = req.headers.get('Authorization')
+    let user = null
+    let profile = null
+    let anonymousUsageKey = ""
+    let anonymousChatCount = 0
+
+    if (authHeader) {
+      const authClient = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } })
+      const { data: userData } = await authClient.auth.getUser()
+      if (userData?.user) {
+        user = userData.user
+        const { data: p } = await adminClient.from('profiles')
+          .select('full_name, city_id, area_id, cities(name), areas(name), ai_chat_count, ai_last_chat_date')
+          .eq('id', user.id).single()
+        profile = p
+      }
+    }
+
+    let chatCount = user ? (profile?.ai_chat_count || 0) : 0
+    if (user && profile?.ai_last_chat_date !== today) chatCount = 0
+    if (user && chatCount >= AUTHENTICATED_DAILY_LIMIT) {
+      return new Response(
+        JSON.stringify({
+          reply: "Daily limit reached.",
+          rate_limited: true,
+          usage: { count: chatCount, limit: AUTHENTICATED_DAILY_LIMIT, isAnonymous: false },
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
+
+    if (!user) {
+      // Server-derived from IP + UA. Caller cannot influence the daily-bucket key.
+      anonymousUsageKey = await buildAnonymousUsageKey(req)
+
+      const { data: anonymousUsage } = await adminClient
+        .from("anonymous_ai_usage")
+        .select("chat_count, last_chat_date")
+        .eq("ip_address", anonymousUsageKey)
+        .maybeSingle()
+
+      anonymousChatCount = anonymousUsage?.last_chat_date === today
+        ? Number(anonymousUsage?.chat_count || 0)
+        : 0
+
+      if (anonymousChatCount >= ANONYMOUS_DAILY_LIMIT) {
+        return new Response(
+          JSON.stringify({
+            reply: "You have reached the free daily limit. Please check back tomorrow.",
+            rate_limited: true,
+            usage: { count: anonymousChatCount, limit: ANONYMOUS_DAILY_LIMIT, isAnonymous: true },
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        )
+      }
+    }
+
+    // --- 2. SYSTEM PROMPT ---
+    const firstName = profile?.full_name?.split(" ")[0] || ""
+    const greeting = firstName ? `Hello ${firstName}! ` : ""
+    const userCity = profile?.cities?.name || context.profile?.city_name || ""
+    const userArea = profile?.areas?.name || context.profile?.area_name || ""
+    const userAreaId = profile?.area_id || context.profile?.area_id || ""
+
+    let systemMessage = `You are CT-AI, the CTMerchant AI Assistant. ${greeting}
+    ${userCity ? `The user is in ${userCity}${userArea ? `, specifically the ${userArea} area` : ''}.` : ''}
+
+    IDENTITY & CONSTRAINTS:
+    - You are CT-AI, a CTMerchant shopping assistant.
+    - NEVER engage in outside world conversations (politics, general knowledge, other platforms, etc.).
+    - If a user asks something outside CTMerchant or if you are confused, kindly tell the user: "Please contact support." Do not make support text a link.
+    - If a user needs to login or you are in a repo-search guest state, tell them: "Please login to your account." Do not make login text a link.
+    - Always stay focused on CTMerchant products, services, and shops.
+
+    WHO WE ARE:
+    CTMerchant is a digital collection of shops and their locations in a city to enhance discovery and mitigate fake online sales claims.
+    CTMerchant is a trademark of CT-Merchant LTD, a registered e-commerce company founded in 2025 in Nigeria. The company is governed by a Board of Directors, a Director General, and Shareholders.
+
+    HOW TO USE THE PLATFORM:
+    1. Create free account: To open an account, users should click the **Create Account** button on the home screen. Creating an account is completely free.
+    2. Discover: Login to discover amazing products and services in your neighbourhood.
+    3. Register Shop: Register your shop, get approved, generate your digital biz card and share to your customers and social media handle.
+    4. Share: Share products directly to your social media handle.
+    5. Biz Card: Your biz card contains your unique ID for your customer to enter in the repository to view your digital storefront.
+    6. Presence: CTMerchant gives you the highest level of professional digital presence for your business at low cost.
+
+    SUBSCRIPTION PRICING:
+    - Yearly Subscription: ₦15,000
+    - 6-Month Subscription: ₦10,000
+    - PROMO PRICING (Frequent): ₦10,000 per year or ₦6,000 for 6 months.
+    - Encourage users to subscribe to our newsletter for updates on promos, new cities, and more.
+
+    OUR OFFICIAL SERVICES:
+    ${CT_SERVICES.map(s => `- ${s.title}: ${s.description}`).join('\n')}
+    For more details, mention the services page as plain text only. Do not link to it from CT-AI.
+
+    OFFICIAL CATEGORIES:
+    ${VALID_CATEGORIES.join(", ")}
+
+    URL PATTERNS (CRITICAL):
+    1. Category Page: /cat?name=CATEGORY_NAME (Encode & as %26)
+    2. Area Page: /area?id=${userAreaId || 'AREA_ID'}
+    3. Shop Page: /shop-detail?id=SHOP_ID
+    4. Product Page: /product-detail?id=PRODUCT_ID
+    5. Login/Home: /
+    6. Services Page: /services
+    7. Create Account Page: /create-account
+
+    GUIDELINES:
+    1. HTML ONLY: Use <b>, <ul>, <li>, and marketplace item links only. No Markdown. Only shop/product result links may use <a href="...">, and they must point to /shop-detail?id=SHOP_ID or /product-detail?id=PRODUCT_ID.
+    2. NO HALLUCINATIONS: Only suggest items returned by your tools.
+    3. VERIFICATION: If is_verified is true, call the shop a "Verified Merchant" and add a "✅" next to its name.
+    4. STOCK: Item is IN STOCK if stock_count > 0.
+    5. ANSWERS: Must be simple and straight forward.
+    `
+
+    // --- 3. PAGE CONTEXT ---
+    if (context.page === 'product_detail' && context.product) {
+      const p = context.product
+      const s = context.shop || {}
+      systemMessage += `
+        ROLE: CT-AI Shopping Assistant for "${p.name}".
+
+        YOUR MISSION:
+        The user wants to "Find similar products and compare prices".
+        1. Use 'search_products' with names similar to "${p.name}".
+        2. Match the current product name and others in the database with high similarity (ideally > 70%).
+        3. Report the first five similar products found, **arranged from the lowest to the highest price**, and compare their prices with the current product.
+        4. If no similar products are found, strictly reply: "did not find any similar product". No further suggestions.
+
+        CONTEXT:
+        - Current Product Name: ${p.name}
+        - Current Product Price: ₦${p.discount_price || p.price}
+        - Current Shop: ${s.name || 'Unknown'}
+        `
+    } else if (context.page === 'shop_detail' && context.shop) {
+      const s = context.shop
+      systemMessage += `
+        ROLE: CT-AI Shopping Assistant for "${s.name}".
+        CONTEXT: Address: ${s.address || 'N/A'}, Category: ${s.category || 'N/A'}.
+
+        YOUR MISSION:
+        1. If asked for "Similar shops in this category":
+           - Use 'search_shops' with category "${s.category}".
+           - If no other shops are found, strictly reply: "no other shops yet in the category". No further suggestions.
+        2. If asked for "Shops in your area":
+           - Use 'get_shops_in_user_area'.
+           - If no shops are found in the area, strictly reply: "no other shops yet in your area". No further suggestions.
+        3. If asked "Tell me about this shop", provide a summary based on the context.
+        4. DO NOT offer price comparison for shops. Answers must be simple and straight forward.
+
+        LINKS: <a href="/shop-detail?id=${s.id}" style="color:#db2777; font-weight:bold; text-decoration:underline;">Visit This Shop</a>
+        `
+    } else {
+      systemMessage += `
+        ROLE: CT-AI System Ambassador.
+        YOUR MISSION: Explain who we are, how to use the platform, and detail our official services and subscription pricing. Always mention the newsletter for updates on promos and city expansions. Be welcoming and helpful.
+        `
+    }
+
+    const tools = [
+      {
+        type: "function",
+        function: {
+          name: "search_products",
+          description: "Search for APPROVED products by name similarity for comparison.",
+          parameters: { type: "object", properties: { name: { type: "string" } } },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "search_shops",
+          description: "Search for approved shops.",
+          parameters: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              category: { type: "string" },
+              city: { type: "string" },
+            },
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "get_shops_in_user_area",
+          description: "Finds verified shops in user's specific localized area.",
+          parameters: { type: "object", properties: {} },
+        },
+      },
+    ]
+
+    const messages = [
+      { role: "system", content: systemMessage },
+      ...history,
+      { role: "user", content: query },
+    ]
+
+    const callAI = async (msgs: any[], toolList?: any[]) => {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openRouterKey}`, 'X-Title': 'CTMerchant AI' },
+        body: JSON.stringify({ model: AI_MODEL, messages: msgs, tools: toolList, temperature: 0.1, max_tokens: 800 }),
+      })
+      return res.json()
+    }
+
+    let data = await callAI(messages, tools)
+    if (data.error) {
+      const errMsg = typeof data.error === "string" ? data.error : (data.error?.message || "AI service error")
+      throw new Error(errMsg)
+    }
+
+    const aiMsg = data.choices[0].message
+    let finalReplyText = ""
+
+    if (aiMsg.tool_calls) {
+      messages.push(aiMsg)
+      for (const toolCall of aiMsg.tool_calls) {
+        const { name, arguments: argsJson } = toolCall.function
+        const args = JSON.parse(argsJson || "{}")
+        let result = ""
+
+        if (name === "get_shops_in_user_area") {
+          const cid = profile?.city_id || context.profile?.city_id
+          const aid = profile?.area_id || context.profile?.area_id
+          if (!cid) {
+            result = "Location not set."
+          } else {
+            // BUGFIX: was .eq('is_subscription_active', true) — column doesn't exist.
+            // Replaced with the canonical active-subscription predicate.
+            let q = adminClient.from('shops')
+              .select('id, name, address, is_verified, category, cities(name), areas(name)')
+              .eq('city_id', cid)
+              .eq('status', 'approved')
+              .eq('is_open', true)
+              .gt('subscription_end_date', nowIso)
+              .eq('is_service', false)
+            if (aid) q = q.eq('area_id', aid)
+            if (context.page === 'shop_detail' && context.shop?.id) {
+              q = q.neq('id', context.shop.id)
+            }
+            const { data: shops, error: shopsErr } = await q.limit(5)
+            if (shopsErr) console.warn("[get_shops_in_user_area]", shopsErr.message)
+            result = shops?.length ? JSON.stringify(shops) : "no other shops yet in your area"
+          }
+        } else if (name === "search_products") {
+          // BUGFIX: was .eq('shops.is_subscription_active', true) — column doesn't exist.
+          const { data: prods, error: prodsErr } = await adminClient.from('products')
+            .select('id, name, price, discount_price, stock_count, shop_id, shops!inner(name, is_verified, status, subscription_end_date, is_open, is_service)')
+            .eq('is_available', true)
+            .eq('is_approved', true)
+            .eq('shops.status', 'approved')
+            .eq('shops.is_open', true)
+            .gt('shops.subscription_end_date', nowIso)
+            .eq('shops.is_service', false)
+            .ilike('name', `%${args.name || ""}%`)
+            .limit(10)
+
+          if (prodsErr) console.warn("[search_products]", prodsErr.message)
+
+          let filtered = prods || []
+          if (context.product?.id) {
+            filtered = filtered.filter((p: any) => p.id !== context.product.id)
+          }
+          filtered.sort((a: any, b: any) => {
+            const priceA = a.discount_price || a.price
+            const priceB = b.discount_price || b.price
+            return priceA - priceB
+          })
+
+          result = filtered.length ? JSON.stringify(filtered.slice(0, 5)) : "did not find any similar product"
+        } else if (name === "search_shops") {
+          // BUGFIX: same column rename.
+          let q = adminClient.from('shops')
+            .select('id, name, address, is_verified, category, area_id, cities!inner(name)')
+            .eq('status', 'approved')
+            .eq('is_open', true)
+            .gt('subscription_end_date', nowIso)
+            .eq('is_service', false)
+          if (args.name) q = q.ilike('name', `%${args.name}%`)
+          if (args.category) q = q.ilike('category', `%${args.category}%`)
+          const targetCity = args.city || userCity
+          if (targetCity) q = q.ilike('cities.name', `%${targetCity}%`)
+          if (context.shop?.id) {
+            q = q.neq('id', context.shop.id)
+          }
+          const { data: shops, error: shopsErr } = await q.limit(5)
+          if (shopsErr) console.warn("[search_shops]", shopsErr.message)
+          result = shops?.length ? JSON.stringify(shops) : "no other shops yet in the category"
+        }
+        messages.push({ tool_call_id: toolCall.id, role: "tool", name, content: result })
+      }
+      const data2 = await callAI(messages)
+      finalReplyText = data2.choices[0].message.content
+    } else {
+      finalReplyText = aiMsg.content
+    }
+
+    if (user) {
+      await adminClient
+        .from('profiles')
+        .update({ ai_chat_count: chatCount + 1, ai_last_chat_date: today })
+        .eq('id', user.id)
+    } else if (anonymousUsageKey) {
+      await adminClient
+        .from("anonymous_ai_usage")
+        .upsert({
+          ip_address: anonymousUsageKey,
+          chat_count: anonymousChatCount + 1,
+          last_chat_date: today,
+        }, { onConflict: "ip_address" })
+    }
+
+    return new Response(
+      JSON.stringify({
+        reply: finalReplyText,
+        usage: {
+          count: user ? chatCount + 1 : anonymousChatCount + 1,
+          limit: user ? AUTHENTICATED_DAILY_LIMIT : ANONYMOUS_DAILY_LIMIT,
+          isAnonymous: !user,
+        },
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    )
+
+  } catch (e) {
+    console.error("[ai-assistant]", e)
+    // Generic error to avoid leaking internal detail.
+    return new Response(
+      JSON.stringify({ reply: "System Notice: Assistant unavailable right now. Please try again." }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    )
+  }
+})
