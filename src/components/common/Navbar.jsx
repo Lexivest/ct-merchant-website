@@ -46,6 +46,15 @@ function MarketPulseTicker() {
             speedFactor={0.15}
           >
             <span className="inline-flex items-center gap-4">
+              {/* LIVE badge */}
+              <span className="inline-flex items-center gap-1.5 mr-1">
+                <span className="relative flex h-[7px] w-[7px]">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-70" />
+                  <span className="relative inline-flex h-[7px] w-[7px] rounded-full bg-green-400" />
+                </span>
+                <span className="font-black text-[9px] tracking-[0.3em] text-green-400">LIVE</span>
+              </span>
+              <span className="text-[#C9A84C]/50">|</span>
               {cities.map((city) => (
                 <span
                   key={city}
