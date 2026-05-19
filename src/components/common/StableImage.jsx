@@ -166,7 +166,10 @@ function StableImageFrame({
       style={containerStyle}
       className={containerClassName}
     >
-      <div className={`relative h-full w-full overflow-hidden ${!loaded ? 'bg-slate-200' : ''}`}>
+      {/* When the caller passes placeholderClassName="bg-transparent" it means
+          it is rendering its own branded placeholder behind StableImage and
+          doesn't want the default slate-200 shimmer background fighting it. */}
+      <div className={`relative h-full w-full overflow-hidden ${!loaded && placeholderClassName !== 'bg-transparent' ? 'bg-slate-200' : ''}`}>
         {/* 1. Blurred thumbnail — lazy-loaded Supabase images only */}
         {lowResSrc && !loaded && isNearViewport && (
           <img
@@ -180,7 +183,7 @@ function StableImageFrame({
         {/* 2. Shimmer skeleton — shown when there is no blur placeholder.
             Uses a mid-gray base + a clearly visible sweep so it never looks
             like an empty white box on slow connections. */}
-        {!loaded && !lowResSrc && (
+        {!loaded && !lowResSrc && placeholderClassName !== 'bg-transparent' && (
           <div className={`absolute inset-0 z-[1] bg-slate-200 ${placeholderClassName}`}>
             <div className="absolute inset-0 animate-shimmer bg-[linear-gradient(110deg,transparent_20%,rgba(255,255,255,0.5)_50%,transparent_80%)]" />
           </div>

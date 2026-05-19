@@ -1101,10 +1101,34 @@ function Home() {
             <div className="relative mx-auto flex flex-col gap-4 lg:grid lg:max-w-7xl lg:grid-cols-2 lg:items-start lg:gap-6">
               <div className="w-full lg:col-start-1 lg:flex lg:flex-col lg:gap-4">
                 <div className="overflow-hidden rounded-[30px] border border-[#C9A84C]/25 bg-[#140D05] shadow-[0_30px_90px_rgba(0,0,0,0.38)]">
-                  {/* The deep fallback colour keeps the hero stable while the
-                      bundled banner.jpg is still downloading on slow networks.
-                      StableImage's inner shimmer layer covers it once mounted. */}
+                  {/* Hero image area — the branded placeholder renders instantly
+                      from CSS while banner.jpg (189 KB) downloads in parallel.
+                      A Vite build plugin injects <link rel="preload"> for the
+                      hashed asset so the browser fetches it before React mounts. */}
                   <div className="relative h-[260px] w-full overflow-hidden bg-[#140D05] sm:h-[340px] md:h-[440px]">
+
+                    {/* Branded welcome placeholder — pure CSS, zero network cost.
+                        Visible immediately; the banner fades over it once loaded. */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#4A2410] via-[#2B1A08] to-[#140D05]">
+                      {/* Decorative ring */}
+                      <div className="absolute inset-0 opacity-10"
+                        style={{ backgroundImage: "radial-gradient(circle at 30% 40%, #C9A84C 0%, transparent 55%), radial-gradient(circle at 75% 65%, #db2777 0%, transparent 45%)" }}
+                      />
+                      <div className="relative z-10 flex flex-col items-center gap-2 px-6 text-center select-none">
+                        <span className="font-black tracking-[0.22em] text-[#C9A84C]"
+                          style={{ fontSize: "clamp(1.6rem, 6vw, 2.6rem)" }}>
+                          CTMerchant
+                        </span>
+                        <span className="font-bold tracking-wide text-[#F2DCA4]"
+                          style={{ fontSize: "clamp(0.85rem, 3vw, 1.2rem)" }}>
+                          Best Deals Near You
+                        </span>
+                        <span className="mt-1 text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-[#C9A84C]/60">
+                          City Commerce Platform
+                        </span>
+                      </div>
+                    </div>
+
                     <StableImage
                       src={banner}
                       alt="Commerce Banner"
@@ -1112,7 +1136,7 @@ function Home() {
                       className="h-full w-full object-cover object-center"
                       loading="eager"
                       fetchPriority="high"
-                      placeholderClassName="bg-gradient-to-br from-[#3B1C09] via-[#2B1A08] to-[#140D05]"
+                      placeholderClassName="bg-transparent"
                     />
                   </div>
                 </div>
