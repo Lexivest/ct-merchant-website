@@ -517,6 +517,8 @@ function Home() {
   )
 
 
+  const [bannerLoaded, setBannerLoaded] = useState(false)
+
   const [loginForm, setLoginForm] = useState({ email: "", password: "" })
   const [loginErrors, setLoginErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
@@ -1108,26 +1110,28 @@ function Home() {
                   <div className="relative h-[260px] w-full overflow-hidden bg-[#140D05] sm:h-[340px] md:h-[440px]">
 
                     {/* Branded welcome placeholder — pure CSS, zero network cost.
-                        Visible immediately; the banner fades over it once loaded. */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#4A2410] via-[#2B1A08] to-[#140D05]">
-                      {/* Decorative ring */}
-                      <div className="absolute inset-0 opacity-10"
-                        style={{ backgroundImage: "radial-gradient(circle at 30% 40%, #C9A84C 0%, transparent 55%), radial-gradient(circle at 75% 65%, #db2777 0%, transparent 45%)" }}
-                      />
-                      <div className="relative z-10 flex flex-col items-center gap-2 px-6 text-center select-none">
-                        <span className="font-black tracking-[0.22em] text-[#C9A84C]"
-                          style={{ fontSize: "clamp(1.6rem, 6vw, 2.6rem)" }}>
-                          CTMerchant
-                        </span>
-                        <span className="font-bold tracking-wide text-[#F2DCA4]"
-                          style={{ fontSize: "clamp(0.85rem, 3vw, 1.2rem)" }}>
-                          Best Deals Near You
-                        </span>
-                        <span className="mt-1 text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-[#C9A84C]/60">
-                          City Commerce Platform
-                        </span>
+                        Unmounted as soon as the banner image fires onLoad so it
+                        never sits on top of the real photo. */}
+                    {!bannerLoaded && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#4A2410] via-[#2B1A08] to-[#140D05]">
+                        <div className="absolute inset-0 opacity-10"
+                          style={{ backgroundImage: "radial-gradient(circle at 30% 40%, #C9A84C 0%, transparent 55%), radial-gradient(circle at 75% 65%, #db2777 0%, transparent 45%)" }}
+                        />
+                        <div className="flex flex-col items-center gap-2 px-6 text-center select-none">
+                          <span className="font-black tracking-[0.22em] text-[#C9A84C]"
+                            style={{ fontSize: "clamp(1.6rem, 6vw, 2.6rem)" }}>
+                            CTMerchant
+                          </span>
+                          <span className="font-bold tracking-wide text-[#F2DCA4]"
+                            style={{ fontSize: "clamp(0.85rem, 3vw, 1.2rem)" }}>
+                            Best Deals Near You
+                          </span>
+                          <span className="mt-1 text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-[#C9A84C]/60">
+                            City Commerce Platform
+                          </span>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     <StableImage
                       src={banner}
@@ -1137,6 +1141,7 @@ function Home() {
                       loading="eager"
                       fetchPriority="high"
                       placeholderClassName="bg-transparent"
+                      onLoad={() => setBannerLoaded(true)}
                     />
                   </div>
                 </div>
