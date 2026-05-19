@@ -9,6 +9,7 @@ import {
   FaGlobe,
   FaHandshake,
   FaPhone,
+  FaStore,
   FaUser,
   FaXmark,
 } from "react-icons/fa6"
@@ -33,6 +34,7 @@ const FIELD_LIMITS = {
   phone: 30,
   socialMediaLinks: 500,
   platformNames: 500,
+  ctmId: 60,
 }
 
 const TEXTAREA_CLASS =
@@ -53,6 +55,8 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
     questionnaire: {
       hasOnboardedBefore: "no",
       platformNames: "",
+      isCtmMerchant: "no",
+      ctmId: "",
       availability: "part-time",
       preferredRegion: "",
     },
@@ -89,6 +93,8 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
               ? clampWords(value, WORD_LIMITS.preferredRegion)
               : qKey === "platformNames"
               ? value.slice(0, FIELD_LIMITS.platformNames)
+              : qKey === "ctmId"
+              ? value.slice(0, FIELD_LIMITS.ctmId)
               : value,
         },
       }))
@@ -148,6 +154,11 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
             platformNames:
               formData.questionnaire.hasOnboardedBefore === "yes"
                 ? formData.questionnaire.platformNames.trim()
+                : "",
+            isCtmMerchant: formData.questionnaire.isCtmMerchant,
+            ctmId:
+              formData.questionnaire.isCtmMerchant === "yes"
+                ? formData.questionnaire.ctmId.trim()
                 : "",
             availability: formData.questionnaire.availability,
             preferredRegion: formData.questionnaire.preferredRegion,
@@ -444,6 +455,50 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
                             onChange={handleChange}
                             placeholder="List the platforms or government agencies you have worked with, e.g. CAC registration, SCUML onboarding, Tax Promax, Trademark Registry, NAFDAC, etc."
                             className={`${TEXTAREA_CLASS} border-slate-200`}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="mb-3 block text-[11px] font-bold text-slate-700">
+                        Are you a shop owner or service provider on{" "}
+                        <BrandText />?
+                      </label>
+                      <div className="flex gap-4">
+                        {["yes", "no"].map((opt) => (
+                          <label
+                            key={opt}
+                            className="flex cursor-pointer items-center gap-2"
+                          >
+                            <input
+                              type="radio"
+                              name="q_isCtmMerchant"
+                              value={opt}
+                              checked={
+                                formData.questionnaire.isCtmMerchant === opt
+                              }
+                              onChange={handleChange}
+                              className="h-4 w-4 border-slate-300 text-pink-600 focus:ring-pink-500"
+                            />
+                            <span className="text-sm font-bold capitalize text-slate-600">
+                              {opt}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+
+                      {formData.questionnaire.isCtmMerchant === "yes" && (
+                        <div className="mt-4">
+                          <AuthInput
+                            id="agent-ctmId"
+                            label="Your CT ID (as shown on your shop page)"
+                            name="q_ctmId"
+                            value={formData.questionnaire.ctmId}
+                            onChange={handleChange}
+                            placeholder="e.g. 00012 or CTM-00012"
+                            maxLength={FIELD_LIMITS.ctmId}
+                            icon={<FaStore />}
                           />
                         </div>
                       )}
