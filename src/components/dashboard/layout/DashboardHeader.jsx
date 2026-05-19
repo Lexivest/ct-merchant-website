@@ -692,21 +692,8 @@ function DashboardHeader({
           <div className="mx-auto my-2.5 h-1 w-10 rounded-full bg-slate-300" />
 
           {/* Quick actions */}
-          <div className="flex flex-col">
-            <button
-              type="button"
-              onClick={() => { setMoreOpen(false); onOpenServices?.() }}
-              className="flex items-center gap-4 px-6 py-4 text-left transition hover:bg-slate-50 active:bg-slate-100"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                <FaBriefcase className="text-base" />
-              </span>
-              <div>
-                <div className="text-sm font-bold text-slate-900">Local Services</div>
-                <div className="text-xs text-slate-500">Find service providers near you</div>
-              </div>
-            </button>
-
+          <div className="flex flex-col divide-y divide-slate-100">
+            {/* 1 — Announcements */}
             <button
               type="button"
               onClick={() => { setMoreOpen(false); onOpenAnnouncements() }}
@@ -726,6 +713,7 @@ function DashboardHeader({
               </div>
             </button>
 
+            {/* 2 — Shops A-Z (shops only, no services) */}
             <button
               type="button"
               onClick={() => { setMoreOpen(false); onShopIndex() }}
@@ -735,8 +723,23 @@ function DashboardHeader({
                 <FaArrowDownAZ className="text-base" />
               </span>
               <div>
-                <div className="text-sm font-bold text-slate-900">Shop Directory</div>
-                <div className="text-xs text-slate-500">Browse all shops and services A–Z</div>
+                <div className="text-sm font-bold text-slate-900">Browse All Shops A–Z</div>
+                <div className="text-xs text-slate-500">Verified physical shops in your city</div>
+              </div>
+            </button>
+
+            {/* 3 — Services Directory */}
+            <button
+              type="button"
+              onClick={() => { setMoreOpen(false); onOpenServices?.() }}
+              className="flex items-center gap-4 px-6 py-4 text-left transition hover:bg-slate-50 active:bg-slate-100"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <FaBriefcase className="text-base" />
+              </span>
+              <div>
+                <div className="text-sm font-bold text-slate-900">Services Directory</div>
+                <div className="text-xs text-slate-500">Browse all services near you</div>
               </div>
             </button>
           </div>
