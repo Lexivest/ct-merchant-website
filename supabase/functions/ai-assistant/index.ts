@@ -256,12 +256,18 @@ serve(async (req) => {
       systemMessage += `
         ROLE: CT-AI Shopping Assistant for "${p.name}".
 
-        YOUR MISSION:
-        The user wants to "Find similar products and compare prices".
-        1. Use 'search_products' with names similar to "${p.name}".
-        2. Match the current product name and others in the database with high similarity (ideally > 70%).
-        3. Report the first five similar products found, **arranged from the lowest to the highest price**, and compare their prices with the current product.
-        4. If no similar products are found, strictly reply: "did not find any similar product". No further suggestions.
+        YOUR MISSION — Find similar products and compare prices:
+        1. Extract the KEY CATEGORY NOUN(S) from the product name — NOT the full name.
+           Examples:
+             "150cc Scooter"        → search "Scooter"
+             "Samsung Galaxy A52"   → search "Samsung Galaxy"
+             "HP Pavilion Laptop"   → search "Laptop"
+             "Nike Air Max Sneaker" → search "Sneaker"
+        2. Call 'search_products' with those keyword(s).
+        3. If fewer than 2 results come back, call 'search_products' again with an even shorter/broader keyword (e.g. just "Scooter" → "motor", or "Laptop" → "computer").
+        4. Include results from ANY shop, including the current shop — do NOT skip same-shop products.
+        5. Present up to five results arranged from lowest to highest price and compare each price to the current product (₦${p.discount_price || p.price}).
+        6. Only say "did not find any similar product" if both search attempts return nothing.
 
         CONTEXT:
         - Current Product Name: ${p.name}
@@ -277,11 +283,12 @@ serve(async (req) => {
         YOUR MISSION:
         1. If asked for "Similar shops in this category":
            - Use 'search_shops' with category "${s.category}".
-           - If no other shops are found, strictly reply: "no other shops yet in the category". No further suggestions.
+           - Exclude the current shop from results (already handled).
+           - If no other shops are found, say "no other shops found in this category yet" and suggest the user explore other areas.
         2. If asked for "Shops in your area":
            - Use 'get_shops_in_user_area'.
-           - If no shops are found in the area, strictly reply: "no other shops yet in your area". No further suggestions.
-        3. If asked "Tell me about this shop", provide a summary based on the context.
+           - If no shops are found, say "no shops found in your area yet" and suggest browsing by category.
+        3. If asked "Tell me about this shop", provide a friendly summary: name, category, address, verified status.
         4. DO NOT offer price comparison for shops. Answers must be simple and straight forward.
 
         LINKS: <a href="/shop-detail?id=${s.id}" style="color:#db2777; font-weight:bold; text-decoration:underline;">Visit This Shop</a>
@@ -366,13 +373,19 @@ serve(async (req) => {
           } else {
             // BUGFIX: was .eq('is_subscription_active', true) — column doesn't exist.
             // Replaced with the canonical active-subscription predicate.
+            // Match is_service to the current shop's type so service shops find
+            // service neighbours and product shops find product neighbours.
+            const areaShopIsService = context.page === 'shop_detail'
+              ? context.shop?.is_service === true
+              : false
+
             let q = adminClient.from('shops')
               .select('id, name, address, is_verified, category, cities(name), areas(name)')
               .eq('city_id', cid)
               .eq('status', 'approved')
               .eq('is_open', true)
               .gt('subscription_end_date', nowIso)
-              .eq('is_service', false)
+              .eq('is_service', areaShopIsService)
             if (aid) q = q.eq('area_id', aid)
             if (context.page === 'shop_detail' && context.shop?.id) {
               q = q.neq('id', context.shop.id)
@@ -382,39 +395,56 @@ serve(async (req) => {
             result = shops?.length ? JSON.stringify(shops) : "no other shops yet in your area"
           }
         } else if (name === "search_products") {
-          // BUGFIX: was .eq('shops.is_subscription_active', true) — column doesn't exist.
+          // Split the AI-supplied name into individual keywords and OR-match each one.
+          // This means "150cc Scooter" finds products containing "150cc" OR "Scooter",
+          // so same-shop variants ("Scooter 125cc", "Electric Scooter") are returned.
+          const rawTerm = String(args.name || "").trim()
+          const keywords = rawTerm
+            .split(/\s+/)
+            .map((w: string) => w.replace(/[%_]/g, ""))   // sanitise ILIKE wildcards
+            .filter((w: string) => w.length > 1)
+          const orFilter = keywords.length > 0
+            ? keywords.map((w: string) => `name.ilike.%${w}%`).join(",")
+            : `name.ilike.%${rawTerm}%`
+
           const { data: prods, error: prodsErr } = await adminClient.from('products')
-            .select('id, name, price, discount_price, stock_count, shop_id, shops!inner(name, is_verified, status, subscription_end_date, is_open, is_service)')
+            .select('id, name, price, discount_price, stock_count, shop_id, shops!inner(name, is_verified, status, subscription_end_date, is_open)')
             .eq('is_available', true)
             .eq('is_approved', true)
             .eq('shops.status', 'approved')
             .eq('shops.is_open', true)
             .gt('shops.subscription_end_date', nowIso)
-            .eq('shops.is_service', false)
-            .ilike('name', `%${args.name || ""}%`)
-            .limit(10)
+            .or(orFilter)
+            .limit(20)
 
           if (prodsErr) console.warn("[search_products]", prodsErr.message)
 
           let filtered = prods || []
+          // Exclude the exact product the user is currently viewing
           if (context.product?.id) {
             filtered = filtered.filter((p: any) => p.id !== context.product.id)
           }
           filtered.sort((a: any, b: any) => {
-            const priceA = a.discount_price || a.price
-            const priceB = b.discount_price || b.price
+            const priceA = a.discount_price ?? a.price
+            const priceB = b.discount_price ?? b.price
             return priceA - priceB
           })
 
           result = filtered.length ? JSON.stringify(filtered.slice(0, 5)) : "did not find any similar product"
         } else if (name === "search_shops") {
-          // BUGFIX: same column rename.
+          // Match is_service to whatever type the current shop is.
+          // On shop_detail, find shops of the same type (service vs product).
+          // In ambassador mode (no shop context), default to product shops.
+          const shopIsService = context.page === 'shop_detail'
+            ? context.shop?.is_service === true
+            : false
+
           let q = adminClient.from('shops')
             .select('id, name, address, is_verified, category, area_id, cities!inner(name)')
             .eq('status', 'approved')
             .eq('is_open', true)
             .gt('subscription_end_date', nowIso)
-            .eq('is_service', false)
+            .eq('is_service', shopIsService)
           if (args.name) q = q.ilike('name', `%${args.name}%`)
           if (args.category) q = q.ilike('category', `%${args.category}%`)
           const targetCity = args.city || userCity
