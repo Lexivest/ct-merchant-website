@@ -591,7 +591,7 @@ function ShopDetail() {
   function openGoogleMaps() {
     if (currentShop?.latitude && currentShop?.longitude) {
       window.open(
-        `https://www.google.com/maps/search/?api=1&query=$${currentShop.latitude},${currentShop.longitude}`,
+        `https://www.google.com/maps/search/?api=1&query=${currentShop.latitude},${currentShop.longitude}`,
         "_blank",
         "noopener,noreferrer"
       )
@@ -600,7 +600,7 @@ function ShopDetail() {
 
     if (!currentShop?.address) return
     window.open(
-      `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(currentShop.address)}`,
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentShop.address)}`,
       "_blank",
       "noopener,noreferrer"
     )

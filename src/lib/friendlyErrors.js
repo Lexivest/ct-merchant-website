@@ -165,8 +165,19 @@ export function getFriendlyError(error, fallback = "We encountered an unexpected
     return result
   }
 
-  // Fallback for simple short messages that are likely user-friendly enough
-  if (rawMessage.length < 100 && !rawMessage.includes("|") && !rawMessage.includes("details:") && !rawMessage.includes("hint:")) {
+  // Fallback for simple short messages that are likely user-friendly enough.
+  // Explicitly exclude raw JS runtime error patterns (TypeError, ReferenceError,
+  // etc.) that should never be shown to users in production.
+  const looksLikeTechnicalError =
+    /cannot read|is not a function|is not defined|undefined|null reference|unexpected token|syntax error/i.test(rawMessage)
+
+  if (
+    rawMessage.length < 100 &&
+    !looksLikeTechnicalError &&
+    !rawMessage.includes("|") &&
+    !rawMessage.includes("details:") &&
+    !rawMessage.includes("hint:")
+  ) {
     result.message = rawMessage
   }
 

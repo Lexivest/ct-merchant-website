@@ -11,19 +11,17 @@ import { useNetworkStatus } from "../../lib/networkStatus"
 import { isChunkLoadFailure } from "../../lib/runtimeRecovery"
 import { renderBrandedText } from "./BrandText"
 
-function resolveErrorCopy(error, explicitTitle, explicitMessage, isOffline) {
+function resolveErrorCopy(error, explicitTitle, isOffline) {
   const network = isOffline || isNetworkError(error)
   const chunk = isChunkLoadFailure(error)
   const friendly = getFriendlyError(error)
 
-  if (explicitTitle || explicitMessage) {
+  if (explicitTitle) {
     return {
       network,
       chunk,
       category: friendly.category,
-      title: explicitTitle || (network ? "Connection issue" : "Something went wrong"),
-      message: explicitMessage || friendly.message,
-      action: friendly.action,
+      title: explicitTitle,
     }
   }
 
@@ -33,8 +31,6 @@ function resolveErrorCopy(error, explicitTitle, explicitMessage, isOffline) {
       chunk,
       category: ErrorCategory.NETWORK,
       title: "Connection issue",
-      message: friendly.message,
-      action: friendly.action,
     }
   }
 
@@ -44,8 +40,6 @@ function resolveErrorCopy(error, explicitTitle, explicitMessage, isOffline) {
       chunk,
       category: ErrorCategory.SERVER,
       title: "Connection issue",
-      message: "CTMerchant could not finish loading this screen. Please check your connection and try again.",
-      action: "If the problem continues, refresh the page once.",
     }
   }
 
@@ -57,14 +51,15 @@ function resolveErrorCopy(error, explicitTitle, explicitMessage, isOffline) {
       friendly.category === ErrorCategory.AUTH
         ? "Security notice"
         : "Something went wrong",
-    message: friendly.message,
-    action: friendly.action,
   }
 }
 
 function GlobalErrorScreen({
   error = null,
   title = "",
+  // message prop accepted for backward-compat but no longer rendered —
+  // raw technical messages must never be shown to users in production.
+  // eslint-disable-next-line no-unused-vars
   message = "",
   fullScreen = true,
   onRetry = null,
@@ -75,11 +70,8 @@ function GlobalErrorScreen({
 }) {
   const navigate = useNavigate()
   const networkStatus = useNetworkStatus()
-  const copy = resolveErrorCopy(error, title, message, networkStatus.isOffline)
+  const copy = resolveErrorCopy(error, title, networkStatus.isOffline)
 
-  const wrapperClass = fullScreen
-    ? "fixed inset-x-0 bottom-4 z-[3000] flex justify-center px-4 pointer-events-none sm:bottom-6"
-    : "flex justify-center px-4 py-6"
   const Icon = copy.network
     ? FaWifi
     : copy.category === ErrorCategory.AUTH
@@ -100,54 +92,59 @@ function GlobalErrorScreen({
     navigate("/", { replace: true })
   }
 
-  return (
-    <div className={wrapperClass}>
-      <div className="pointer-events-auto w-full max-w-md overflow-hidden rounded-[28px] border border-slate-200/80 bg-white p-5 text-left shadow-[0_24px_70px_rgba(15,23,42,0.16)] backdrop-blur md:p-6">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-xl text-white shadow-sm">
-            <Icon className={busy ? "animate-pulse" : ""} />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-lg font-black tracking-tight text-slate-950">
-              {renderBrandedText(copy.title)}
-            </h1>
-            <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-              {renderBrandedText(busy ? "Preparing a clean recovery..." : copy.message)}
-            </p>
-            {copy.action ? (
-              <p className="mt-2 text-xs font-medium leading-5 text-slate-500">
-                {renderBrandedText(copy.action)}
-              </p>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-          {typeof onRetry === "function" ? (
-            <button
-              type="button"
-              onClick={onRetry}
-              disabled={busy}
-              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 text-sm font-black text-white transition hover:bg-slate-800 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
-            >
-              <FaRotateRight className={busy ? "animate-spin" : ""} />
-              <span>{retryLabel}</span>
-            </button>
-          ) : null}
-
-          {onBack !== false ? (
-            <button
-              type="button"
-              onClick={handleBack}
-              disabled={busy}
-              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-slate-100 px-4 text-sm font-bold text-slate-600 transition hover:bg-slate-200 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
-            >
-              <FaArrowLeft className="text-xs" />
-              <span>{backLabel}</span>
-            </button>
-          ) : null}
-        </div>
+  const card = (
+    <div className="w-full max-w-sm overflow-hidden rounded-[28px] border border-slate-200/80 bg-white px-7 py-8 text-center shadow-[0_24px_70px_rgba(15,23,42,0.22)]">
+      {/* Icon */}
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[20px] bg-slate-950 text-2xl text-white shadow-sm">
+        <Icon className={busy ? "animate-pulse" : ""} />
       </div>
+
+      {/* Title only — no body message, no raw error details */}
+      <h1 className="mt-5 text-[1.25rem] font-black tracking-tight text-slate-950">
+        {renderBrandedText(copy.title)}
+      </h1>
+
+      {/* Actions */}
+      <div className="mt-7 flex flex-col gap-3">
+        {typeof onRetry === "function" ? (
+          <button
+            type="button"
+            onClick={onRetry}
+            disabled={busy}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 text-sm font-black text-white transition hover:bg-slate-800 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
+          >
+            <FaRotateRight className={busy ? "animate-spin" : ""} />
+            <span>{retryLabel}</span>
+          </button>
+        ) : null}
+
+        {onBack !== false ? (
+          <button
+            type="button"
+            onClick={handleBack}
+            disabled={busy}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition hover:bg-slate-50 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
+          >
+            <FaArrowLeft className="text-xs" />
+            <span>{backLabel}</span>
+          </button>
+        ) : null}
+      </div>
+    </div>
+  )
+
+  if (!fullScreen) {
+    return (
+      <div className="flex justify-center px-4 py-10">
+        {card}
+      </div>
+    )
+  }
+
+  // Full-screen: centered over a dim backdrop — never bottom-anchored
+  return (
+    <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-[rgba(15,23,42,0.60)] px-5 backdrop-blur-[2px]">
+      {card}
     </div>
   )
 }
