@@ -1,9 +1,11 @@
 // Covers chunk-load errors across browsers:
 //   Chrome/Edge: "Failed to fetch dynamically imported module"
 //   Firefox:     "Loading module from '...' failed." / "error loading module"
+//   Firefox:     "can't access property 'default', e._result is undefined"
+//                (React.lazy reads .default from a rejected module — Firefox-only)
 //   Safari:      "Load failed" (TypeError on any failed module fetch)
 const CHUNK_LOAD_PATTERN =
-  /(error loading dynamically imported module|failed to fetch dynamically imported module|importing a module script failed|failed to load module script|loading module from|chunkloaderror|loading chunk|unable to preload css|vite:preloaderror|^load failed$)/i
+  /(error loading dynamically imported module|failed to fetch dynamically imported module|importing a module script failed|failed to load module script|loading module from|chunkloaderror|loading chunk|unable to preload css|vite:preloaderror|^load failed$|_result is undefined|can't access property ['"]default['"])/i
 
 const RECOVERY_PARAM = "ctm_reload"
 const RECOVERY_ATTEMPT_TTL = 1000 * 60 * 2

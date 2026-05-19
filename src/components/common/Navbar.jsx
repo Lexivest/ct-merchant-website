@@ -128,7 +128,7 @@ function Navbar() {
 
             <Link
               to="/staff-portal"
-              className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-1.5 text-sm font-semibold text-white no-underline shadow-sm transition hover:bg-slate-800"
+              className="inline-flex items-center justify-center rounded-lg bg-[#3B1C09] px-4 py-1.5 text-sm font-semibold text-white no-underline shadow-sm transition hover:bg-[#5E3016]"
             >
               Staff Portal
             </Link>
@@ -207,7 +207,7 @@ function Navbar() {
                 <Link
                   to="/staff-portal"
                   onClick={closeMenu}
-                  className="mt-2 inline-flex items-center justify-center rounded-xl bg-slate-900 px-3 py-3 text-sm font-bold text-white no-underline transition hover:bg-slate-800"
+                  className="mt-2 inline-flex items-center justify-center rounded-xl bg-[#3B1C09] px-3 py-3 text-sm font-bold text-white no-underline transition hover:bg-[#5E3016]"
                 >
                   Staff Portal
                 </Link>
