@@ -1436,10 +1436,22 @@ function UserDashboard() {
     beginRouteTransition(retryAction)
 
     try {
+      // Build a quick lookup so primed shop data includes areas.name,
+      // matching what ShopIndex's own query returns via the areas(name) join.
+      const areasById = new Map(
+        (localData.areas || []).map((area) => [String(area.id), area])
+      )
+      const shopsWithArea = (localData.shops || [])
+        .filter((shop) => !isServiceShop(shop))
+        .map((shop) => ({
+          ...shop,
+          areas: shop.area_id ? (areasById.get(String(shop.area_id)) ?? null) : null,
+        }))
+
       primeCachedFetchStore(
         `dir_city_${profile?.city_id || "none"}_q_`,
         {
-          shops: (localData.shops || []).filter((shop) => !isServiceShop(shop)),
+          shops: shopsWithArea,
           services: localData.serviceShops || [],
           serviceProducts: localData.serviceProducts || [],
         },
