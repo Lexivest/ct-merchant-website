@@ -1441,18 +1441,22 @@ function UserDashboard() {
       const areasById = new Map(
         (localData.areas || []).map((area) => [String(area.id), area])
       )
+      const attachArea = (shop) => ({
+        ...shop,
+        areas: shop.area_id ? (areasById.get(String(shop.area_id)) ?? null) : null,
+      })
+
       const shopsWithArea = (localData.shops || [])
         .filter((shop) => !isServiceShop(shop))
-        .map((shop) => ({
-          ...shop,
-          areas: shop.area_id ? (areasById.get(String(shop.area_id)) ?? null) : null,
-        }))
+        .map(attachArea)
+
+      const servicesWithArea = (localData.serviceShops || []).map(attachArea)
 
       primeCachedFetchStore(
         `dir_city_${profile?.city_id || "none"}_q_`,
         {
           shops: shopsWithArea,
-          services: localData.serviceShops || [],
+          services: servicesWithArea,
           serviceProducts: localData.serviceProducts || [],
         },
         Date.now(),
