@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import {
+  FaArrowLeft,
   FaArrowRight,
   FaBriefcase,
   FaBullhorn,
@@ -14,16 +16,18 @@ import {
   FaPhone,
   FaStore,
   FaUser,
-  FaXmark,
 } from "react-icons/fa6"
-import AuthInput from "../auth/AuthInput"
-import AuthButton from "../auth/AuthButton"
-import BrandText from "../common/BrandText"
-import WordLimitCounter from "../common/WordLimitCounter"
-import { useGlobalFeedback } from "../common/GlobalFeedbackProvider"
-import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
-import { clampWords, getWordLimitError } from "../../lib/textLimits"
-import { supabase } from "../../lib/supabase"
+import AuthInput from "../components/auth/AuthInput"
+import AuthButton from "../components/auth/AuthButton"
+import BrandText from "../components/common/BrandText"
+import WordLimitCounter from "../components/common/WordLimitCounter"
+import PageSeo from "../components/common/PageSeo"
+import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
+import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
+import { clampWords, getWordLimitError } from "../lib/textLimits"
+import { supabase } from "../lib/supabase"
+import useAuthSession from "../hooks/useAuthSession"
+import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 
 const WORD_LIMITS = {
   bio: 300,
@@ -68,8 +72,13 @@ const INITIAL_QUESTIONNAIRE = {
   preferredRegion: "",
 }
 
-export default function AgentApplicationModal({ isOpen, onClose, user }) {
+export default function BecomeAgent() {
+  const navigate = useNavigate()
+  const { user, loading: authLoading } = useAuthSession()
   const { notify } = useGlobalFeedback()
+
+  usePreventPullToRefresh()
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [formData, setFormData] = useState({
@@ -96,6 +105,12 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
   const isIndividual = formData.applicantType === "individual"
   const isCorporate = formData.applicantType === "corporate"
 
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/", { replace: true })
+    }
+  }, [authLoading, navigate, user])
+
   // Sync email once auth resolves
   useEffect(() => {
     if (user?.email && !formData.email) {
@@ -103,21 +118,10 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
     }
   }, [user, formData.email])
 
-  // Reset form state whenever the modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setSubmitted(false)
-      setErrors({})
-    }
-  }, [isOpen])
-
-  if (!isOpen) return null
-
   function switchApplicantType(type) {
     setFormData((prev) => ({
       ...prev,
       applicantType: type,
-      // Clear type-specific fields when switching so nothing stale carries over
       fullName: "",
       businessName: "",
       rcNumber: "",
@@ -222,7 +226,6 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
           questionnaire: {
             applicationType: "agent",
             agentApplicantType: formData.applicantType,
-            // Corporate-specific fields — only present for business applications
             ...(isCorporate && {
               businessName: formData.businessName.trim(),
               rcNumber: formData.rcNumber.trim(),
@@ -266,115 +269,128 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-end justify-center bg-black/50 backdrop-blur-[2px] sm:items-center">
-      <div className="relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:rounded-[28px]">
+    <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
+      <PageSeo
+        title="Become a CTM Agent | CTMerchant"
+        description="Apply to become a CTMerchant field agent and help businesses in your city join the digital marketplace."
+        canonicalPath="/become-agent"
+        noindex
+      />
 
-        {/* ── Header ── */}
-        <div className="flex shrink-0 items-center justify-between gap-4 bg-slate-950 px-6 py-4 text-white">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-pink-600">
-              <FaHandshake className="text-base" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-pink-300">
-                Partnerships
-              </p>
-              <h2 className="text-lg font-extrabold leading-tight">
-                Become a CTM Agent
-              </h2>
-            </div>
-          </div>
+      {/* ── Page Header ── */}
+      <header className="sticky top-0 z-50 bg-[#131921] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
+        <div className="mx-auto flex w-full max-w-[800px] items-center gap-4 px-4 py-3">
           <button
             type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white transition hover:bg-white/20"
-            aria-label="Close"
+            onClick={() => navigate(-1)}
+            className="ml-[-4px] p-1 text-[1.2rem] transition hover:text-pink-400"
+            aria-label="Go back"
           >
-            <FaXmark />
+            <FaArrowLeft />
           </button>
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <FaHandshake className="shrink-0 text-[1.1rem] text-pink-400" />
+            <span className="truncate text-[1.15rem] font-bold tracking-[0.5px]">
+              Become a CTM Agent
+            </span>
+          </div>
         </div>
+      </header>
 
-        {/* ── Body ── */}
-        <div className="flex-1 overflow-y-auto">
-          {submitted ? (
-            /* ── Success state ── */
-            <div className="flex flex-col items-center justify-center px-8 py-16 text-center">
-              <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                <FaCircleCheck className="text-4xl" />
-              </div>
-              <h3 className="text-2xl font-black text-slate-900">Application Submitted!</h3>
-              <p className="mt-3 max-w-sm text-sm font-medium leading-relaxed text-slate-600">
-                Thank you for applying to the <BrandText /> Agent Program. Our team will review
-                your application and contact you via email when shortlisted.
-              </p>
-              <button
-                type="button"
-                onClick={onClose}
-                className="mt-8 rounded-xl bg-slate-900 px-8 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
-              >
-                Close
-              </button>
+      {/* ── Body ── */}
+      <main className="mx-auto w-full max-w-[800px] flex-1 px-4 py-6">
+
+        {submitted ? (
+          /* ── Success State ── */
+          <div className="flex flex-col items-center justify-center rounded-[28px] bg-white px-8 py-20 text-center shadow-sm">
+            <div className="mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+              <FaCircleCheck className="text-5xl" />
             </div>
-          ) : (
-            /* ── Form ── */
-            <div className="px-6 py-6 md:px-8">
-              <div className="mb-6">
-                <h3 className="text-base font-black text-slate-900">Agent Application Form</h3>
-                <p className="mt-1 text-sm text-slate-500">
-                  Tell us about yourself and how you plan to help grow the <BrandText /> ecosystem
-                  as a field agent.
-                </p>
-              </div>
-
-              {/* ── Applicant Type Selector ── */}
-              <div className="mb-7">
-                <p className="mb-3 text-xs font-black uppercase tracking-widest text-slate-500">
-                  Who is applying?
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => switchApplicantType("individual")}
-                    className={`flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition ${
-                      isIndividual
-                        ? "border-pink-500 bg-pink-50 text-pink-700"
-                        : "border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300"
-                    }`}
-                  >
-                    <FaUser
-                      className={`text-xl ${isIndividual ? "text-pink-600" : "text-slate-400"}`}
-                    />
-                    <div>
-                      <div className="text-sm font-extrabold">Individual</div>
-                      <div className="mt-0.5 text-[11px] font-medium opacity-75">
-                        Applying as a person
-                      </div>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => switchApplicantType("corporate")}
-                    className={`flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition ${
-                      isCorporate
-                        ? "border-pink-500 bg-pink-50 text-pink-700"
-                        : "border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300"
-                    }`}
-                  >
-                    <FaBuilding
-                      className={`text-xl ${isCorporate ? "text-pink-600" : "text-slate-400"}`}
-                    />
-                    <div>
-                      <div className="text-sm font-extrabold">Business Entity</div>
-                      <div className="mt-0.5 text-[11px] font-medium opacity-75">
-                        Company, cooperative, NGO, group
-                      </div>
-                    </div>
-                  </button>
+            <h2 className="text-2xl font-black text-slate-900">Application Submitted!</h2>
+            <p className="mt-3 max-w-sm text-sm font-medium leading-relaxed text-slate-600">
+              Thank you for applying to the <BrandText /> Agent Program. Our team will review your
+              application and contact you via email when shortlisted.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="mt-8 rounded-xl bg-slate-900 px-8 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* ── Intro banner ── */}
+            <div className="mb-6 rounded-[24px] bg-slate-950 px-6 py-5 text-white">
+              <div className="mb-3 flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-pink-600">
+                  <FaHandshake className="text-lg" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-pink-300">
+                    Partnerships
+                  </p>
+                  <h1 className="text-lg font-extrabold leading-tight">Agent Application Form</h1>
                 </div>
               </div>
+              <p className="text-sm leading-relaxed text-slate-400">
+                Help businesses in your city get discovered on <BrandText className="text-white" />.
+                Individuals and registered business entities are welcome to apply.
+              </p>
+            </div>
 
-              <form onSubmit={handleSubmit} className="space-y-7">
+            {/* ── Applicant Type Selector ── */}
+            <div className="mb-6">
+              <p className="mb-3 text-xs font-black uppercase tracking-widest text-slate-500">
+                Who is applying?
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => switchApplicantType("individual")}
+                  className={`flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition ${
+                    isIndividual
+                      ? "border-pink-500 bg-white text-pink-700 shadow-sm"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                  }`}
+                >
+                  <FaUser
+                    className={`text-xl ${isIndividual ? "text-pink-600" : "text-slate-400"}`}
+                  />
+                  <div>
+                    <div className="text-sm font-extrabold">Individual</div>
+                    <div className="mt-0.5 text-[11px] font-medium opacity-70">
+                      Applying as a person
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => switchApplicantType("corporate")}
+                  className={`flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition ${
+                    isCorporate
+                      ? "border-pink-500 bg-white text-pink-700 shadow-sm"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                  }`}
+                >
+                  <FaBuilding
+                    className={`text-xl ${isCorporate ? "text-pink-600" : "text-slate-400"}`}
+                  />
+                  <div>
+                    <div className="text-sm font-extrabold">Business Entity</div>
+                    <div className="mt-0.5 text-[11px] font-medium opacity-70">
+                      Company, cooperative, NGO, group
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* ── Form card ── */}
+            <div className="rounded-[24px] bg-white px-6 py-7 shadow-sm md:px-8">
+              <form onSubmit={handleSubmit} className="space-y-8">
 
                 {/* ══ INDIVIDUAL: Contact Information ══ */}
                 {isIndividual && (
@@ -416,7 +432,7 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
                       type="tel"
                       value={formData.phone}
                       onChange={handleChange}
-                      placeholder="+234..."
+                      placeholder="+234…"
                       maxLength={FIELD_LIMITS.phone}
                       icon={<FaPhone />}
                     />
@@ -498,7 +514,6 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
                       />
                     </div>
 
-                    {/* Corporate contact details */}
                     <div className="grid gap-4 sm:grid-cols-2">
                       <AuthInput
                         id="agent-email"
@@ -527,7 +542,7 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
                   </div>
                 )}
 
-                {/* ══ About (shared, label adapts) ══ */}
+                {/* ══ About (shared) ══ */}
                 <div className="space-y-4">
                   <h4 className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-pink-600">
                     <FaCircleInfo className="text-[10px]" />
@@ -542,7 +557,7 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
                     </div>
                     <textarea
                       name="bio"
-                      rows="3"
+                      rows="4"
                       value={formData.bio}
                       onChange={handleChange}
                       placeholder={
@@ -576,7 +591,7 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
                     </div>
                     <textarea
                       name="agentExperience"
-                      rows="3"
+                      rows="4"
                       value={formData.agentExperience}
                       onChange={handleChange}
                       placeholder={
@@ -639,13 +654,13 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
                 </div>
 
                 {/* ══ Questionnaire (shared, labels adapt) ══ */}
-                <div className="space-y-5 rounded-3xl border border-pink-100 bg-pink-50/50 p-5">
+                <div className="space-y-5 rounded-3xl border border-pink-100 bg-pink-50/60 p-5">
                   <h4 className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-pink-600">
                     <FaCircleQuestion className="text-[10px]" />
                     Quick Questionnaire
                   </h4>
 
-                  <div className="space-y-5">
+                  <div className="space-y-6">
 
                     {/* Has onboarded before */}
                     <div>
@@ -785,17 +800,16 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
                   </div>
                 </div>
 
-                <div className="pb-2">
-                  <AuthButton type="submit" loading={isSubmitting}>
-                    <span>Submit Agent Application</span>
-                    <FaArrowRight />
-                  </AuthButton>
-                </div>
+                <AuthButton type="submit" loading={isSubmitting}>
+                  <span>Submit Agent Application</span>
+                  <FaArrowRight />
+                </AuthButton>
+
               </form>
             </div>
-          )}
-        </div>
-      </div>
+          </>
+        )}
+      </main>
     </div>
   )
 }

@@ -184,6 +184,7 @@ const loadDiscoveryDetail = () => import("./pages/DiscoveryDetail")
 const loadShopDetail = () => import("./pages/ShopDetail")
 const loadProductDetail = () => import("./pages/ProductDetail")
 const loadShopIndex = () => import("./pages/ShopIndex")
+const loadBecomeAgent = () => import("./pages/BecomeAgent")
 const loadLocalServices = () => import("./pages/LocalServices")
 const loadMerchantDiscovery = () => import("./pages/MerchantDiscovery")
 const loadVendorsPanel = () => import("./pages/VendorsPanel")
@@ -240,6 +241,7 @@ const ShopDetail = resilientLazy(loadShopDetail, { pageLabel: "shop view" })
 
 const ProductDetail = resilientLazy(loadProductDetail, { pageLabel: "product details" })
 const ShopIndex = resilientLazy(loadShopIndex, { pageLabel: "market index" })
+const BecomeAgent = resilientLazy(loadBecomeAgent, { pageLabel: "become agent" })
 const LocalServices = resilientLazy(loadLocalServices, { pageLabel: "local services" })
 const MerchantDiscovery = resilientLazy(loadMerchantDiscovery, { pageLabel: "merchant profile" })
 const VendorsPanel = resilientLazy(loadVendorsPanel, { pageLabel: "vendor panel" })
@@ -1023,6 +1025,11 @@ function AppShell() {
         <Route
           path="/shop-index"
           element={withProtectedRoute(<ShopIndex />)}
+        />
+
+        <Route
+          path="/become-agent"
+          element={withProtectedRoute(<BecomeAgent />)}
         />
 
         <Route

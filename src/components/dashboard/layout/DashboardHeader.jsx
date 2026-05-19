@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
+import { useNavigate } from "react-router-dom"
 import {
   FaArrowDownAZ,
   FaBell,
@@ -15,7 +16,6 @@ import {
   FaStore,
   FaTableCellsLarge,
 } from "react-icons/fa6"
-import AgentApplicationModal from "../AgentApplicationModal"
 
 function DashboardHeader({
   activeTab,
@@ -54,10 +54,11 @@ function DashboardHeader({
     currentProfile?.full_name || user?.email || "User"
   )}`
 
+  const navigate = useNavigate()
+
   const [desktopAreaOpen, setDesktopAreaOpen] = useState(false)
   const [mobileAreaOpen, setMobileAreaOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
-  const [agentModalOpen, setAgentModalOpen] = useState(false)
 
   const desktopAreaRef = useRef(null)
   const mobileAreaRef = useRef(null)
@@ -589,7 +590,7 @@ function DashboardHeader({
         <button
           type="button"
           className="flex h-[30px] w-[30px] shrink-0 items-center justify-center gap-[6px] rounded border border-transparent px-0 text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-3"
-          onClick={() => setAgentModalOpen(true)}
+          onClick={() => navigate("/become-agent")}
           title="Become an Agent"
           aria-label="Become an Agent"
         >
@@ -760,7 +761,7 @@ function DashboardHeader({
             {/* 4 — Become an Agent */}
             <button
               type="button"
-              onClick={() => { setMoreOpen(false); setAgentModalOpen(true) }}
+              onClick={() => { setMoreOpen(false); navigate("/become-agent") }}
               className="flex items-center gap-4 px-6 py-4 text-left transition hover:bg-slate-50 active:bg-slate-100"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
@@ -778,12 +779,6 @@ function DashboardHeader({
     )}
 
     </>, document.body)}
-
-    <AgentApplicationModal
-      isOpen={agentModalOpen}
-      onClose={() => setAgentModalOpen(false)}
-      user={user}
-    />
 
     </>
   )
