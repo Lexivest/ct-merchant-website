@@ -8,7 +8,7 @@ import ctmLogo from "../../assets/images/logo.jpg"
 
 function MarketPulseTicker() {
   const cities = ["Jos", "Kaduna", "Lokoja", "Minna", "Asaba", "Enugu", "Makurdi"]
-  const message = "city commerce - discover business and services in your neighbourhood before you step out - bridging the gap between digital convenience and physical reality"
+  const message = "city commerce - discover businesses and services in your neighbourhood before you step out - bridging the gap between digital convenience and physical reality"
   const tickerText = `${cities.join("  |  ").toUpperCase()}  |  ${message.toUpperCase()}`
   const locationIcon = (
     <svg
@@ -42,7 +42,7 @@ function MarketPulseTicker() {
         <div className="min-w-0 flex-1">
           <ScrollingTicker
             text={tickerText}
-            textClassName="font-serif text-[11px] font-semibold uppercase tracking-[0.28em] text-[#F2DCA4]"
+            textClassName="font-serif text-[11px] font-semibold uppercase tracking-[0.28em] text-white"
             speedFactor={0.15}
           >
             <span className="inline-flex items-center gap-4">
