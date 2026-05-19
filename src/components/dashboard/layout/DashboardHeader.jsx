@@ -221,10 +221,10 @@ function DashboardHeader({
             activeTab === "services" ? "active" : ""
           } flex h-[30px] w-[30px] items-center justify-center gap-[6px] rounded border border-transparent px-0 text-[0.9rem] font-bold text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-3`}
           onClick={() => switchScreen("services")}
-          title="Hub"
+          title="Dashboard"
         >
           <FaTableCellsLarge className="text-[1.05rem]" />
-          <span className="hidden min-[900px]:inline">Hub</span>
+          <span className="hidden min-[900px]:inline">Dashboard</span>
         </button>
 
         <button
@@ -566,15 +566,16 @@ function DashboardHeader({
         ) : null}
       </div>
 
-      <div className="amz-sub-header hidden lg:flex h-[42px] items-center gap-1 bg-[#232F3E] px-0 py-0 text-[0.9rem] font-semibold text-white sm:gap-2">
+      <div className="amz-sub-header hidden lg:flex h-[42px] items-center justify-center gap-1 bg-[#232F3E] px-0 py-0 text-[0.9rem] font-semibold text-white sm:gap-2">
         <button
           type="button"
-          className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded border border-transparent px-0 text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-2"
+          className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center gap-[6px] rounded border border-transparent px-0 text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-3"
           onClick={onOpenAnnouncements}
           title="Announcements"
           aria-label="Open announcements"
         >
           <FaBullhorn className="text-[1.02rem]" />
+          <span className="hidden min-[900px]:inline">Announcements</span>
           {announcementsCount > 0 ? (
             <span className="absolute -right-[5px] -top-[3px] rounded-[10px] border-2 border-[#232F3E] bg-pink-600 px-[5px] py-[1px] text-[0.6rem] font-extrabold leading-none text-white">
               {announcementsCount > 9 ? "9+" : announcementsCount}
@@ -583,7 +584,6 @@ function DashboardHeader({
         </button>
 
         {renderNavControls()}
-        <div className="min-w-0 flex-1" />
       </div>
     </header>
 
