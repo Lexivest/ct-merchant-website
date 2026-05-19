@@ -97,11 +97,11 @@ const socialLinks = [
 
 const editorialTexture = {
   backgroundImage:
-    "radial-gradient(circle at 18% 18%, rgba(201,168,76,0.16), transparent 30%), radial-gradient(circle at 86% 8%, rgba(219,39,119,0.10), transparent 28%), linear-gradient(180deg, #0D0800 0%, #150C04 48%, #090600 100%)",
+    "radial-gradient(circle at 18% 18%, rgba(201,168,76,0.16), transparent 30%), radial-gradient(circle at 86% 8%, rgba(219,39,119,0.10), transparent 28%), linear-gradient(180deg, #3B1C09 0%, #150C04 48%, #090600 100%)",
 }
 
 const lightFieldClass =
-  "w-full rounded-2xl border border-[#C9A84C]/35 bg-white/80 px-5 py-3 text-sm font-semibold text-[#1B1208] outline-none transition placeholder:text-[#8A6A2A]/55 focus:border-[#9B7A25] focus:bg-white focus:ring-4 focus:ring-[#C9A84C]/15"
+  "w-full rounded-2xl border border-[#C9A84C]/35 bg-white/80 px-5 py-3 text-sm font-semibold text-[#4A2410] outline-none transition placeholder:text-[#8A6A2A]/55 focus:border-[#9B7A25] focus:bg-white focus:ring-4 focus:ring-[#C9A84C]/15"
 
 function GoldDivider({ label = "City commerce" }) {
   return (
@@ -117,7 +117,7 @@ function GoldDivider({ label = "City commerce" }) {
 
 function HomeCardShell({ children, className = "" }) {
   return (
-    <div className={`rounded-[26px] border border-[#C9A84C]/30 bg-[#F7EED8] p-5 text-[#1B1208] shadow-[0_22px_60px_rgba(27,18,8,0.18)] ${className}`}>
+    <div className={`rounded-[26px] border border-[#C9A84C]/30 bg-[#F7EED8] p-5 text-[#4A2410] shadow-[0_22px_60px_rgba(74,36,16,0.18)] ${className}`}>
       <div className="mb-4 h-1 w-16 rounded-full bg-pink-600" />
       {children}
     </div>
@@ -137,7 +137,7 @@ function ActivityCalendar() {
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C9A84C] text-[#140D05] shadow-sm">
           <FaCalendarDays className="text-xs" />
         </div>
-        <h3 className="text-xs font-black tracking-tight text-[#1B1208] uppercase">Activity Calendar</h3>
+        <h3 className="text-xs font-black tracking-tight text-[#4A2410] uppercase">Activity Calendar</h3>
       </div>
 
       <div className="w-full divide-y divide-[#C9A84C]/20 overflow-hidden rounded-2xl border border-[#C9A84C]/25 bg-white/80 p-1 shadow-sm">
@@ -145,10 +145,10 @@ function ActivityCalendar() {
           <div key={idx} className="flex items-center gap-2.5 p-2.5 transition hover:bg-[#F2DCA4]/35">
             <div className="flex h-10 w-10 flex-col items-center justify-center rounded-lg bg-[#C9A84C]/15 text-center shrink-0">
               <span className="text-[8px] font-black text-[#8A6A2A] uppercase tracking-tighter">{ev.date.split(" ")[0]}</span>
-              <span className="text-sm font-black text-[#1B1208]">{ev.date.split(" ")[1]}</span>
+              <span className="text-sm font-black text-[#4A2410]">{ev.date.split(" ")[1]}</span>
             </div>
             <div className="min-w-0 flex-1 text-left">
-              <div className="truncate text-[11px] font-bold leading-tight text-[#1B1208]">{ev.title}</div>
+              <div className="truncate text-[11px] font-bold leading-tight text-[#4A2410]">{ev.title}</div>
               <div className="mt-0.5 inline-flex rounded-full bg-[#C9A84C]/15 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wider text-[#6A5422]">
                 {ev.type}
               </div>
@@ -167,14 +167,14 @@ function OfficeSupportCard() {
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C9A84C] text-[#140D05] shadow-sm">
           <FaClock className="text-xs" />
         </div>
-        <h3 className="text-xs font-black tracking-tight text-[#1B1208] uppercase">Office & Support</h3>
+        <h3 className="text-xs font-black tracking-tight text-[#4A2410] uppercase">Office & Support</h3>
       </div>
 
       <div className="w-full rounded-2xl border border-[#C9A84C]/25 bg-white/80 p-4 text-center shadow-sm">
         <div className="flex flex-col items-center gap-1">
           <div className="text-xs text-[#8A6A2A]"><FaClock /></div>
           <div>
-            <div className="text-[10px] font-black uppercase tracking-tighter text-[#1B1208]">Opening Hours</div>
+            <div className="text-[10px] font-black uppercase tracking-tighter text-[#4A2410]">Opening Hours</div>
             <p className="mt-0.5 text-[10px] font-medium leading-relaxed text-[#6A5422]">
               Mon - Fri: 8:00 AM - 6:00 PM
             </p>
@@ -182,7 +182,7 @@ function OfficeSupportCard() {
         </div>
         <Link
           to="/contact"
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1B1208] px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#F7EED8] transition hover:bg-pink-600"
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#4A2410] px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#F7EED8] transition hover:bg-pink-600"
         >
           Contact support
           <FaArrowRight />
@@ -242,12 +242,12 @@ function HomeFeedbackSection() {
   }
 
   return (
-    <div className="h-full rounded-[28px] border border-[#C9A84C]/30 bg-[#F7EED8] p-5 text-[#1B1208] shadow-[0_22px_60px_rgba(27,18,8,0.18)] md:p-7">
+    <div className="h-full rounded-[28px] border border-[#C9A84C]/30 bg-[#F7EED8] p-5 text-[#4A2410] shadow-[0_22px_60px_rgba(74,36,16,0.18)] md:p-7">
       <div className="mb-4">
         <span className="inline-block rounded-full border border-[#C9A84C]/45 bg-[#C9A84C]/15 px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-[#6A5422]">
           Share Your Feedback
         </span>
-        <h2 className="mt-2 font-serif text-2xl font-semibold text-[#1B1208] md:text-3xl">
+        <h2 className="mt-2 font-serif text-2xl font-semibold text-[#4A2410] md:text-3xl">
           Help Us Improve Your Experience
         </h2>
         <p className="mt-1 text-sm font-medium text-[#6A5422]">
@@ -360,7 +360,7 @@ function NewsletterSection() {
   }
 
   return (
-    <section className="border-y border-[#C9A84C]/25 bg-[#F7EED8] py-10 text-[#1B1208] md:py-16">
+    <section className="border-y border-[#C9A84C]/25 bg-[#F7EED8] py-10 text-[#4A2410] md:py-16">
       <div className="mx-auto max-w-7xl px-4">
         <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
           <div>
@@ -378,7 +378,7 @@ function NewsletterSection() {
             </p>
           </div>
 
-          <div className="rounded-[32px] border border-[#C9A84C]/30 bg-white/75 p-6 shadow-[0_22px_60px_rgba(27,18,8,0.16)] md:p-8 backdrop-blur-sm">
+          <div className="rounded-[32px] border border-[#C9A84C]/30 bg-white/75 p-6 shadow-[0_22px_60px_rgba(74,36,16,0.16)] md:p-8 backdrop-blur-sm">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -388,7 +388,7 @@ function NewsletterSection() {
                     value={formData.fullName}
                     onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
                     placeholder="John Doe"
-                    className="w-full rounded-2xl border border-[#C9A84C]/35 bg-white px-6 py-4 text-base font-bold text-[#1B1208] outline-none transition placeholder:text-[#8A6A2A]/55 focus:border-[#9B7A25] focus:ring-2 focus:ring-[#C9A84C]/20"
+                    className="w-full rounded-2xl border border-[#C9A84C]/35 bg-white px-6 py-4 text-base font-bold text-[#4A2410] outline-none transition placeholder:text-[#8A6A2A]/55 focus:border-[#9B7A25] focus:ring-2 focus:ring-[#C9A84C]/20"
                   />
                 </div>
                 <div className="space-y-2">
@@ -398,7 +398,7 @@ function NewsletterSection() {
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                     placeholder="john@example.com"
-                    className="w-full rounded-2xl border border-[#C9A84C]/35 bg-white px-6 py-4 text-base font-bold text-[#1B1208] outline-none transition placeholder:text-[#8A6A2A]/55 focus:border-[#9B7A25] focus:ring-2 focus:ring-[#C9A84C]/20"
+                    className="w-full rounded-2xl border border-[#C9A84C]/35 bg-white px-6 py-4 text-base font-bold text-[#4A2410] outline-none transition placeholder:text-[#8A6A2A]/55 focus:border-[#9B7A25] focus:ring-2 focus:ring-[#C9A84C]/20"
                   />
                 </div>
               </div>
@@ -1064,12 +1064,12 @@ function Home() {
             structuredData={homeStructuredData}
           />
           <PwaAddToHomePrompt />
-          <section className="relative overflow-x-hidden bg-[#0D0800] px-4 py-4 text-[#F7EED8] md:py-8" style={editorialTexture}>
+          <section className="relative overflow-x-hidden bg-[#3B1C09] px-4 py-4 text-[#F7EED8] md:py-8" style={editorialTexture}>
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(242,220,164,0.13),transparent_34%)]" />
             <div className="relative mx-auto mb-4 w-full max-w-7xl lg:hidden">
               <p className="mb-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-[#F2DCA4]">Verified Shops and Services</p>
               <div className="overflow-hidden rounded-[22px] border border-[#C9A84C]/25 bg-[#140D05]/90 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
-                <div className="flex h-[48px] w-full overflow-hidden rounded-[16px] border-[3px] border-[#C9A84C] bg-[#0D0800]/90 shadow-[0_0_0_4px_rgba(201,168,76,0.14)] transition focus-within:border-pink-500 focus-within:shadow-[0_0_0_4px_rgba(219,39,119,0.16)]">
+                <div className="flex h-[48px] w-full overflow-hidden rounded-[16px] border-[3px] border-[#C9A84C] bg-[#3B1C09]/90 shadow-[0_0_0_4px_rgba(201,168,76,0.14)] transition focus-within:border-pink-500 focus-within:shadow-[0_0_0_4px_rgba(219,39,119,0.16)]">
                   <div className="flex items-center border-r border-[#C9A84C]/25 bg-[#F7EED8]/10 pl-4 pr-2 text-sm font-black tracking-[0.12em] text-[#F2DCA4]">
                     CT-
                   </div>
@@ -1112,7 +1112,7 @@ function Home() {
                       className="h-full w-full object-cover object-center"
                       loading="eager"
                       fetchPriority="high"
-                      placeholderClassName="bg-gradient-to-br from-[#0D0800] via-[#2B1A08] to-[#140D05]"
+                      placeholderClassName="bg-gradient-to-br from-[#3B1C09] via-[#2B1A08] to-[#140D05]"
                     />
                   </div>
                 </div>
@@ -1126,7 +1126,7 @@ function Home() {
                 <div className="space-y-4">
                   <div className="space-y-4">
                   <div className="hidden rounded-[24px] bg-[#C9A84C]/15 p-1 lg:block">
-                    <div className="rounded-[20px] border border-[#C9A84C]/20 bg-[#0D0800]/80 p-4">
+                    <div className="rounded-[20px] border border-[#C9A84C]/20 bg-[#3B1C09]/80 p-4">
                       <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#F2DCA4]">Verified Shops and Services</p>
                       <div className="flex h-[44px] overflow-hidden rounded-2xl border-[3px] border-[#C9A84C] bg-[#140D05] shadow-[0_0_0_4px_rgba(201,168,76,0.14)] transition focus-within:border-pink-500 focus-within:shadow-[0_0_0_4px_rgba(219,39,119,0.16)]">
                         <div className="flex items-center border-r border-[#C9A84C]/25 bg-[#F7EED8]/10 pl-4 pr-2 text-sm font-black tracking-[0.12em] text-[#F2DCA4]">
@@ -1158,9 +1158,9 @@ function Home() {
                   </div>
 
                   <div className="rounded-[26px] bg-[#C9A84C]/25 p-1">
-                    <div className="rounded-[22px] border border-[#C9A84C]/35 bg-[#F7EED8] p-6 text-[#1B1208] shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
+                    <div className="rounded-[22px] border border-[#C9A84C]/35 bg-[#F7EED8] p-6 text-[#4A2410] shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
                       <div className="mb-4 h-1 w-16 rounded-full bg-pink-600" />
-                      <h2 className="flex items-center gap-2 font-serif text-2xl font-semibold text-[#1B1208]">
+                      <h2 className="flex items-center gap-2 font-serif text-2xl font-semibold text-[#4A2410]">
                         <FaLock className="text-[#9B7A25]" />
                         <span>Users Login</span>
                       </h2>
@@ -1216,13 +1216,13 @@ function Home() {
                           <button
                             type="button"
                             onClick={openResetFlow}
-                            className="text-sm font-semibold text-[#6A5422] transition hover:text-[#1B1208]"
+                            className="text-sm font-semibold text-[#6A5422] transition hover:text-[#4A2410]"
                           >
                             Forgot password?
                           </button>
                         </div>
 
-                        <AuthButton type="submit" loading={loginLoading} className="!bg-[#1B1208] !text-[#F7EED8] hover:!bg-[#2D1D0D]">
+                        <AuthButton type="submit" loading={loginLoading} className="!bg-[#4A2410] !text-[#F7EED8] hover:!bg-[#5E3016]">
                           <span>Secure Sign In</span>
                           <FaArrowRight />
                         </AuthButton>
@@ -1237,7 +1237,7 @@ function Home() {
                       <button
                         type="button"
                         onClick={openCreateAccountWithTransition}
-                        className="w-full rounded-xl border-2 border-[#C9A84C]/40 bg-white/70 px-4 py-3 text-base font-bold text-[#1B1208] transition hover:bg-[#F2DCA4]/55"
+                        className="w-full rounded-xl border-2 border-[#C9A84C]/40 bg-white/70 px-4 py-3 text-base font-bold text-[#4A2410] transition hover:bg-[#F2DCA4]/55"
                       >
                         Create Account
                       </button>
@@ -1265,11 +1265,11 @@ function Home() {
 
                         <p className="px-2 text-center text-[0.75rem] leading-relaxed text-[#6A5422]">
                           By continuing with Google, you agree to <BrandText />'s{' '}
-                          <Link to="/terms" className="font-semibold text-[#1B1208] underline transition hover:text-[#9B7A25]">
+                          <Link to="/terms" className="font-semibold text-[#4A2410] underline transition hover:text-[#9B7A25]">
                             Terms of Use
                           </Link>{' '}
                           and{' '}
-                          <Link to="/privacy" className="font-semibold text-[#1B1208] underline transition hover:text-[#9B7A25]">
+                          <Link to="/privacy" className="font-semibold text-[#4A2410] underline transition hover:text-[#9B7A25]">
                             Privacy Policy
                           </Link>
                           .
@@ -1280,7 +1280,7 @@ function Home() {
                   </div>
 
                   <HomeCardShell>
-                    <h3 className="font-serif text-xl font-semibold text-[#1B1208]">Social Channels</h3>
+                    <h3 className="font-serif text-xl font-semibold text-[#4A2410]">Social Channels</h3>
                     <div className="mt-4 grid grid-cols-4 gap-1.5 sm:gap-3">
                       {socialLinks.map((item) => {
                         const Icon = item.icon
@@ -1297,7 +1297,7 @@ function Home() {
                             >
                               <Icon />
                             </span>
-                            <span className="block text-[8px] font-extrabold text-[#1B1208] sm:text-[10px]">
+                            <span className="block text-[8px] font-extrabold text-[#4A2410] sm:text-[10px]">
                               {item.label}
                             </span>
                           </a>

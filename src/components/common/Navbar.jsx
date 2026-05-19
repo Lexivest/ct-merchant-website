@@ -27,7 +27,7 @@ function MarketPulseTicker() {
   )
 
   return (
-    <div className="border-b border-[#C9A84C]/25 bg-[#0D0800] py-2.5 text-[#F7EED8]">
+    <div className="border-b border-[#C9A84C]/25 bg-[#3B1C09] py-2.5 text-[#F7EED8]">
       <div className="mx-auto flex max-w-7xl items-center px-4">
         <div className="mr-4 flex shrink-0 items-center gap-2 border-r border-[#C9A84C]/25 pr-4">
           <div className="flex h-[12px] w-[18px] flex-col overflow-hidden rounded-[2px] border border-white/20">
