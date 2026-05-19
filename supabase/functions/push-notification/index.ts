@@ -1,0 +1,100 @@
+import { createClient } from 'jsr:@supabase/supabase-js@2'
+import admin from 'npm:firebase-admin@^12.0.0'
+
+console.log("--- FUNCTION COLD START ---")
+
+Deno.serve(async (req) => {
+  try {
+    // --- 1. SETUP ---
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) return new Response("Unauthorized", { status: 401 })
+
+    const payload = await req.json()
+    const record = payload.record
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    )
+
+    // --- 2. INIT FIREBASE ---
+    if (admin.apps.length === 0) {
+      const serviceAccount = JSON.parse(Deno.env.get('FIREBASE_SERVICE_ACCOUNT')!)
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      })
+    }
+
+    // --- 3. FETCH TOKEN ---
+    const { data: tokenData } = await supabase
+      .from('fcm_tokens')
+      .select('token')
+      .eq('user_id', record.user_id)
+      .maybeSingle()
+
+    if (!tokenData) {
+      console.log(`No token for user ${record.user_id}`)
+      return new Response("No Token", { status: 200 })
+    }
+
+    // --- 4. CONSTRUCT MESSAGE ---
+    // Make sure this file exists in your bucket!
+    const logoUrl = 'https://xdchacdjcgazyckacbpc.supabase.co/storage/v1/object/public/brand-assets/CT-Merchant.jpg'
+
+    const message = {
+      token: tokenData.token,
+      notification: {
+        title: record.title,
+        body: record.message,
+        // image: logoUrl, // Optional big picture
+      },
+      android: {
+        notification: {
+          color: '#00695C',
+          icon: 'ic_notification',
+          sound: 'default',
+        },
+      },
+      data: {
+        click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        notification_id: String(record.id),
+      },
+    }
+
+    // --- 5. SEND WITH AUTO-CLEANUP ---
+    try {
+      const response = await admin.messaging().send(message)
+      console.log("SUCCESS! Sent:", response)
+      return new Response(JSON.stringify({ success: true, id: response }), {
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+    } catch (fcmError: any) {
+      console.error("FCM Send Error:", fcmError.code)
+
+      // CHECK FOR STALE TOKENS
+      if (fcmError.code === 'messaging/registration-token-not-registered' ||
+          fcmError.code === 'messaging/invalid-registration-token') {
+
+        console.log(`Token invalid. Deleting from DB: ${tokenData.token}`)
+
+        // Auto-delete the bad token
+        await supabase
+          .from('fcm_tokens')
+          .delete()
+          .eq('token', tokenData.token)
+
+        return new Response(JSON.stringify({ success: false, error: "Stale token deleted" }), {
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+
+      // Re-throw other errors
+      throw fcmError
+    }
+
+  } catch (error: any) {
+    console.error("CRITICAL ERROR:", error)
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 })
+  }
+})
