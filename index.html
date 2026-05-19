@@ -47,7 +47,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://xdchacdjcgazyckacbpc.supabase.co" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <!-- Non-blocking Google Fonts: loads without delaying first paint.
+         media="print" keeps it out of screen rendering during download;
+         onload switches it to "all" once it arrives. -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" /></noscript>
     <link rel="shortcut icon" href="/ctm-logo.jpg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>CTMerchant | Repository of Shops, Products and Services</title>
@@ -141,6 +145,36 @@
         to   { transform: rotate(0deg); }
       }
     </style>
+
+    <!-- Boot timeout: if React hasn't replaced the spinner after 9 s (broken
+         JS bundle, SW serving a stale shell, or very slow network) swap in a
+         plain "taking too long" message so users are never left staring at a
+         frozen spinner with no way out. -->
+    <script>
+      (function () {
+        var tid = setTimeout(function () {
+          var boot = document.querySelector('.ctm-boot');
+          if (!boot) return; // React already mounted — nothing to do
+          boot.innerHTML =
+            '<div style="text-align:center;padding:32px 24px;font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;">' +
+            '<div style="font-size:1.1rem;font-weight:900;color:#db2777;margin-bottom:6px;">CTMerchant</div>' +
+            '<p style="color:#64748b;font-size:0.875rem;margin:0 0 20px;">Taking longer than expected. Please check your connection.</p>' +
+            '<button onclick="window.location.reload()" style="background:#131921;color:#fff;border:none;padding:11px 22px;border-radius:9px;font-weight:700;font-size:0.875rem;cursor:pointer;">Reload App</button>' +
+            '</div>';
+        }, 9000);
+        // Cancel the timeout as soon as React replaces #root's children
+        var root = document.getElementById('root');
+        if (root && typeof MutationObserver !== 'undefined') {
+          var obs = new MutationObserver(function () {
+            if (!document.querySelector('.ctm-boot')) {
+              clearTimeout(tid);
+              obs.disconnect();
+            }
+          });
+          obs.observe(root, { childList: true, subtree: true });
+        }
+      })();
+    </script>
 
     <script type="application/ld+json">
       {

@@ -1,7 +1,7 @@
-const SHELL_CACHE = "ctm-shell-v6";
-const STATIC_CACHE = "ctm-static-v6";
-const ASSET_CACHE = "ctm-assets-v6";
-const NETWORK_FIRST_TIMEOUT_MS = 2500;
+const SHELL_CACHE = "ctm-shell-v7";
+const STATIC_CACHE = "ctm-static-v7";
+const ASSET_CACHE = "ctm-assets-v7";
+const NETWORK_FIRST_TIMEOUT_MS = 1200;
 const PRECACHE_URLS = [
   "/",
   "/index.html",

@@ -310,8 +310,17 @@ function useAuthSession() {
 
     const cachedProfile =
       authSnapshot?.profile || readCachedProfile(activeCachedUserId)
+
+    // If we have both a cached session user AND a cached profile, start with
+    // loading: false so protected routes render immediately from cache.
+    // The background load() still runs to validate the JWT — if the session
+    // has expired it will clear state and redirect via onAuthStateChange.
+    // This is the same optimistic pattern large SPAs use (show cached content
+    // instantly, correct silently if the server disagrees).
+    const hasCachedSession = Boolean(authSnapshot?.user?.id && cachedProfile)
+
     return {
-      loading: true,
+      loading: !hasCachedSession,
       session: authSnapshot?.session || null,
       user: authSnapshot?.user || null,
       profile: cachedProfile || null,
@@ -375,7 +384,13 @@ function useAuthSession() {
       const snapshot = getSnapshotWithCachedProfile()
 
       try {
-        const session = await getSession()
+        // Race the session fetch against a 6-second safety timeout.
+        // If Supabase is unreachable, we resolve with null rather than
+        // spinning forever — the offline/cached fallback below takes over.
+        const session = await Promise.race([
+          getSession(),
+          new Promise((resolve) => setTimeout(() => resolve(null), 6000)),
+        ])
         const user = session?.user || null
 
         if (!mounted) return
