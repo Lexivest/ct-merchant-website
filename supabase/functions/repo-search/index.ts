@@ -1,7 +1,9 @@
-// Pass 11 fixed source: repo-search
-// Changes vs v24:
-// - Removed `skipRateLimit` body-field bypass (any caller could opt out of rate limiting)
-// - Tightened generic error responses (no internal detail leakage)
+// Pass 12 fixed source: repo-search
+// Changes vs v27:
+// - Replaced select("*") on shops with SHOP_PUBLIC_COLUMNS — service_role bypasses RLS,
+//   so wildcard select would expose KYC/financial columns to any caller with a unique_id.
+// - Replaced select("*") on products with PRODUCT_PUBLIC_COLUMNS for same reason.
+// - Added areas ( name ) to shop select for area-name display in the UI.
 // Deploy with: verify_jwt: true (unchanged)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
@@ -72,6 +74,27 @@ function normalizeSearchTerm(value: unknown) {
   return ""
 }
 
+// SECURITY: With service_role (RLS bypassed), NEVER use select("*").
+// Always list columns explicitly so private KYC/financial fields cannot leak.
+// Excluded from SHOP_PUBLIC_COLUMNS: owner_id, cac_number, cac_certificate_url,
+// id_type, id_number, id_card_url, kyc_video_url, kyc_status, kyc_submission_meta,
+// rejection_reason, creation_ip, creation_device, subscription_end_date, subscription_plan.
+const SHOP_PUBLIC_COLUMNS = `
+  id, unique_id, name, description, category, address, phone, whatsapp,
+  image_url, is_verified, is_featured, is_open, is_service, business_type,
+  city_id, area_id, latitude, longitude, facebook_url, instagram_url,
+  twitter_url, tiktok_url, website_url, telegram_url, storefront_url,
+  created_at, cities ( name ), areas ( name ), profiles ( full_name )
+`
+
+// Excluded from PRODUCT_PUBLIC_COLUMNS: rejection_reason and any internal fields.
+const PRODUCT_PUBLIC_COLUMNS = `
+  id, shop_id, name, description, price, discount_price, condition,
+  image_url, image_url_2, image_url_3, stock_count, category, attributes,
+  is_available, is_approved, created_at,
+  shops!inner ( id, status, is_open, subscription_end_date )
+`
+
 function getCooldownMessage(retryAfterSeconds: number) {
   const seconds = Math.max(1, Math.ceil(retryAfterSeconds || DEFAULT_COOLDOWN_SECONDS))
   const minutes = Math.ceil(seconds / 60)
@@ -83,11 +106,7 @@ async function fetchFirstShop(supabase: ReturnType<typeof createClient>, normali
   const nowIso = new Date().toISOString()
   return supabase
     .from("shops")
-    .select(`
-      *,
-      cities ( name ),
-      profiles ( full_name )
-    `)
+    .select(SHOP_PUBLIC_COLUMNS)
     .eq("unique_id", normalizedTerm)
     .eq("status", "approved")
     .eq("is_open", true)
@@ -105,10 +124,7 @@ async function fetchShopDetailPayload(supabase: ReturnType<typeof createClient>,
   const [productsResult, bannerNewsResult, likesResult] = await Promise.all([
     supabase
       .from("products")
-      .select(`
-        *,
-        shops!inner ( id, status, is_open, subscription_end_date )
-      `)
+      .select(PRODUCT_PUBLIC_COLUMNS)
       .eq("shop_id", shopId)
       .eq("is_available", true)
       .eq("is_approved", true)

@@ -16,6 +16,9 @@ Disallow: /staff-inbox
 Disallow: /staff-security-radar
 Disallow: /staff-products
 Disallow: /staff-shop-content
+Disallow: /staff-shop-analytics
+Disallow: /staff-commissions
+Disallow: /staff-shop-identity
 Disallow: /staff-announcements
 Disallow: /staff-notifications
 Disallow: /user-dashboard
