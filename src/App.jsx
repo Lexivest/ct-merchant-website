@@ -229,6 +229,7 @@ const StaffShopContent = createPreloadableStaffRoute("/staff-shop-content")
 const StaffShopIdentity = createPreloadableStaffRoute("/staff-shop-identity")
 const StaffAnnouncements = createPreloadableStaffRoute("/staff-announcements")
 const StaffNotifications = createPreloadableStaffRoute("/staff-notifications")
+const StaffAgentApplications = createPreloadableStaffRoute("/staff-agent-applications")
 const UserDashboard = resilientLazy(loadUserDashboard, { pageLabel: "user dashboard" })
 const ShopRegistration = resilientLazy(loadShopRegistration, { pageLabel: "shop registration" })
 const Area = resilientLazy(loadArea, { pageLabel: "area view" })
@@ -503,6 +504,11 @@ function getRouteMeta(pathname) {
     "/staff-notifications": {
       title: "Targeted Notifications | CTMerchant",
       description: "Compose and send targeted operational notifications to merchants and users.",
+      noindex: true,
+    },
+    "/staff-agent-applications": {
+      title: "Agent Applications | CTMerchant",
+      description: "Review and approve CTMerchant agent applications submitted by individuals and business entities.",
       noindex: true,
     },
     "/user-dashboard": {
@@ -893,6 +899,7 @@ function AppShell() {
         <Route path="/staff-shop-identity" element={<ProtectedStaffRoute superOnly><StaffShopIdentity /></ProtectedStaffRoute>} />
         <Route path="/staff-announcements" element={<ProtectedStaffRoute adminOnly><StaffAnnouncements /></ProtectedStaffRoute>} />
         <Route path="/staff-notifications" element={<ProtectedStaffRoute adminOnly><StaffNotifications /></ProtectedStaffRoute>} />
+        <Route path="/staff-agent-applications" element={<ProtectedStaffRoute superOnly><StaffAgentApplications /></ProtectedStaffRoute>} />
 
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />

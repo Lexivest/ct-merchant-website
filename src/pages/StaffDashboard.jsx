@@ -14,6 +14,7 @@ import {
   FaEnvelope,
   FaFileContract,
   FaFolderOpen,
+  FaHandshake,
   FaIdBadge,
   FaImages,
   FaMoneyCheckDollar,
@@ -462,6 +463,16 @@ export default function StaffDashboard() {
         path: "/staff-security-radar",
         locked: superLocked,
         lockedMessage: "Security radar is reserved for super admins.",
+      },
+      {
+        title: "Agent Applications",
+        icon: <FaHandshake />,
+        metric: counts.agentApplications,
+        metricLabel: "Pending",
+        tone: "emerald",
+        path: "/staff-agent-applications",
+        locked: superLocked,
+        lockedMessage: "Agent application reviews are reserved for super admins.",
       },
     ]
   }, [counts, hasAdminRole, isSuperAdmin, summary])

@@ -604,6 +604,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
     content: cachedCounts?.counts?.content || 0,
     inbox: cachedCounts?.counts?.inbox || 0,
     radar: cachedCounts?.counts?.radar || 0,
+    agentApplications: cachedCounts?.counts?.agentApplications || 0,
   })
   const [summary, setSummary] = useState({
     shopCount: cachedCounts?.summary?.shopCount || 0,
@@ -622,6 +623,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
         content: 0,
         inbox: 0,
         radar: 0,
+        agentApplications: 0,
       }
       const nextSummary = {
         shopCount: 0,
@@ -681,6 +683,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
       visitsTodayResult,
       cityReporterIdsResult,
       radarResult,
+      agentAppsResult,
     ] = await Promise.allSettled([
       buildScopedShopQuery(
         supabase.from("shops").select("id", { count: "exact", head: true })
@@ -725,6 +728,12 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
             p_city_id: null,
           })
         : Promise.resolve({ data: [], error: null }),
+      isSuperAdmin
+        ? supabase
+            .from("agent_applications")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "pending")
+        : Promise.resolve({ count: 0, error: null }),
     ])
 
     const readCount = (result) =>
@@ -775,6 +784,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
       content: readCount(pendingContentResult),
       inbox: readCount(unreadContactResult) + pendingAbuseCount,
       radar: radarCount,
+      agentApplications: readCount(agentAppsResult),
     }
 
     const nextSummary = {
@@ -797,6 +807,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
         content: 0,
         inbox: 0,
         radar: 0,
+        agentApplications: 0,
       }
       const nextSummary = {
         shopCount: 0,
@@ -812,7 +823,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
 
     try {
       setLoading((previous) => previous && !hasCachedCounts)
-      const [payloadResult, radarResult] = await Promise.all([
+      const [payloadResult, radarResult, agentAppsResult] = await Promise.all([
         supabase.rpc("get_staff_dashboard_payload", {
           p_is_super_admin: isSuperAdmin,
           p_city_id: staffCityId ? Number(staffCityId) : null,
@@ -823,6 +834,12 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
               p_city_id: null,
             })
           : Promise.resolve({ data: [], error: null }),
+        isSuperAdmin
+          ? supabase
+              .from("agent_applications")
+              .select("id", { count: "exact", head: true })
+              .eq("status", "pending")
+          : Promise.resolve({ count: 0, error: null }),
       ])
 
       const { data, error } = payloadResult
@@ -835,9 +852,13 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
             ? Number(data.counts?.radar || 0)
             : radarResult.data.length
 
+        const agentApplications =
+          !agentAppsResult.error ? agentAppsResult.count || 0 : 0
+
         const nextCounts = {
           ...data.counts,
           radar: radarCount,
+          agentApplications,
         }
         const nextSummary = {
           shopCount: data.summary.shop_count,

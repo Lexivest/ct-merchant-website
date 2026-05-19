@@ -212,7 +212,7 @@ export default function BecomeAgent() {
     try {
       setIsSubmitting(true)
 
-      const { error } = await supabase.from("affiliate_applications").insert([
+      const { error } = await supabase.from("agent_applications").insert([
         {
           full_name: isIndividual
             ? formData.fullName.trim()

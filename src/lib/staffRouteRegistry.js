@@ -18,6 +18,7 @@ const staffRouteLoaders = {
   "/staff-discoveries": () => import("../pages/staff/StaffDiscoveries"),
   "/staff-inbox": () => import("../pages/staff/StaffInbox"),
   "/staff-security-radar": () => import("../pages/staff/StaffSecurityRadar"),
+  "/staff-agent-applications": () => import("../pages/staff/StaffAgentApplications"),
   "/staff-studio": () => import("../pages/vendors/ImageOptimizer"),
   "/staff-issue-id": () => import("../pages/staff/StaffIDGenerator"),
 }
