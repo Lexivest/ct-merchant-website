@@ -1149,12 +1149,15 @@ function ShopDetail() {
     <AiAssistantWidget 
       mode="shopping" 
       isRepoSearch={isRepoSearchEntry}
-      shopData={currentShop ? { 
-        id: currentShop.id, 
-        name: currentShop.name, 
+      shopData={currentShop ? {
+        id: currentShop.id,
+        name: currentShop.name,
         category: currentShop.category,
-        city: currentShop.cities?.name 
-      } : null} 
+        address: currentShop.address || null,
+        is_service: currentShop.is_service ?? false,
+        is_verified: currentShop.is_verified ?? false,
+        city: currentShop.cities?.name
+      } : null}
     />
   </>
 )

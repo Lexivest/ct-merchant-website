@@ -1195,16 +1195,20 @@ function ProductDetail() {
       <AiAssistantWidget 
         mode="shopping" 
         isRepoSearch={isPublicRepoMode}
-        shopData={currentShop ? { 
-          id: currentShop.id, 
-          name: currentShop.name, 
+        shopData={currentShop ? {
+          id: currentShop.id,
+          name: currentShop.name,
           category: currentShop.category,
-          city: currentShop.cities?.name 
+          address: currentShop.address || null,
+          is_service: currentShop.is_service ?? false,
+          is_verified: currentShop.is_verified ?? false,
+          city: currentShop.cities?.name
         } : null}
         productData={currentProduct ? {
           id: currentProduct.id,
           name: currentProduct.name,
-          price: currentProduct.discount_price || currentProduct.price
+          price: currentProduct.price,
+          discount_price: currentProduct.discount_price || null
         } : null}
       />
 
