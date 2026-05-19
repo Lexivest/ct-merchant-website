@@ -892,7 +892,7 @@ function ShopRegistration() {
         setExistingShop(data.shop || null)
       }
 
-      const draft = await loadPersistentDraft(shopDraftKey)
+      const draft = await loadPersistentDraft(shopDraftKey, { maxAgeDays: 30 })
       if (isCancelled) return
 
       if (draft?.data?.form) {

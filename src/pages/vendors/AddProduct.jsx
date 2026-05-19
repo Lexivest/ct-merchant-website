@@ -267,7 +267,7 @@ export default function AddProduct() {
   const previewsRef = useRef(previews);
   const tempImageRef = useRef(tempImage);
   const skipNextDraftSaveRef = useRef(false);
-  const fileInputRefs = { 1: useRef(null), 2: useRef(null), 3: useRef(null) };
+  const fileInputRefs = useRef({ 1: null, 2: null, 3: null });
 
   useEffect(() => { cameraSlotRef.current = cameraSlot; }, [cameraSlot]);
   useEffect(() => { previewsRef.current = previews; }, [previews]);
@@ -330,7 +330,7 @@ export default function AddProduct() {
     if (authLoading || loading || error || !productDraftKey) return;
     let isCancelled = false;
     async function restoreDraft() {
-      const draft = await loadPersistentDraft(productDraftKey);
+      const draft = await loadPersistentDraft(productDraftKey, { maxAgeDays: 14 });
       if (isCancelled) return;
       if (draft?.data?.form) setForm((prev) => ({ ...prev, ...draft.data.form }));
       if (draft?.data?.dynamicAttrs) setDynamicAttrs(draft.data.dynamicAttrs);
@@ -410,8 +410,6 @@ export default function AddProduct() {
 
     setProcessingSlots((prev) => ({ ...prev, [slot]: true }));
     try {
-      console.log(`[CT Studio API] Processing slot ${slot}. Original Size: ${file.size}`);
-      
       const result = await safeProcessImage(file, {
         targetWidth: PRODUCT_PROFILE.targetWidth,
         targetHeight: PRODUCT_PROFILE.targetHeight,
@@ -741,7 +739,7 @@ export default function AddProduct() {
                 key={slot}
                 className={`relative flex aspect-square flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed transition-colors ${slot === 1 ? (previews[1] ? "border-[#db2777] bg-white" : "border-[#db2777] bg-[#fdf2f8]") : (previews[slot] ? "border-slate-300 bg-white" : "border-[#888C8C] bg-[#F7F7F7]")}`}
               >
-                <input type="file" ref={fileInputRefs[slot]} hidden accept={PRODUCT_ACCEPT} onChange={(e) => handleFileSelect(e, slot)} />
+                <input type="file" ref={(el) => { fileInputRefs.current[slot] = el }} hidden accept={PRODUCT_ACCEPT} onChange={(e) => handleFileSelect(e, slot)} />
                 
                 {processingSlots[slot] ? (
                   <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm">
@@ -754,7 +752,7 @@ export default function AddProduct() {
                   <>
                     <img src={previews[slot]} className="absolute inset-0 h-full w-full object-contain bg-white z-10" alt={`Slot ${slot}`} />
                     <div className="absolute left-1 top-1 z-20 flex items-center gap-1">
-                      <button type="button" onClick={() => fileInputRefs[slot].current?.click()} className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#0F172A] shadow-md transition hover:scale-110" title="Pick from files"><FaImage size={11} /></button>
+                      <button type="button" onClick={() => fileInputRefs.current[slot]?.click()} className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#0F172A] shadow-md transition hover:scale-110" title="Pick from files"><FaImage size={11} /></button>
                       <button type="button" onClick={() => setCameraSlot(slot)} className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0F172A] text-white shadow-md transition hover:scale-110 hover:bg-[#1E293B]" title="Capture from camera"><FaCamera size={11} /></button>
                       <button type="button" onClick={() => openStudioForSlot(slot)} className="flex h-7 w-7 items-center justify-center rounded-full bg-[#db2777] text-white shadow-md transition hover:scale-110 hover:bg-[#be185d]" title="Edit in CT Studio"><FaWandMagicSparkles size={11} /></button>
                     </div>
@@ -779,7 +777,7 @@ export default function AddProduct() {
                             : "Label/Box\n(Optional)"}
                     </span>
                     <div className="mt-2 flex items-center gap-1">
-                      <button type="button" onClick={() => fileInputRefs[slot].current?.click()} className="rounded-md border border-[#334155] bg-white px-2 py-1 text-[0.58rem] font-extrabold uppercase tracking-wide text-[#0F172A] transition hover:bg-slate-50">File</button>
+                      <button type="button" onClick={() => fileInputRefs.current[slot]?.click()} className="rounded-md border border-[#334155] bg-white px-2 py-1 text-[0.58rem] font-extrabold uppercase tracking-wide text-[#0F172A] transition hover:bg-slate-50">File</button>
                       <button type="button" onClick={() => setCameraSlot(slot)} className="rounded-md border border-[#334155] bg-[#0F172A] px-2 py-1 text-[0.58rem] font-extrabold uppercase tracking-wide text-white transition hover:bg-[#1E293B]">Camera</button>
                     </div>
                   </>

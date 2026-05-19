@@ -81,7 +81,7 @@ async function removeDraftFiles(draftKey) {
   })
 }
 
-export async function loadPersistentDraft(draftKey) {
+export async function loadPersistentDraft(draftKey, { maxAgeDays = null } = {}) {
   if (!draftKey || typeof window === "undefined") {
     return { data: null, files: {} }
   }
@@ -92,6 +92,19 @@ export async function loadPersistentDraft(draftKey) {
     metadata = raw ? JSON.parse(raw) : null
   } catch (error) {
     console.warn("Could not read local draft metadata:", error.message)
+  }
+
+  // Auto-clear and ignore drafts that exceed the caller's freshness requirement.
+  // This prevents stale form data (old categories, old area IDs, etc.) from
+  // silently pre-populating forms after long periods of inactivity.
+  if (maxAgeDays !== null && metadata?.updatedAt) {
+    const ageMs = Date.now() - metadata.updatedAt
+    const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000
+    if (ageMs > maxAgeMs) {
+      console.warn(`[persistentDrafts] Draft "${draftKey}" is older than ${maxAgeDays} days — discarding.`)
+      await clearPersistentDraft(draftKey).catch(() => {})
+      return { data: null, files: {} }
+    }
   }
 
   let files = {}
