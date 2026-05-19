@@ -420,11 +420,8 @@ export default function ServiceCategory() {
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-pink-100 text-[1.4rem] text-pink-600">
                     <FaBriefcase />
                   </div>
-                  <div>
-                    <div className="text-[1.4rem] font-extrabold text-[#0F1111]">{serviceName}</div>
-                    <div className="mt-0.5 text-[0.9rem] font-semibold text-[#565959]">
-                      {providers.length} verified providers found in your city
-                    </div>
+                  <div className="text-[0.9rem] font-semibold text-[#565959]">
+                    {providers.length} verified providers found in your city
                   </div>
                 </div>
                 {providers.map((provider) => (
