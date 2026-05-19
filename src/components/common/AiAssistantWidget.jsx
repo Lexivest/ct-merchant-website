@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { FaPaperPlane, FaRobot, FaRotateLeft, FaXmark } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
@@ -135,6 +136,7 @@ function colorizeBrandText(root) {
 
 function AiAssistantWidget({ mode = "ambassador", shopData = null, productData = null, isRepoSearch = false }) {
   const [isOpen, setIsOpen] = useState(false)
+  const navigate = useNavigate()
   const { user, profile } = useAuthSession()
   const firstName = profile?.full_name?.split(" ")[0] || ""
 
@@ -261,6 +263,18 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
     ])
     setInput("")
     setIsSending(false)
+  }
+
+  // Intercept anchor clicks inside AI message bubbles so they use
+  // React Router's client-side navigation instead of full-page reload.
+  const handleMessageClick = (e) => {
+    const anchor = e.target.closest("a[href]")
+    if (!anchor) return
+    const href = anchor.getAttribute("href")
+    if (!href || !href.startsWith("/")) return
+    e.preventDefault()
+    setIsOpen(false)
+    navigate(href)
   }
 
   const handleSend = async (textOverride = null) => {
@@ -473,6 +487,7 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
         <div
           ref={scrollContainerRef}
           className="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-3"
+          onClick={handleMessageClick}
         >
           {messages.map((message, index) => (
             <div
