@@ -78,7 +78,6 @@ const navLinks = [
   { label: "Home", to: "/" },
   { label: "About", to: "/about", preload: () => import("../../pages/About") },
   { label: "Services", to: "/services", preload: () => import("../../pages/Services") },
-  { label: "Affiliate", to: "/affiliate", preload: () => import("../../pages/Affiliate") },
   { label: "Careers", to: "/careers", preload: () => import("../../pages/Careers") },
   { label: "Contact", to: "/contact", preload: () => import("../../pages/Contact") },
 ]

@@ -8,12 +8,14 @@ import {
   FaBullhorn,
   FaChevronDown,
   FaEllipsis,
+  FaHandshake,
   FaHouse,
   FaLocationDot,
   FaMagnifyingGlass,
   FaStore,
   FaTableCellsLarge,
 } from "react-icons/fa6"
+import AgentApplicationModal from "../AgentApplicationModal"
 
 function DashboardHeader({
   activeTab,
@@ -55,6 +57,7 @@ function DashboardHeader({
   const [desktopAreaOpen, setDesktopAreaOpen] = useState(false)
   const [mobileAreaOpen, setMobileAreaOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
+  const [agentModalOpen, setAgentModalOpen] = useState(false)
 
   const desktopAreaRef = useRef(null)
   const mobileAreaRef = useRef(null)
@@ -583,6 +586,17 @@ function DashboardHeader({
           ) : null}
         </button>
 
+        <button
+          type="button"
+          className="flex h-[30px] w-[30px] shrink-0 items-center justify-center gap-[6px] rounded border border-transparent px-0 text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-3"
+          onClick={() => setAgentModalOpen(true)}
+          title="Become an Agent"
+          aria-label="Become an Agent"
+        >
+          <FaHandshake className="text-[1.02rem]" />
+          <span className="hidden min-[900px]:inline">Become an Agent</span>
+        </button>
+
         {renderNavControls()}
       </div>
     </header>
@@ -742,6 +756,21 @@ function DashboardHeader({
                 <div className="text-xs text-slate-500">Browse all services near you</div>
               </div>
             </button>
+
+            {/* 4 — Become an Agent */}
+            <button
+              type="button"
+              onClick={() => { setMoreOpen(false); setAgentModalOpen(true) }}
+              className="flex items-center gap-4 px-6 py-4 text-left transition hover:bg-slate-50 active:bg-slate-100"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                <FaHandshake className="text-base" />
+              </span>
+              <div>
+                <div className="text-sm font-bold text-slate-900">Become an Agent</div>
+                <div className="text-xs text-slate-500">Help businesses join CTMerchant</div>
+              </div>
+            </button>
           </div>
 
         </div>
@@ -749,6 +778,12 @@ function DashboardHeader({
     )}
 
     </>, document.body)}
+
+    <AgentApplicationModal
+      isOpen={agentModalOpen}
+      onClose={() => setAgentModalOpen(false)}
+      user={user}
+    />
 
     </>
   )
