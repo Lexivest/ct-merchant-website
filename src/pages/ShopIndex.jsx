@@ -58,7 +58,7 @@ function ShopIndex() {
 
     let query = supabase
       .from("shops")
-      .select("*")
+      .select("*, areas(name)")
       .eq("city_id", profile.city_id)
       .eq("is_service", false)
       .eq("status", "approved")
@@ -414,14 +414,14 @@ function ShopIndex() {
                 )}
 
                 <div className="min-w-0 flex-1 overflow-hidden">
-                  <div className="mb-1.5 flex items-center gap-1.5">
-                    <span className="truncate text-[1.05rem] font-extrabold text-[#0F1111]">
+                  <div className="mb-1.5 flex items-start gap-1.5">
+                    <span className="line-clamp-2 text-[0.875rem] font-extrabold leading-snug text-[#0F1111]">
                       {shop.name}
                     </span>
 
                     {shop.is_verified ? (
                       <FaCircleCheck
-                        className="shrink-0 text-[0.9rem] text-[#007185]"
+                        className="mt-0.5 shrink-0 text-[0.85rem] text-[#007185]"
                         title="Verified"
                       />
                     ) : null}
@@ -437,20 +437,16 @@ function ShopIndex() {
                       {isService ? "Service" : "Shop"}
                     </span>
 
-                    <span className="rounded bg-pink-50 px-2 py-1 text-[0.7rem] font-bold text-pink-600">
-                      {shop.category || "Uncategorized"}
-                    </span>
-
                     {shop.is_verified ? (
-                      <span className="text-[0.75rem] font-semibold text-slate-500">
+                      <span className="text-[0.72rem] font-semibold text-slate-400">
                         ID: {displayId}
                       </span>
                     ) : null}
                   </div>
 
-                  <div className="truncate text-[0.85rem] font-medium text-slate-500">
+                  <div className="truncate text-[0.8rem] font-medium text-slate-500">
                     <FaLocationDot className="mr-1 inline text-slate-400" />
-                    {shop.address || "No address"}
+                    {shop.areas?.name || "Area N/A"}
                   </div>
 
                   {isService ? (
