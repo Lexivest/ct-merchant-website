@@ -32,6 +32,7 @@ const FIELD_LIMITS = {
   fullName: 80,
   phone: 30,
   socialMediaLinks: 500,
+  platformNames: 500,
 }
 
 const TEXTAREA_CLASS =
@@ -51,6 +52,7 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
     agentPlan: "",
     questionnaire: {
       hasOnboardedBefore: "no",
+      platformNames: "",
       availability: "part-time",
       preferredRegion: "",
     },
@@ -85,6 +87,8 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
           [qKey]:
             qKey === "preferredRegion"
               ? clampWords(value, WORD_LIMITS.preferredRegion)
+              : qKey === "platformNames"
+              ? value.slice(0, FIELD_LIMITS.platformNames)
               : value,
         },
       }))
@@ -141,6 +145,10 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
           promotion_plan: formData.agentPlan.trim(),
           questionnaire: {
             hasOnboardedBefore: formData.questionnaire.hasOnboardedBefore,
+            platformNames:
+              formData.questionnaire.hasOnboardedBefore === "yes"
+                ? formData.questionnaire.platformNames.trim()
+                : "",
             availability: formData.questionnaire.availability,
             preferredRegion: formData.questionnaire.preferredRegion,
             applicationType: "agent",
@@ -417,6 +425,28 @@ export default function AgentApplicationModal({ isOpen, onClose, user }) {
                           </label>
                         ))}
                       </div>
+
+                      {formData.questionnaire.hasOnboardedBefore === "yes" && (
+                        <div className="mt-4">
+                          <div className="mb-2 flex items-center justify-between gap-3">
+                            <label className="block text-[11px] font-bold text-slate-700">
+                              Which platform(s) or agency/agencies? (e.g. CAC,
+                              SCUML, Tax Promax, Trademark Registry, etc.)
+                            </label>
+                            <span className="shrink-0 text-[10px] font-semibold text-slate-400">
+                              {formData.questionnaire.platformNames.length}/{FIELD_LIMITS.platformNames}
+                            </span>
+                          </div>
+                          <textarea
+                            name="q_platformNames"
+                            rows="3"
+                            value={formData.questionnaire.platformNames}
+                            onChange={handleChange}
+                            placeholder="List the platforms or government agencies you have worked with, e.g. CAC registration, SCUML onboarding, Tax Promax, Trademark Registry, NAFDAC, etc."
+                            className={`${TEXTAREA_CLASS} border-slate-200`}
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <div>
