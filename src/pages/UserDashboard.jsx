@@ -32,7 +32,7 @@ import { buildWishlistCacheKey, fetchWishlistData } from "../lib/wishlistData"
 import { isActiveMarketplaceShop, isServiceCategory, isServiceShop } from "../lib/serviceCategories"
 
 import DashboardHeader from "../components/dashboard/layout/DashboardHeader"
-import MarketSection, { ServiceCategoryPicker } from "../components/dashboard/sections/MarketSection"
+import MarketSection from "../components/dashboard/sections/MarketSection"
 import NotificationsSection from "../components/dashboard/sections/NotificationsSection"
 
 const loadServicesProfileSection = () =>
@@ -44,6 +44,7 @@ const loadCatPage = () => import("./Cat")
 const loadServiceCategoryPage = () => import("./ServiceCategory")
 const loadServiceProviderPage = () => import("./ServiceProvider")
 const loadShopIndexPage = () => import("./ShopIndex")
+const loadLocalServicesPage = () => import("./LocalServices")
 const loadDiscoveryDetailPage = () => import("./DiscoveryDetail")
 const loadWishlistDashboardView = () =>
   import("../components/dashboard/views/WishlistDashboardView")
@@ -407,7 +408,7 @@ function UserDashboard() {
   })
   const [prefetchedWishlistItems, setPrefetchedWishlistItems] = useState(null)
   const [announcementsOpen, setAnnouncementsOpen] = useState(false)
-  const [servicePickerOpen, setServicePickerOpen] = useState(false)
+
   const [hasUnreadAnnouncements, setHasUnreadAnnouncements] = useState(false)
 
   useEffect(() => {
@@ -1458,6 +1459,24 @@ function UserDashboard() {
     }
   }
 
+  async function openLocalServicesWithTransition() {
+    const retryAction = () => openLocalServicesWithTransition()
+    beginRouteTransition(retryAction)
+
+    try {
+      await loadLocalServicesPage()
+      navigate("/local-services")
+    } catch (error) {
+      failRouteTransition(
+        getFriendlyErrorMessage(
+          error,
+          "We could not open local services right now. Please try again."
+        ),
+        retryAction
+      )
+    }
+  }
+
   async function openDashboardRouteWithTransition(path) {
     if (!path) return
 
@@ -2358,7 +2377,7 @@ function UserDashboard() {
           hasUnreadAnnouncements ? (localData.announcements || []).length : 0
         }
         onOpenAnnouncements={openAnnouncementsModal}
-        onOpenServices={() => setServicePickerOpen(true)}
+        onOpenServices={openLocalServicesWithTransition}
       />
 
       <main className="content-body mx-auto w-full max-w-[1600px] pb-24 lg:pb-10">
@@ -2465,11 +2484,6 @@ function UserDashboard() {
         announcements={localData.announcements || []}
         open={announcementsOpen}
         onClose={() => markAnnouncementsSeen()}
-      />
-      <ServiceCategoryPicker
-        open={servicePickerOpen}
-        onClose={() => setServicePickerOpen(false)}
-        onOpenServiceCategory={openServiceCategoryWithTransition}
       />
     </div>
   )

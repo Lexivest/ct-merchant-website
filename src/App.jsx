@@ -184,6 +184,7 @@ const loadDiscoveryDetail = () => import("./pages/DiscoveryDetail")
 const loadShopDetail = () => import("./pages/ShopDetail")
 const loadProductDetail = () => import("./pages/ProductDetail")
 const loadShopIndex = () => import("./pages/ShopIndex")
+const loadLocalServices = () => import("./pages/LocalServices")
 const loadMerchantDiscovery = () => import("./pages/MerchantDiscovery")
 const loadVendorsPanel = () => import("./pages/VendorsPanel")
 const loadAddProduct = () => import("./pages/vendors/AddProduct")
@@ -239,6 +240,7 @@ const ShopDetail = resilientLazy(loadShopDetail, { pageLabel: "shop view" })
 
 const ProductDetail = resilientLazy(loadProductDetail, { pageLabel: "product details" })
 const ShopIndex = resilientLazy(loadShopIndex, { pageLabel: "market index" })
+const LocalServices = resilientLazy(loadLocalServices, { pageLabel: "local services" })
 const MerchantDiscovery = resilientLazy(loadMerchantDiscovery, { pageLabel: "merchant profile" })
 const VendorsPanel = resilientLazy(loadVendorsPanel, { pageLabel: "vendor panel" })
 const AddProduct = resilientLazy(loadAddProduct, { pageLabel: "add product" })
@@ -1021,6 +1023,11 @@ function AppShell() {
         <Route
           path="/shop-index"
           element={withProtectedRoute(<ShopIndex />)}
+        />
+
+        <Route
+          path="/local-services"
+          element={withProtectedRoute(<LocalServices />)}
         />
 
         {/* --- CATCH-ALL 404 ROUTE --- */}
