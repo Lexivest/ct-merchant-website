@@ -396,9 +396,17 @@ function useAuthSession() {
         if (!mounted) return
 
         if (!user) {
+          // Only blast the full fetch cache when a previously-authenticated session
+          // has expired or been revoked. If the user was never authenticated in this
+          // session (e.g. unauthenticated public repo visitor), the cache holds
+          // public page data — clearing it forces needless re-fetches and causes
+          // the skeleton to re-appear on every back-navigation.
+          const hadPreviousSession = Boolean(globalAuthMemory.user?.id)
           clearCachedProfile()
-          clearCachedFetchStore()
           clearAuthSnapshot()
+          if (hadPreviousSession) {
+            clearCachedFetchStore()
+          }
           globalAuthMemory = {
             isResolved: true,
             session: null,
@@ -537,9 +545,17 @@ function useAuthSession() {
       if (!mounted) return
 
       if (event === "SIGNED_OUT" || !session?.user) {
+        // Only wipe the fetch cache if the user is actively signing out or if
+        // a previously-authenticated session has expired (INITIAL_SESSION / other
+        // event with session=null while we still had a remembered user).
+        // An INITIAL_SESSION with no user for an always-unauthenticated visitor
+        // should not discard their public-page cache (shop detail, repo search, etc.).
+        const hadSession = Boolean(globalAuthMemory.user?.id)
         clearCachedProfile()
-        clearCachedFetchStore()
         clearAuthSnapshot()
+        if (event === "SIGNED_OUT" || hadSession) {
+          clearCachedFetchStore()
+        }
         globalAuthMemory = {
           isResolved: true,
           session: null,
