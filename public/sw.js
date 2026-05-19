@@ -1,6 +1,6 @@
-const SHELL_CACHE = "ctm-shell-v7";
-const STATIC_CACHE = "ctm-static-v7";
-const ASSET_CACHE = "ctm-assets-v7";
+const SHELL_CACHE = "ctm-shell-v8";
+const STATIC_CACHE = "ctm-static-v8";
+const ASSET_CACHE = "ctm-assets-v8";
 const NETWORK_FIRST_TIMEOUT_MS = 1200;
 const PRECACHE_URLS = [
   "/",
@@ -10,6 +10,7 @@ const PRECACHE_URLS = [
   "/version.json",
   "/robots.txt",
   "/sitemap.xml",
+  "/boot-guard.js",
   "/ctm-logo.jpg",
   "/apple-touch-icon.png",
   "/icon-192.png",
@@ -308,6 +309,7 @@ self.addEventListener("fetch", (event) => {
 
   if (
     url.pathname === "/manifest.json" ||
+    url.pathname === "/boot-guard.js" ||
     url.pathname === "/apple-touch-icon.png" ||
     url.pathname === "/icon-192.png" ||
     url.pathname === "/icon-512.png" ||
