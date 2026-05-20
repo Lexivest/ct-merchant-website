@@ -7,7 +7,64 @@ import {
   FaEye,
   FaReply,
   FaTrashCan,
+  FaTriangleExclamation,
 } from "react-icons/fa6"
+
+/* ── Flagged-word filter ────────────────────────────────────────── */
+const FLAGGED_WORDS = [
+  // Fraud / scam
+  "scam","scammer","scamming","fraud","fraudster","fraudulent",
+  "thief","thieves","thieve","stole","stolen","robber","robbery",
+  "criminal","cheat","cheater","cheating","con","swindle","swindler",
+  "fake","counterfeit","ponzi","liar","lies","deceive","deception",
+  "extortion","bribe","blackmail","money back","unauthorized",
+  // Insults
+  "stupid","idiot","fool","dumb","moron","imbecile",
+  "useless","worthless","trash","garbage","rubbish",
+  "crazy","mad","lunatic","insane","rogue",
+  // Profanity
+  "fuck","shit","bitch","bastard","pussy","dick","cock",
+  "cunt","whore","slut","nigga","nigger","motherfucker","asshole",
+  // Violence / threats
+  "kill","murder","attack","threaten","rape","bomb",
+  "destroy","shoot","stab","beat up","i will find you",
+  // Religious (context-sensitive — often used offensively)
+  "jesus","mohammed","muhammad","allah","satan","devil","lucifer",
+  "kafir","infidel","pagan","heathen","blasphemy",
+  // Hate / discrimination
+  "racist","racism","tribalism","tribalist","xenophobia","bigot",
+  "hate you","i hate","go to hell",
+]
+
+function getFlaggedTerms(text) {
+  if (!text) return []
+  const found = []
+  FLAGGED_WORDS.forEach((word) => {
+    const re = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i")
+    if (re.test(text) && !found.includes(word)) found.push(word)
+  })
+  return found
+}
+
+function HighlightedText({ text, flaggedTerms }) {
+  if (!text || !flaggedTerms.length) return <>{text}</>
+  const escaped = flaggedTerms.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+  const splitRe = new RegExp(`(${escaped.join("|")})`, "gi")
+  const testRe  = new RegExp(`^(${escaped.join("|")})$`, "i")
+  return (
+    <>
+      {text.split(splitRe).map((part, i) =>
+        testRe.test(part) ? (
+          <mark key={i} className="rounded bg-red-100 px-0.5 font-bold not-italic text-red-700">
+            {part}
+          </mark>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  )
+}
 import { supabase } from "../../lib/supabase"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import { renderBrandedText } from "../../components/common/BrandText"
@@ -50,7 +107,7 @@ export default function StaffCommunity() {
   const [commentThreads, setCommentThreads] = useState(() => prefetchedData?.commentThreads || [])
   const [loadingComments, setLoadingComments] = useState(() => !prefetchedData && !fetchingStaff)
   const [selectedCommentThread, setSelectedCommentThread] = useState(null)
-  const [commentFilter, setCommentFilter] = useState("all")
+  const [commentFilter, setCommentFilter] = useState("flagged")
   const [ageFilter, setAgeFilter] = useState("all")
   const [moderatingCommentId, setModeratingCommentId] = useState(null)
   const [deletingCommentId, setDeletingCommentId] = useState(null)
@@ -270,8 +327,20 @@ export default function StaffCommunity() {
     }
   }
 
+  /* flag every thread that contains at least one flagged word */
+  const flaggedThreadIds = useMemo(() => {
+    const ids = new Set()
+    commentThreads.forEach((thread) => {
+      const hit = thread.comments.some((c) => getFlaggedTerms(c.body).length > 0)
+      if (hit) ids.add(thread.id)
+    })
+    return ids
+  }, [commentThreads])
+
   const filteredCommentThreads = useMemo(() => {
     return commentThreads.filter((thread) => {
+      if (commentFilter === "flagged") return flaggedThreadIds.has(thread.id)
+
       const matchesStatus =
         commentFilter === "all" || thread.comments.some((comment) => comment.status === commentFilter)
 
@@ -285,12 +354,13 @@ export default function StaffCommunity() {
       if (ageFilter === "1_year") return ageInDays >= 365
       return true
     })
-  }, [ageFilter, commentFilter, commentThreads])
+  }, [ageFilter, commentFilter, commentThreads, flaggedThreadIds])
 
   const approvedCommentTotal = commentThreads.reduce((sum, thread) => sum + thread.approvedCount, 0)
-  const hiddenCommentTotal = commentThreads.reduce((sum, thread) => sum + thread.hiddenCount, 0)
+  const hiddenCommentTotal   = commentThreads.reduce((sum, thread) => sum + thread.hiddenCount, 0)
   const rejectedCommentTotal = commentThreads.reduce((sum, thread) => sum + thread.rejectedCount, 0)
-  const totalComments = approvedCommentTotal + hiddenCommentTotal + rejectedCommentTotal
+  const totalComments        = approvedCommentTotal + hiddenCommentTotal + rejectedCommentTotal
+  const flaggedThreadCount   = flaggedThreadIds.size
 
   return (
     <StaffPortalShell
@@ -313,7 +383,18 @@ export default function StaffCommunity() {
         }
       />
 
-      <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-5">
+        {/* Flagged — most important, first */}
+        <button
+          type="button"
+          onClick={() => setCommentFilter("flagged")}
+          className={`rounded-2xl p-4 text-left transition ${commentFilter === "flagged" ? "ring-2 ring-red-500" : "hover:opacity-80"} ${flaggedThreadCount > 0 ? "bg-red-600" : "bg-slate-200"}`}
+        >
+          <div className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide ${flaggedThreadCount > 0 ? "text-red-100" : "text-slate-500"}`}>
+            <FaTriangleExclamation /> Flagged Threads
+          </div>
+          <div className={`mt-2 text-2xl font-black ${flaggedThreadCount > 0 ? "text-white" : "text-slate-900"}`}>{flaggedThreadCount}</div>
+        </button>
         <div className="rounded-2xl bg-blue-50 p-4">
           <div className="text-xs font-bold uppercase tracking-wide text-blue-600">Total Messages</div>
           <div className="mt-2 text-2xl font-black text-slate-900">{totalComments}</div>
@@ -335,9 +416,10 @@ export default function StaffCommunity() {
       <div className="mb-4 grid gap-3 lg:grid-cols-[1fr_auto]">
         <div className="flex flex-wrap gap-2">
           {[
-            { key: "all", label: "All Threads" },
+            { key: "flagged",  label: "🚨 Flagged" },
+            { key: "all",      label: "All Threads" },
             { key: "approved", label: "Live" },
-            { key: "hidden", label: "Hidden" },
+            { key: "hidden",   label: "Hidden" },
             { key: "rejected", label: "Removed" },
           ].map((option) => (
             <button
@@ -401,7 +483,9 @@ export default function StaffCommunity() {
               ) : filteredCommentThreads.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="px-6 py-10 text-center font-medium text-slate-500">
-                    No comment threads found for this filter.
+                    {commentFilter === "flagged"
+                    ? "No flagged conversations detected — community looks clean."
+                    : "No comment threads found for this filter."}
                   </td>
                 </tr>
               ) : (
@@ -416,10 +500,16 @@ export default function StaffCommunity() {
                           ? `${Math.floor(ageInDays / 30)} month${Math.floor(ageInDays / 30) === 1 ? "" : "s"} old`
                           : `${Math.max(1, Math.floor(ageInDays))} day${Math.max(1, Math.floor(ageInDays)) === 1 ? "" : "s"} old`
 
+                  const isFlagged = flaggedThreadIds.has(thread.id)
                   return (
-                    <tr key={thread.id} className="transition hover:bg-slate-50">
+                    <tr key={thread.id} className={`transition hover:bg-slate-50 ${isFlagged ? "bg-red-50/40" : ""}`}>
                       <td className="px-6 py-4">
                         <div className="max-w-[360px]">
+                          {isFlagged && (
+                            <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-red-700">
+                              <FaTriangleExclamation /> Flagged content
+                            </div>
+                          )}
                           <div className="line-clamp-2 font-semibold text-slate-900">{thread.root.body}</div>
                           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                             <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-2 py-1 font-bold text-slate-600">
@@ -541,7 +631,9 @@ export default function StaffCommunity() {
                           ) : null}
                         </div>
                         <div className="mt-0.5 text-[11px] font-medium text-slate-400">{formatDateTime(comment.created_at)}</div>
-                        <div className="mt-2 whitespace-pre-wrap text-[0.88rem] leading-6 text-slate-700">{comment.body}</div>
+                        <div className="mt-2 whitespace-pre-wrap text-[0.88rem] leading-6 text-slate-700">
+                          <HighlightedText text={comment.body} flaggedTerms={getFlaggedTerms(comment.body)} />
+                        </div>
 
                         {comment.moderation_reason ? (
                           <div className="mt-2 rounded-2xl border border-amber-200 bg-white px-3 py-2 text-[0.75rem] font-medium text-amber-700">
@@ -586,6 +678,30 @@ export default function StaffCommunity() {
               </div>
 
               <div className="space-y-4">
+                {/* Flagged words panel — shows only when thread has hits */}
+                {(() => {
+                  const allFlagged = [
+                    ...new Set(
+                      selectedCommentThread.comments.flatMap((c) => getFlaggedTerms(c.body)),
+                    ),
+                  ]
+                  if (!allFlagged.length) return null
+                  return (
+                    <div className="rounded-3xl border border-red-200 bg-red-50 p-5 shadow-sm">
+                      <div className="mb-2 flex items-center gap-2 text-sm font-black text-red-700">
+                        <FaTriangleExclamation /> Flagged Words Detected
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {allFlagged.map((w) => (
+                          <span key={w} className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-800">
+                            {w}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
+
                 <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
                   <div className="mb-3 text-sm font-bold text-[#2E1065]">Thread Summary</div>
                   <div className="space-y-3 text-sm text-slate-700">
