@@ -120,6 +120,9 @@ function StableImageFrame({
     if (!src || shouldEagerLoad || isPreviouslyLoaded) return null
     const candidate = getOptimizedImageUrl(src, { width: 30, height: 30, quality: 20 })
     // If the URL didn't change (non-Supabase asset), skip the blur placeholder.
+    if (candidate === src) {
+      console.warn('[img-debug] lowResSrc=null (non-supabase URL), src:', src?.slice(0, 100))
+    }
     return candidate !== src ? candidate : null
   }, [src, shouldEagerLoad, isPreviouslyLoaded])
 
@@ -146,6 +149,7 @@ function StableImageFrame({
     // naturalWidth === 0 means the browser got a 200 response but couldn't decode the image
     // (Supabase render endpoint can return an empty/corrupt body on transform failure)
     if (event.target.naturalWidth === 0) {
+      console.warn('[img-debug] naturalWidth=0 (corrupt response):', event.target.src?.slice(-60), '| original src tail:', src?.slice(-40))
       handleError(event)
       return
     }
@@ -157,9 +161,11 @@ function StableImageFrame({
   function handleError(event) {
     // If the transformed URL failed and we haven't tried the original yet, retry with original
     if (!usedOriginalFallback && src && finalSrc !== src) {
+      console.warn('[img-debug] transform failed, retrying with original:', src?.slice(-40))
       setUsedOriginalFallback(true)
       return
     }
+    console.warn('[img-debug] image fully failed (showing fallback):', src?.slice(-40))
     setFailed(true)
     setLoaded(false)
     onError?.(event)
