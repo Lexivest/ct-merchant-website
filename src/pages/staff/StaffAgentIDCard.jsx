@@ -53,10 +53,10 @@ function AgentCard({ agent, avatarUrl }) {
     <div style={{ width:370, height:390, fontFamily:"'Inter',system-ui,-apple-system,sans-serif", position:"relative", overflow:"hidden", background:"#fff", borderRadius:20 }}>
 
       {/* ── HEADER: avatar | centered text | QR ── */}
-      <div style={{ height:108, background:"linear-gradient(135deg,#020617 0%,#0f172a 50%,#1a1340 100%)", display:"flex", alignItems:"center", padding:"0 16px", gap:12 }}>
+      <div style={{ height:108, background:"linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 55%,#3b82f6 100%)", display:"flex", alignItems:"center", padding:"0 16px", gap:12 }}>
 
         {/* Avatar — same visual size as QR tile */}
-        <div style={{ width:70, height:70, borderRadius:"50%", border:"2.5px solid rgba(255,255,255,0.25)", overflow:"hidden", background:avatarUrl?"transparent":"linear-gradient(135deg,#059669,#0d9488)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+        <div style={{ width:70, height:70, borderRadius:"50%", border:"2.5px solid rgba(255,255,255,0.3)", overflow:"hidden", background:avatarUrl?"transparent":"linear-gradient(135deg,#2563eb,#1d4ed8)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
           {avatarUrl
             ? <img src={avatarUrl} alt={name} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
             : <span style={{ fontSize:23, fontWeight:900, color:"#fff" }}>{initials}</span>
@@ -66,17 +66,17 @@ function AgentCard({ agent, avatarUrl }) {
         {/* Centered brand text + agent ID */}
         <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
           <div style={{ fontSize:15, fontWeight:900, letterSpacing:"0.05em", color:"#fff", lineHeight:1 }}>CTMerchant</div>
-          <div style={{ fontSize:8, fontWeight:800, letterSpacing:"0.28em", color:"#6ee7b7", textTransform:"uppercase" }}>Field Agent</div>
-          <div style={{ fontSize:9, fontWeight:800, color:"#fff", fontFamily:"ui-monospace,monospace", letterSpacing:"0.12em", marginTop:4, background:"rgba(255,255,255,0.1)", borderRadius:4, padding:"2px 8px" }}>{agentId}</div>
-          <div style={{ fontSize:6.5, fontWeight:600, color:"rgba(255,255,255,0.32)", marginTop:3, letterSpacing:"0.08em" }}>www.ctmerchant.com.ng</div>
+          <div style={{ fontSize:8, fontWeight:800, letterSpacing:"0.28em", color:"#bfdbfe", textTransform:"uppercase" }}>Field Agent</div>
+          <div style={{ fontSize:9, fontWeight:800, color:"#fff", fontFamily:"ui-monospace,monospace", letterSpacing:"0.12em", marginTop:4, background:"rgba(255,255,255,0.15)", borderRadius:4, padding:"2px 8px" }}>{agentId}</div>
+          <div style={{ fontSize:6.5, fontWeight:600, color:"rgba(255,255,255,0.4)", marginTop:3, letterSpacing:"0.08em" }}>www.ctmerchant.com.ng</div>
         </div>
 
         {/* QR code tile */}
         <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, flexShrink:0 }}>
-          <div style={{ background:"#fff", padding:4, borderRadius:8, border:"1.5px solid rgba(255,255,255,0.15)" }}>
-            <QRCodeCanvas value={qrValue} size={60} level="H" includeMargin={false} bgColor="#ffffff" fgColor="#0f172a" />
+          <div style={{ background:"#fff", padding:4, borderRadius:8, border:"1.5px solid rgba(255,255,255,0.2)" }}>
+            <QRCodeCanvas value={qrValue} size={60} level="H" includeMargin={false} bgColor="#ffffff" fgColor="#1e3a8a" />
           </div>
-          <div style={{ fontSize:6, fontWeight:800, letterSpacing:"0.16em", color:"rgba(255,255,255,0.38)", textTransform:"uppercase" }}>Verify ID</div>
+          <div style={{ fontSize:6, fontWeight:800, letterSpacing:"0.16em", color:"rgba(255,255,255,0.45)", textTransform:"uppercase" }}>Verify ID</div>
         </div>
       </div>
 
@@ -86,30 +86,29 @@ function AgentCard({ agent, avatarUrl }) {
       {/* ── WHITE BODY ── */}
       <div style={{ padding:"16px 22px 0" }}>
 
-        {/* Full Name */}
-        <div>
-          <div style={lbl}>Full Name</div>
-          <div style={{ ...val, fontSize:16, fontWeight:900 }}>{name}</div>
-        </div>
-        <div style={div} />
-
-        {/* Phone + Email */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
-          <div>
+        {/* Name + Phone */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:14, alignItems:"end" }}>
+          <div style={{ minWidth:0 }}>
+            <div style={lbl}>Full Name</div>
+            <div style={{ ...val, fontSize:15, fontWeight:900, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{name}</div>
+          </div>
+          <div style={{ textAlign:"right", flexShrink:0 }}>
             <div style={lbl}>Phone</div>
             <div style={{ ...val, fontSize:12 }}>{phone || "—"}</div>
           </div>
+        </div>
+        <div style={div} />
+
+        {/* Email + Location */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
           <div style={{ minWidth:0 }}>
             <div style={lbl}>Email</div>
             <div style={{ ...val, fontSize:10, wordBreak:"break-all" }}>{email || "—"}</div>
           </div>
-        </div>
-        <div style={div} />
-
-        {/* Location */}
-        <div>
-          <div style={lbl}>Region / Location</div>
-          <div style={{ ...val, fontSize:13 }}>{region || "—"}</div>
+          <div style={{ minWidth:0 }}>
+            <div style={lbl}>Region / Location</div>
+            <div style={{ ...val, fontSize:11, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{region || "—"}</div>
+          </div>
         </div>
         <div style={div} />
 
@@ -127,7 +126,7 @@ function AgentCard({ agent, avatarUrl }) {
       </div>
 
       {/* ── FOOTER: small logo + text ── */}
-      <div style={{ position:"absolute", bottom:0, left:0, right:0, height:44, background:"linear-gradient(90deg,#020617 0%,#0f172a 100%)", display:"flex", alignItems:"center", padding:"0 18px", gap:10 }}>
+      <div style={{ position:"absolute", bottom:0, left:0, right:0, height:44, background:"linear-gradient(90deg,#1e3a8a 0%,#1d4ed8 100%)", display:"flex", alignItems:"center", padding:"0 18px", gap:10 }}>
         <img
           src={ctmLogo}
           alt="CTM"
