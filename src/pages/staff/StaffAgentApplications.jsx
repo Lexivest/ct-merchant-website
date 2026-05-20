@@ -8,6 +8,7 @@ import {
   FaCircleCheck,
   FaCircleNotch,
   FaHandshake,
+  FaIdCard,
   FaInbox,
   FaUser,
   FaXmark,
@@ -532,16 +533,19 @@ export default function StaffAgentApplications() {
                 </div>
               )}
 
-              {/* Approved + not suspended → Suspend */}
+              {/* Approved + not suspended → Mint ID Card + Suspend */}
               {isApproved && !isSuspended && (
                 <div className="fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto lg:left-auto lg:right-auto bg-white lg:rounded-2xl p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] lg:shadow-sm border-t lg:border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 z-30">
-                  <p className="text-[0.65rem] font-black uppercase tracking-widest text-slate-400 hidden sm:block">
-                    Agent is active
-                  </p>
+                  <button
+                    onClick={() => navigate("/staff-agent-id-card", { state: { agent: selectedItem } })}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[0.7rem] sm:text-xs font-black uppercase tracking-widest shadow-md transition"
+                  >
+                    <FaIdCard /> Mint ID Card
+                  </button>
                   <button
                     onClick={handleSuspend}
                     disabled={processing}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-xl text-[0.7rem] sm:text-xs font-black uppercase tracking-widest transition disabled:opacity-50"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-xl text-[0.7rem] sm:text-xs font-black uppercase tracking-widest transition disabled:opacity-50"
                   >
                     {processing ? <FaCircleNotch className="animate-spin" /> : <FaBan />}
                     Suspend Agent
