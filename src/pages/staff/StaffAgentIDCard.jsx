@@ -19,138 +19,124 @@ function getInitials(name) {
     .join("");
 }
 
-function fmtIssueDate(dateStr) {
-  if (!dateStr) return "";
-  return new Date(dateStr).toLocaleDateString("en-NG", { month: "long", year: "numeric" });
+function fmtDate(dateStr) {
+  if (!dateStr) return "—";
+  return new Date(dateStr).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" });
 }
 
-/* ── ID Card (renders at exactly 370 × 430 px) ───────────── */
-function AgentCard({ agent, avatarUrl }) {
-  const q         = agent.questionnaire || {};
-  const name      = agent.full_name    || "Unknown Agent";
-  const agentId   = agent.agent_id     || "CTM-AGT-?????";
-  const email     = agent.email        || "";
-  const phone     = agent.phone        || "";
-  const region    = q.preferredRegion  || "";
-  const issueDate = fmtIssueDate(agent.reviewed_at || agent.created_at);
-  const initials  = getInitials(name);
-  const qrValue   = `https://ctmerchant.com.ng/verify-agent?id=${encodeURIComponent(agentId)}`;
+function calcExpiry(dateStr) {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  d.setFullYear(d.getFullYear() + 1);
+  return d.toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" });
+}
 
-  const card    = { width:370, height:430, fontFamily:"'Inter',system-ui,-apple-system,sans-serif", position:"relative", overflow:"hidden", background:"#fff", borderRadius:20 };
-  const hdr     = { height:108, background:"linear-gradient(135deg,#020617 0%,#0f172a 50%,#1a1340 100%)", position:"relative", display:"flex", alignItems:"center", padding:"0 18px 0 20px", gap:13 };
-  const stripe  = { height:5, background:"linear-gradient(90deg,#10b981 0%,#db2777 52%,#7c3aed 100%)" };
-  const body    = { padding:"16px 22px 0", display:"flex", flexDirection:"column", alignItems:"center" };
-  const divider = { width:"100%", height:1, background:"linear-gradient(90deg,transparent,#e2e8f0,transparent)", margin:"11px 0" };
-  const ftr     = { position:"absolute", bottom:0, left:0, right:0, height:44, background:"linear-gradient(90deg,#020617 0%,#0f172a 100%)", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 20px" };
+/* ── ID Card (renders at exactly 370 × 390 px) ───────────── */
+function AgentCard({ agent, avatarUrl }) {
+  const q          = agent.questionnaire || {};
+  const name       = agent.full_name    || "Unknown Agent";
+  const agentId    = agent.agent_id     || "CTM-AGT-?????";
+  const email      = agent.email        || "";
+  const phone      = agent.phone        || "";
+  const region     = q.preferredRegion  || "";
+  const issuedDate = fmtDate(agent.reviewed_at || agent.created_at);
+  const expiryDate = calcExpiry(agent.reviewed_at || agent.created_at);
+  const initials   = getInitials(name);
+  const qrValue    = `https://ctmerchant.com.ng/verify-agent?id=${encodeURIComponent(agentId)}`;
+
+  // shared style tokens
+  const lbl = { fontSize:7.5, fontWeight:800, color:"#94a3b8", letterSpacing:"0.2em", textTransform:"uppercase", marginBottom:3 };
+  const val = { fontSize:13, fontWeight:700, color:"#1e293b", lineHeight:1.3 };
+  const div = { height:1, background:"linear-gradient(90deg,transparent,#e2e8f0,transparent)", margin:"10px 0" };
 
   return (
-    <div style={card}>
+    <div style={{ width:370, height:390, fontFamily:"'Inter',system-ui,-apple-system,sans-serif", position:"relative", overflow:"hidden", background:"#fff", borderRadius:20 }}>
 
-      {/* ── HEADER ── */}
-      <div style={hdr}>
-        {/* Logo */}
-        <img
-          src={ctmLogo}
-          alt="CTM"
-          crossOrigin="anonymous"
-          style={{ width:42, height:42, borderRadius:10, border:"2px solid rgba(255,255,255,0.18)", background:"#fff", objectFit:"cover", padding:2, flexShrink:0, zIndex:1 }}
-        />
+      {/* ── HEADER: avatar | centered text | QR ── */}
+      <div style={{ height:108, background:"linear-gradient(135deg,#020617 0%,#0f172a 50%,#1a1340 100%)", display:"flex", alignItems:"center", padding:"0 16px", gap:12 }}>
 
-        {/* Brand text */}
-        <div style={{ zIndex:1, flex:1 }}>
-          <div style={{ fontSize:16.5, fontWeight:900, letterSpacing:"0.04em", color:"#fff", lineHeight:1 }}>
-            CTMerchant
-          </div>
-          <div style={{ fontSize:9.5, fontWeight:800, letterSpacing:"0.28em", color:"#6ee7b7", marginTop:5, textTransform:"uppercase" }}>
-            Field Agent
-          </div>
-          <div style={{ fontSize:7.5, fontWeight:600, letterSpacing:"0.1em", color:"rgba(255,255,255,0.36)", marginTop:3 }}>
-            www.ctmerchant.com.ng
-          </div>
+        {/* Avatar — same visual size as QR tile */}
+        <div style={{ width:70, height:70, borderRadius:"50%", border:"2.5px solid rgba(255,255,255,0.25)", overflow:"hidden", background:avatarUrl?"transparent":"linear-gradient(135deg,#059669,#0d9488)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+          {avatarUrl
+            ? <img src={avatarUrl} alt={name} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+            : <span style={{ fontSize:23, fontWeight:900, color:"#fff" }}>{initials}</span>
+          }
         </div>
 
-        {/* QR code — top-right, replaces Active chip */}
-        <div style={{ zIndex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
-          <div style={{ background:"#fff", padding:5, borderRadius:8, border:"1.5px solid rgba(255,255,255,0.15)" }}>
-            <QRCodeCanvas
-              value={qrValue}
-              size={62}
-              level="H"
-              includeMargin={false}
-              bgColor="#ffffff"
-              fgColor="#0f172a"
-            />
+        {/* Centered brand text + agent ID */}
+        <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
+          <div style={{ fontSize:15, fontWeight:900, letterSpacing:"0.05em", color:"#fff", lineHeight:1 }}>CTMerchant</div>
+          <div style={{ fontSize:8, fontWeight:800, letterSpacing:"0.28em", color:"#6ee7b7", textTransform:"uppercase" }}>Field Agent</div>
+          <div style={{ fontSize:9, fontWeight:800, color:"#fff", fontFamily:"ui-monospace,monospace", letterSpacing:"0.12em", marginTop:4, background:"rgba(255,255,255,0.1)", borderRadius:4, padding:"2px 8px" }}>{agentId}</div>
+          <div style={{ fontSize:6.5, fontWeight:600, color:"rgba(255,255,255,0.32)", marginTop:3, letterSpacing:"0.08em" }}>www.ctmerchant.com.ng</div>
+        </div>
+
+        {/* QR code tile */}
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, flexShrink:0 }}>
+          <div style={{ background:"#fff", padding:4, borderRadius:8, border:"1.5px solid rgba(255,255,255,0.15)" }}>
+            <QRCodeCanvas value={qrValue} size={60} level="H" includeMargin={false} bgColor="#ffffff" fgColor="#0f172a" />
           </div>
-          <div style={{ fontSize:6.5, fontWeight:800, letterSpacing:"0.18em", color:"rgba(255,255,255,0.4)", textTransform:"uppercase" }}>
-            Verify ID
-          </div>
+          <div style={{ fontSize:6, fontWeight:800, letterSpacing:"0.16em", color:"rgba(255,255,255,0.38)", textTransform:"uppercase" }}>Verify ID</div>
         </div>
       </div>
 
       {/* ── ACCENT STRIPE ── */}
-      <div style={stripe} />
+      <div style={{ height:5, background:"linear-gradient(90deg,#10b981 0%,#db2777 52%,#7c3aed 100%)" }} />
 
-      {/* ── BODY ── */}
-      <div style={body}>
+      {/* ── WHITE BODY ── */}
+      <div style={{ padding:"16px 22px 0" }}>
 
-        {/* Profile photo / initials */}
-        <div style={{ position:"relative" }}>
-          <div style={{ width:76, height:76, borderRadius:"50%", border:"3px solid #10b981", overflow:"hidden", background:avatarUrl?"transparent":"linear-gradient(135deg,#059669,#0d9488)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-            {avatarUrl
-              ? <img src={avatarUrl} alt={name} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-              : <span style={{ fontSize:25, fontWeight:900, color:"#fff" }}>{initials}</span>
-            }
+        {/* Full Name */}
+        <div>
+          <div style={lbl}>Full Name</div>
+          <div style={{ ...val, fontSize:16, fontWeight:900 }}>{name}</div>
+        </div>
+        <div style={div} />
+
+        {/* Phone + Email */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
+          <div>
+            <div style={lbl}>Phone</div>
+            <div style={{ ...val, fontSize:12 }}>{phone || "—"}</div>
           </div>
-          <div style={{ position:"absolute", inset:-4, borderRadius:"50%", border:"2px solid rgba(16,185,129,0.2)", pointerEvents:"none" }} />
+          <div style={{ minWidth:0 }}>
+            <div style={lbl}>Email</div>
+            <div style={{ ...val, fontSize:10, wordBreak:"break-all" }}>{email || "—"}</div>
+          </div>
         </div>
+        <div style={div} />
 
-        {/* Name */}
-        <div style={{ marginTop:10, fontSize:17, fontWeight:900, color:"#0f172a", textAlign:"center", lineHeight:1.2, maxWidth:306, wordBreak:"break-word" }}>
-          {name}
+        {/* Location */}
+        <div>
+          <div style={lbl}>Region / Location</div>
+          <div style={{ ...val, fontSize:13 }}>{region || "—"}</div>
         </div>
+        <div style={div} />
 
-        {/* Agent ID pill */}
-        <div style={{ marginTop:6, fontSize:11.5, fontWeight:800, color:"#059669", fontFamily:"ui-monospace,'Cascadia Code',monospace", letterSpacing:"0.16em", background:"rgba(16,185,129,0.08)", border:"1px solid rgba(16,185,129,0.28)", borderRadius:6, padding:"3px 11px" }}>
-          {agentId}
+        {/* Date Issued + Expiry */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
+          <div>
+            <div style={lbl}>Date Issued</div>
+            <div style={{ ...val, fontSize:12 }}>{issuedDate}</div>
+          </div>
+          <div>
+            <div style={lbl}>Expiry Date</div>
+            <div style={{ fontSize:12, fontWeight:800, color:"#dc2626" }}>{expiryDate}</div>
+          </div>
         </div>
-
-        {/* Divider */}
-        <div style={divider} />
-
-        {/* Contact rows */}
-        <div style={{ width:"100%", display:"flex", flexDirection:"column", gap:7, paddingLeft:6 }}>
-          {email && (
-            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <span style={{ fontSize:10.5, color:"#10b981", width:15, flexShrink:0 }}>✉</span>
-              <span style={{ fontSize:11, fontWeight:700, color:"#1e293b" }}>{email}</span>
-            </div>
-          )}
-          {phone && (
-            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <span style={{ fontSize:10.5, color:"#10b981", width:15, flexShrink:0 }}>📱</span>
-              <span style={{ fontSize:11, fontWeight:700, color:"#1e293b" }}>{phone}</span>
-            </div>
-          )}
-          {region && (
-            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <span style={{ fontSize:10.5, color:"#10b981", width:15, flexShrink:0 }}>📍</span>
-              <span style={{ fontSize:11, fontWeight:700, color:"#1e293b" }}>{region}</span>
-            </div>
-          )}
-        </div>
-
       </div>
 
-      {/* ── FOOTER ── */}
-      <div style={ftr}>
+      {/* ── FOOTER: small logo + text ── */}
+      <div style={{ position:"absolute", bottom:0, left:0, right:0, height:44, background:"linear-gradient(90deg,#020617 0%,#0f172a 100%)", display:"flex", alignItems:"center", padding:"0 18px", gap:10 }}>
+        <img
+          src={ctmLogo}
+          alt="CTM"
+          crossOrigin="anonymous"
+          style={{ width:22, height:22, borderRadius:5, border:"1px solid rgba(255,255,255,0.14)", background:"#fff", objectFit:"cover", padding:1.5, flexShrink:0 }}
+        />
         <div>
-          <div style={{ fontSize:6.5, fontWeight:700, color:"rgba(255,255,255,0.36)", letterSpacing:"0.16em", textTransform:"uppercase" }}>Issued</div>
-          <div style={{ fontSize:9.5, fontWeight:800, color:"rgba(255,255,255,0.82)", marginTop:2 }}>{issueDate}</div>
-        </div>
-        <div style={{ width:1, height:22, background:"rgba(255,255,255,0.1)" }} />
-        <div style={{ textAlign:"right" }}>
-          <div style={{ fontSize:6.5, fontWeight:700, color:"rgba(255,255,255,0.36)", letterSpacing:"0.16em", textTransform:"uppercase" }}>CTMerchant</div>
-          <div style={{ fontSize:9.5, fontWeight:800, color:"#6ee7b7", marginTop:2, letterSpacing:"0.08em" }}>Agent Network</div>
+          <div style={{ fontSize:9, fontWeight:800, color:"rgba(255,255,255,0.78)", letterSpacing:"0.05em" }}>CTMerchant Agent Network</div>
+          <div style={{ fontSize:6.5, fontWeight:600, color:"rgba(255,255,255,0.32)", letterSpacing:"0.1em", marginTop:1 }}>www.ctmerchant.com.ng</div>
         </div>
       </div>
     </div>
