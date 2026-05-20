@@ -4,7 +4,7 @@ import { supabase } from "../../lib/supabase";
 import {
   FaArrowLeft,
   FaBuildingUser,
-  FaCheckCircle,
+  FaCircleCheck,
   FaCircleNotch,
   FaHandshake,
   FaInbox,
@@ -27,7 +27,7 @@ function StatusBadge({ status, agentId }) {
   if (status === "approved") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-100 px-2 py-0.5 text-[0.6rem] font-black uppercase tracking-widest text-emerald-800 border border-emerald-200">
-        <FaCheckCircle className="text-emerald-600" /> {agentId || "Approved"}
+        <FaCircleCheck className="text-emerald-600" /> {agentId || "Approved"}
       </span>
     );
   }
@@ -273,7 +273,7 @@ export default function StaffAgentApplications() {
               {/* Approved agent ID banner */}
               {!isPending && selectedItem.agent_id && (
                 <div className="mb-4 flex items-center gap-3 rounded-xl bg-emerald-50 border border-emerald-200 p-4 shadow-sm">
-                  <FaCheckCircle className="text-2xl text-emerald-500 flex-shrink-0" />
+                  <FaCircleCheck className="text-2xl text-emerald-500 flex-shrink-0" />
                   <div>
                     <p className="text-[0.65rem] font-black uppercase tracking-widest text-emerald-600">Agent ID Issued</p>
                     <p className="text-lg font-black text-slate-900 tracking-widest">{selectedItem.agent_id}</p>
@@ -409,7 +409,7 @@ export default function StaffAgentApplications() {
                       disabled={processing}
                       className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl text-[0.7rem] sm:text-xs font-black uppercase tracking-widest shadow-md transition disabled:opacity-50"
                     >
-                      {processing ? <FaCircleNotch className="animate-spin" /> : <FaCheckCircle />}
+                      {processing ? <FaCircleNotch className="animate-spin" /> : <FaCircleCheck />}
                       Approve &amp; Issue ID
                     </button>
                   </div>
