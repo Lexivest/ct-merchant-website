@@ -431,8 +431,13 @@ export default function Agents() {
               },
               {
                 step: "4",
+                title: "Attend scheduled online training & certification",
+                body: "Approved agents are enrolled in a scheduled online training session. You will learn how to onboard merchants, represent the brand, and use CTMerchant tools effectively. A certification is awarded upon completion.",
+              },
+              {
+                step: "5",
                 title: "Start representing CTMerchant",
-                body: "Once approved, download your official Agent ID card from your dashboard and begin onboarding merchants and customers in your area.",
+                body: "Once certified, download your official Agent ID card from your dashboard and begin onboarding merchants and customers in your area.",
               },
             ].map(({ step, title, body }) => (
               <div key={step} className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
