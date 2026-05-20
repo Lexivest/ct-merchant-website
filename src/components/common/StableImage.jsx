@@ -111,6 +111,7 @@ function StableImageFrame({
 
   const [loaded, setLoaded] = useState(() => isPreviouslyLoaded)
   const [failed, setFailed] = useState(false)
+  const [usedOriginalFallback, setUsedOriginalFallback] = useState(false)
 
   // Only generate a low-res blur URL for Supabase-hosted images on lazy load.
   // Local/CDN assets that getOptimizedImageUrl can't downsize would just return
@@ -148,6 +149,11 @@ function StableImageFrame({
   }
 
   function handleError(event) {
+    // If the transformed URL failed and we haven't tried the original yet, retry with original
+    if (!usedOriginalFallback && src && finalSrc !== src) {
+      setUsedOriginalFallback(true)
+      return
+    }
     setFailed(true)
     setLoaded(false)
     onError?.(event)
@@ -189,7 +195,7 @@ function StableImageFrame({
         {/* 3. Main image — renders once in-viewport, fades in on load */}
         {isNearViewport && (
           <img
-            src={failed ? fallbackSrc : finalSrc}
+            src={failed ? fallbackSrc : usedOriginalFallback ? src : finalSrc}
             alt={alt}
             loading={loading}
             decoding="async"
