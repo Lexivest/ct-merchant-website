@@ -695,17 +695,6 @@ function MarketSection({
 
     ;(dashboardData?.products || []).forEach((product) => {
       if (!product?.shop_id || !product.image_url || product.condition === "Fairly Used") {
-        // DEBUG: log why Spark 20X Pro might be filtered
-        if (product?.id === 186 || product?.id === 230) {
-          console.warn('[img-debug] Product filtered out:', {
-            id: product?.id,
-            name: product?.name,
-            shop_id: product?.shop_id,
-            has_image: !!product?.image_url,
-            image_url: product?.image_url?.slice(0, 80),
-            condition: product?.condition,
-          })
-        }
         return
       }
 
@@ -717,18 +706,6 @@ function MarketSection({
       } else {
         grouped.set(product.shop_id, [product])
       }
-    })
-
-    // DEBUG: log what landed in the map for shops 108 and 119
-    const shop108Key = [...grouped.keys()].find(k => String(k) === '108')
-    const shop119Key = [...grouped.keys()].find(k => String(k) === '119')
-    console.log('[img-debug] productsByShopId:', {
-      shop108_key: shop108Key,
-      shop108_key_type: typeof shop108Key,
-      shop108_products: grouped.get(shop108Key)?.map(p => ({ id: p.id, name: p.name, url_tail: p.image_url?.slice(-40) })),
-      shop119_key: shop119Key,
-      shop119_products: grouped.get(shop119Key)?.map(p => ({ id: p.id, name: p.name, url_tail: p.image_url?.slice(-40) })),
-      all_key_types: [...grouped.keys()].slice(0, 3).map(k => typeof k),
     })
 
     return grouped
@@ -1056,9 +1033,7 @@ function MarketSection({
               const imageUrl =
                 categoryImageUrl ||
                 categoryPreviewImageByName.get(category.name) ||
-                `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                  category.name
-                )}`
+                null
 
               return (
                 <div

@@ -5,9 +5,32 @@ export const DEFAULT_FALLBACK_IMAGE =
   "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23db2777'/%3E%3Cstop offset='100%25' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23g)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='900' font-size='60' opacity='0.7'%3ECTM%3C/text%3E%3C/svg%3E"
 
 // Amazon-style Global Image Registry
-// This persists for the entire session to ensure that once an image is loaded, 
+// This persists for the entire session to ensure that once an image is loaded,
 // it stays "ready" even if the component unmounts and remounts.
 const GLOBAL_IMAGE_REGISTRY = new Set()
+
+// Track original src URLs whose Supabase transform endpoint returned a corrupt
+// response (HTTP 200 with empty/undecodable body). Persists across page refreshes
+// within the same browser session so we skip the slow transform-then-retry cycle
+// on subsequent loads and go straight to the original URL.
+const FAILED_TRANSFORM_SRCS = (() => {
+  try {
+    const stored = sessionStorage.getItem("ctm_failed_img_transforms")
+    return new Set(stored ? JSON.parse(stored) : [])
+  } catch {
+    return new Set()
+  }
+})()
+
+function markTransformFailed(originalSrc) {
+  if (!originalSrc) return
+  FAILED_TRANSFORM_SRCS.add(originalSrc)
+  try {
+    // Keep only the last 100 entries to avoid quota issues
+    const entries = [...FAILED_TRANSFORM_SRCS].slice(-100)
+    sessionStorage.setItem("ctm_failed_img_transforms", JSON.stringify(entries))
+  } catch { /* storage quota exceeded — ignore */ }
+}
 
 // singleton Intersection Observer
 const observerListeners = new WeakMap()
@@ -57,7 +80,8 @@ function StableImage({
 
   const finalSrc = useMemo(() => {
     if (!src) return fallbackSrc
-    // Ensure we don't have double slashes or trailing questions which break cache keys
+    // If this src's transform is known to be broken, skip to original immediately
+    if (FAILED_TRANSFORM_SRCS.has(src)) return src
     return getOptimizedImageUrl(src, { width, height, quality, format, resize })
   }, [src, width, height, quality, format, resize, fallbackSrc])
 
@@ -120,9 +144,6 @@ function StableImageFrame({
     if (!src || shouldEagerLoad || isPreviouslyLoaded) return null
     const candidate = getOptimizedImageUrl(src, { width: 30, height: 30, quality: 20 })
     // If the URL didn't change (non-Supabase asset), skip the blur placeholder.
-    if (candidate === src) {
-      console.warn('[img-debug] lowResSrc=null (non-supabase URL), src:', src?.slice(0, 100))
-    }
     return candidate !== src ? candidate : null
   }, [src, shouldEagerLoad, isPreviouslyLoaded])
 
@@ -149,7 +170,6 @@ function StableImageFrame({
     // naturalWidth === 0 means the browser got a 200 response but couldn't decode the image
     // (Supabase render endpoint can return an empty/corrupt body on transform failure)
     if (event.target.naturalWidth === 0) {
-      console.warn('[img-debug] naturalWidth=0 (corrupt response):', event.target.src?.slice(-60), '| original src tail:', src?.slice(-40))
       handleError(event)
       return
     }
@@ -161,11 +181,11 @@ function StableImageFrame({
   function handleError(event) {
     // If the transformed URL failed and we haven't tried the original yet, retry with original
     if (!usedOriginalFallback && src && finalSrc !== src) {
-      console.warn('[img-debug] transform failed, retrying with original:', src?.slice(-40))
+      // Remember this src so future renders skip the transform entirely
+      markTransformFailed(src)
       setUsedOriginalFallback(true)
       return
     }
-    console.warn('[img-debug] image fully failed (showing fallback):', src?.slice(-40))
     setFailed(true)
     setLoaded(false)
     onError?.(event)
