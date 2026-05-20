@@ -82,52 +82,56 @@ function AgentCard({ agent, avatarUrl }) {
       {/* ── ACCENT STRIPE ── */}
       <div style={{ height:5, background:"linear-gradient(90deg,#3b82f6 0%,#6366f1 52%,#1d4ed8 100%)", flexShrink:0 }} />
 
-      {/* ── BODY — flex:1 fills remaining space evenly ── */}
-      <div style={{ flex:1, padding:"0 24px", display:"flex", flexDirection:"column", justifyContent:"space-evenly", position:"relative" }}>
-        {/* Chocolate-pink accent bars at each edge */}
-        <div style={{ position:"absolute", top:0, bottom:0, left:0, width:5, background:"linear-gradient(to bottom,#7b2d42,#c2607a,#8b3a52)", borderRadius:"0 3px 3px 0" }} />
-        <div style={{ position:"absolute", top:0, bottom:0, right:0, width:5, background:"linear-gradient(to bottom,#7b2d42,#c2607a,#8b3a52)", borderRadius:"3px 0 0 3px" }} />
+      {/* ── BODY — outer holds accent bars, inner holds flex content ── */}
+      <div style={{ flex:1, position:"relative" }}>
+        {/* Chocolate-pink accent bars — in plain container, not a flex parent */}
+        <div style={{ position:"absolute", top:0, bottom:0, left:0, width:5, background:"linear-gradient(to bottom,#7b2d42,#c2607a,#8b3a52)", borderRadius:"0 3px 3px 0", zIndex:1 }} />
+        <div style={{ position:"absolute", top:0, bottom:0, right:0, width:5, background:"linear-gradient(to bottom,#7b2d42,#c2607a,#8b3a52)", borderRadius:"3px 0 0 3px", zIndex:1 }} />
 
-        {/* Name + Phone */}
-        <div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:16, alignItems:"end" }}>
-            <div style={{ minWidth:0 }}>
-              <div style={lbl}>Full Name</div>
-              <div style={{ ...val, fontSize:18, fontWeight:900, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{name}</div>
+        {/* Flex content */}
+        <div style={{ height:"100%", padding:"0 24px", display:"flex", flexDirection:"column", justifyContent:"space-evenly", boxSizing:"border-box" }}>
+
+          {/* Name + Phone */}
+          <div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:16, alignItems:"end" }}>
+              <div style={{ minWidth:0 }}>
+                <div style={lbl}>Full Name</div>
+                <div style={{ ...val, fontSize:18, fontWeight:900, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{name}</div>
+              </div>
+              <div style={{ textAlign:"right", flexShrink:0 }}>
+                <div style={lbl}>Phone</div>
+                <div style={{ ...val, fontSize:14 }}>{phone || "—"}</div>
+              </div>
             </div>
-            <div style={{ textAlign:"right", flexShrink:0 }}>
-              <div style={lbl}>Phone</div>
-              <div style={{ ...val, fontSize:14 }}>{phone || "—"}</div>
-            </div>
+            <div style={divider} />
           </div>
-          <div style={divider} />
-        </div>
 
-        {/* Email + Location */}
-        <div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
-            <div style={{ minWidth:0 }}>
-              <div style={lbl}>Email</div>
-              <div style={{ ...val, fontSize:12, wordBreak:"break-all" }}>{email || "—"}</div>
+          {/* Email + Location */}
+          <div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+              <div style={{ minWidth:0 }}>
+                <div style={lbl}>Email</div>
+                <div style={{ ...val, fontSize:12, wordBreak:"break-all" }}>{email || "—"}</div>
+              </div>
+              <div style={{ minWidth:0 }}>
+                <div style={lbl}>Region / Location</div>
+                <div style={{ ...val, fontSize:13, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{region || "—"}</div>
+              </div>
             </div>
-            <div style={{ minWidth:0 }}>
-              <div style={lbl}>Region / Location</div>
-              <div style={{ ...val, fontSize:13, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{region || "—"}</div>
-            </div>
+            <div style={divider} />
           </div>
-          <div style={divider} />
-        </div>
 
-        {/* Date Issued + Expiry */}
-        <div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
-            <div>
-              <div style={lbl}>Date Issued</div>
-              <div style={{ ...val, fontSize:14 }}>{issuedDate}</div>
-            </div>
-            <div>
-              <div style={lbl}>Expiry Date</div>
-              <div style={{ fontSize:14, fontWeight:800, color:"#dc2626" }}>{expiryDate}</div>
+          {/* Date Issued + Expiry */}
+          <div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+              <div>
+                <div style={lbl}>Date Issued</div>
+                <div style={{ ...val, fontSize:14 }}>{issuedDate}</div>
+              </div>
+              <div>
+                <div style={lbl}>Expiry Date</div>
+                <div style={{ fontSize:14, fontWeight:800, color:"#dc2626" }}>{expiryDate}</div>
+              </div>
             </div>
           </div>
         </div>
