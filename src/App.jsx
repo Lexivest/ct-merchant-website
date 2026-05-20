@@ -184,6 +184,7 @@ const loadDiscoveryDetail = () => import("./pages/DiscoveryDetail")
 const loadShopDetail = () => import("./pages/ShopDetail")
 const loadProductDetail = () => import("./pages/ProductDetail")
 const loadShopIndex = () => import("./pages/ShopIndex")
+const loadAgents = () => import("./pages/Agents")
 const loadBecomeAgent = () => import("./pages/BecomeAgent")
 const loadLocalServices = () => import("./pages/LocalServices")
 const loadMerchantDiscovery = () => import("./pages/MerchantDiscovery")
@@ -243,6 +244,7 @@ const ShopDetail = resilientLazy(loadShopDetail, { pageLabel: "shop view" })
 
 const ProductDetail = resilientLazy(loadProductDetail, { pageLabel: "product details" })
 const ShopIndex = resilientLazy(loadShopIndex, { pageLabel: "market index" })
+const Agents = resilientLazy(loadAgents, { pageLabel: "agents" })
 const BecomeAgent = resilientLazy(loadBecomeAgent, { pageLabel: "become agent" })
 const LocalServices = resilientLazy(loadLocalServices, { pageLabel: "local services" })
 const MerchantDiscovery = resilientLazy(loadMerchantDiscovery, { pageLabel: "merchant profile" })
@@ -880,6 +882,7 @@ function AppShell() {
         <Route path="/about" element={<About />} />
         <Route path="/services" element={<Services />} />
         <Route path="/affiliate" element={<Affiliate />} />
+        <Route path="/agents" element={<Agents />} />
         <Route path="/careers" element={<Careers />} />
         <Route path="/contact" element={<Contact />} />
         
