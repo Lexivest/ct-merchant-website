@@ -67,7 +67,7 @@ function AgentCard({ agent, avatarUrl }) {
           <div style={{ fontSize:20, fontWeight:900, letterSpacing:"0.04em", color:"#fff", lineHeight:1 }}>CTMerchant</div>
           <div style={{ fontSize:10, fontWeight:800, letterSpacing:"0.28em", color:"#bfdbfe", textTransform:"uppercase" }}>Field Agent</div>
           <div style={{ fontSize:11, fontWeight:800, color:"#fff", fontFamily:"ui-monospace,monospace", letterSpacing:"0.1em", marginTop:5, background:"rgba(255,255,255,0.15)", borderRadius:5, padding:"3px 10px" }}>{agentId}</div>
-          <div style={{ fontSize:8, fontWeight:600, color:"rgba(255,255,255,0.42)", marginTop:3, letterSpacing:"0.08em" }}>www.ctmerchant.com.ng</div>
+          <div style={{ fontSize:8, fontWeight:700, color:"#fde68a", marginTop:3, letterSpacing:"0.08em" }}>www.ctmerchant.com.ng</div>
         </div>
 
         {/* QR */}
@@ -75,7 +75,7 @@ function AgentCard({ agent, avatarUrl }) {
           <div style={{ background:"#fff", padding:4, borderRadius:8, border:"1.5px solid rgba(255,255,255,0.2)" }}>
             <QRCodeCanvas value={qrValue} size={68} level="H" includeMargin={false} bgColor="#ffffff" fgColor="#1e3a8a" />
           </div>
-          <div style={{ fontSize:7, fontWeight:800, letterSpacing:"0.16em", color:"rgba(255,255,255,0.45)", textTransform:"uppercase" }}>Verify ID</div>
+          <div style={{ fontSize:7, fontWeight:800, letterSpacing:"0.16em", color:"#fde68a", textTransform:"uppercase" }}>Verify ID</div>
         </div>
       </div>
 
@@ -83,7 +83,10 @@ function AgentCard({ agent, avatarUrl }) {
       <div style={{ height:5, background:"linear-gradient(90deg,#3b82f6 0%,#6366f1 52%,#1d4ed8 100%)", flexShrink:0 }} />
 
       {/* ── BODY — flex:1 fills remaining space evenly ── */}
-      <div style={{ flex:1, padding:"0 24px", display:"flex", flexDirection:"column", justifyContent:"space-evenly" }}>
+      <div style={{ flex:1, padding:"0 24px", display:"flex", flexDirection:"column", justifyContent:"space-evenly", position:"relative" }}>
+        {/* Chocolate-pink accent bars at each edge */}
+        <div style={{ position:"absolute", top:0, bottom:0, left:0, width:5, background:"linear-gradient(to bottom,#7b2d42,#c2607a,#8b3a52)", borderRadius:"0 3px 3px 0" }} />
+        <div style={{ position:"absolute", top:0, bottom:0, right:0, width:5, background:"linear-gradient(to bottom,#7b2d42,#c2607a,#8b3a52)", borderRadius:"3px 0 0 3px" }} />
 
         {/* Name + Phone */}
         <div>
@@ -140,7 +143,7 @@ function AgentCard({ agent, avatarUrl }) {
         />
         <div>
           <div style={{ fontSize:10, fontWeight:800, color:"rgba(255,255,255,0.85)", letterSpacing:"0.05em" }}>CTMerchant Agent Network</div>
-          <div style={{ fontSize:7.5, fontWeight:600, color:"rgba(255,255,255,0.4)", letterSpacing:"0.1em", marginTop:1 }}>www.ctmerchant.com.ng</div>
+          <div style={{ fontSize:7.5, fontWeight:700, color:"#fde68a", letterSpacing:"0.1em", marginTop:1 }}>www.ctmerchant.com.ng</div>
         </div>
       </div>
     </div>
