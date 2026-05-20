@@ -127,7 +127,13 @@ async function generateAgentCardBlob(agent, avatarDataUrl, ctmLogoSrc, qrDataUrl
   ctx.arc(avCX, avCY, avD / 2, 0, Math.PI * 2);
   ctx.clip();
   if (avatarImg) {
-    ctx.drawImage(avatarImg, avX, avY, avD, avD);
+    /* object-fit:cover — scale to fill circle, crop excess edges */
+    const scale  = Math.max(avD / avatarImg.naturalWidth, avD / avatarImg.naturalHeight);
+    const drawW  = avatarImg.naturalWidth  * scale;
+    const drawH  = avatarImg.naturalHeight * scale;
+    const drawX  = avX + (avD - drawW) / 2;
+    const drawY  = avY + (avD - drawH) / 2;
+    ctx.drawImage(avatarImg, drawX, drawY, drawW, drawH);
   } else {
     const ag = ctx.createLinearGradient(avX, avY, avX + avD, avY + avD);
     ag.addColorStop(0, "#2563eb");
@@ -178,7 +184,7 @@ async function generateAgentCardBlob(agent, avatarDataUrl, ctmLogoSrc, qrDataUrl
   bY += 65;
 
   ctx.font      = `800 24px Inter,Arial,sans-serif`;
-  ctx.fillStyle = "#bfdbfe";
+  ctx.fillStyle = "#fde68a";
   ctx.fillText("FIELD AGENT", brandCX, bY);
   bY += 35;
 
@@ -194,7 +200,7 @@ async function generateAgentCardBlob(agent, avatarDataUrl, ctmLogoSrc, qrDataUrl
   ctx.fillText(agentId, brandCX, bY + pillH / 2);
   bY += pillH + 7;
 
-  ctx.font         = `700 19px Inter,Arial,sans-serif`;
+  ctx.font         = `700 23px Inter,Arial,sans-serif`;
   ctx.fillStyle    = "#fde68a";
   ctx.textBaseline = "top";
   ctx.fillText("www.ctmerchant.com.ng", brandCX, bY);
@@ -376,9 +382,9 @@ function AgentCard({ agent, avatarUrl, qrCanvasRef }) {
         {/* brand */}
         <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:3 }}>
           <div style={{ fontSize:22, fontWeight:900, letterSpacing:"0.04em", color:"#fff", lineHeight:1 }}>CTMerchant</div>
-          <div style={{ fontSize:10, fontWeight:800, letterSpacing:"0.22em", color:"#bfdbfe", textTransform:"uppercase" }}>Field Agent</div>
+          <div style={{ fontSize:10, fontWeight:800, letterSpacing:"0.22em", color:"#fde68a", textTransform:"uppercase" }}>Field Agent</div>
           <div style={{ fontSize:10, fontWeight:800, color:"#fff", fontFamily:"ui-monospace,monospace", letterSpacing:"0.1em", marginTop:3, background:"rgba(255,255,255,0.15)", borderRadius:4, padding:"3px 9px" }}>{agentId}</div>
-          <div style={{ fontSize:8, fontWeight:700, color:"#fde68a", marginTop:2, letterSpacing:"0.07em" }}>www.ctmerchant.com.ng</div>
+          <div style={{ fontSize:10, fontWeight:700, color:"#fde68a", marginTop:2, letterSpacing:"0.07em" }}>www.ctmerchant.com.ng</div>
         </div>
         {/* QR — 64 px tile */}
         <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3, flexShrink:0 }}>
