@@ -23,7 +23,7 @@ import {
 
 export default function StaffAnnouncements() {
   const location = useLocation()
-  const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
+  const { isSuperAdmin, isCityAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
   const prefetchedData =
     location.state?.prefetchedData?.kind === "staff-announcements"
       ? location.state.prefetchedData
@@ -114,7 +114,7 @@ export default function StaffAnnouncements() {
       if (error) throw error
 
       setAnnouncements(prev => [data, ...prev])
-      setForm({ city_id: "", message: "", is_active: true })
+      setForm({ city_id: isSuperAdmin ? "" : (staffCityId || ""), message: "", is_active: true })
       notify({ type: "success", title: "Announcement Created", message: "Live in the selected city." })
     } catch (err) {
       notify({ type: "error", title: "Save Failed", message: getFriendlyErrorMessage(err) })
@@ -200,17 +200,29 @@ export default function StaffAnnouncements() {
             <div className="space-y-5">
               <div>
                 <label className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-400">Target City</label>
-                <select
-                  required
-                  value={form.city_id}
-                  onChange={e => setForm(prev => ({ ...prev, city_id: e.target.value }))}
-                  className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-indigo-600 focus:bg-white"
-                >
-                  <option value="">Select a city...</option>
-                  {cities.map(c => (
-                    <option key={c.id} value={c.id}>{c.name} ({c.state})</option>
-                  ))}
-                </select>
+                {isCityAdmin && !isSuperAdmin ? (
+                  <div className="flex items-center gap-2 rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3">
+                    <FaLocationDot className="shrink-0 text-indigo-400" />
+                    <span className="text-sm font-bold text-slate-900">
+                      {cities.find(c => String(c.id) === String(staffCityId))
+                        ? `${cities.find(c => String(c.id) === String(staffCityId)).name} (${cities.find(c => String(c.id) === String(staffCityId)).state})`
+                        : "Your city"}
+                    </span>
+                    <span className="ml-auto text-[10px] font-black uppercase tracking-widest text-slate-400">Locked</span>
+                  </div>
+                ) : (
+                  <select
+                    required
+                    value={form.city_id}
+                    onChange={e => setForm(prev => ({ ...prev, city_id: e.target.value }))}
+                    className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-indigo-600 focus:bg-white"
+                  >
+                    <option value="">Select a city...</option>
+                    {cities.map(c => (
+                      <option key={c.id} value={c.id}>{c.name} ({c.state})</option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <div>
