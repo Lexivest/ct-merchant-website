@@ -38,7 +38,8 @@ import {
   toProductCategoryOptions,
 } from "../../lib/productCategories";
 import { isServiceCategory } from "../../lib/serviceCategories";
-import { prepareVendorRouteTransition } from "../../lib/vendorRouteTransitions";
+import { prepareVendorRouteTransition } from "../../lib/vendorRouteTransitions"
+import { invalidateCachedFetchStore } from "../../hooks/useCachedFetch";
 
 // Only importing the Editor utilities; the compression utilities are built-in below to prevent OOM crashes and enforce 100KB limits.
 import {
@@ -677,6 +678,7 @@ export default function EditProduct() {
 
       if (rpcErr) throw rpcErr;
       dbUpdateSucceeded = true;
+      invalidateCachedFetchStore(key => key === `merchant_products_${productData?.shop_id}`);
 
       notify({
         type: "success",

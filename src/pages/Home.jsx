@@ -97,7 +97,7 @@ const socialLinks = [
 
 const editorialTexture = {
   backgroundImage:
-    "radial-gradient(circle at 18% 18%, rgba(201,168,76,0.16), transparent 30%), radial-gradient(circle at 86% 8%, rgba(219,39,119,0.10), transparent 28%), linear-gradient(180deg, #3B1C09 0%, #150C04 48%, #090600 100%)",
+    "radial-gradient(circle at 18% 18%, rgba(201,168,76,0.16), transparent 30%), radial-gradient(circle at 86% 8%, rgba(219,39,119,0.10), transparent 28%), linear-gradient(180deg, #5A2B0F 0%, #2E1508 48%, #180A03 100%)",
 }
 
 const lightFieldClass =
@@ -182,7 +182,7 @@ function OfficeSupportCard() {
         </div>
         <Link
           to="/contact"
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#4A2410] px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#F7EED8] transition hover:bg-pink-600"
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#5A2B0F] px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#F7EED8] transition hover:bg-pink-600"
         >
           Contact support
           <FaArrowRight />
@@ -1066,12 +1066,12 @@ function Home() {
             structuredData={homeStructuredData}
           />
           <PwaAddToHomePrompt />
-          <section className="relative overflow-x-hidden bg-[#3B1C09] px-4 py-4 text-[#F7EED8] md:py-8" style={editorialTexture}>
+          <section className="relative overflow-x-hidden bg-[#5A2B0F] px-4 py-4 text-[#F7EED8] md:py-8" style={editorialTexture}>
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(242,220,164,0.13),transparent_34%)]" />
             <div className="relative mx-auto mb-4 w-full max-w-7xl lg:hidden">
               <p className="mb-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-[#F2DCA4]">Verified Shops and Services</p>
-              <div className="overflow-hidden rounded-[22px] border border-[#C9A84C]/25 bg-[#140D05]/90 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
-                <div className="flex h-[48px] w-full overflow-hidden rounded-[16px] border-[3px] border-[#C9A84C] bg-[#3B1C09]/90 shadow-[0_0_0_4px_rgba(201,168,76,0.14)] transition focus-within:border-pink-500 focus-within:shadow-[0_0_0_4px_rgba(219,39,119,0.16)]">
+              <div className="overflow-hidden rounded-[22px] border border-[#C9A84C]/25 bg-[#2E1508]/90 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+                <div className="flex h-[48px] w-full overflow-hidden rounded-[16px] border-[3px] border-[#C9A84C] bg-[#5A2B0F]/90 shadow-[0_0_0_4px_rgba(201,168,76,0.14)] transition focus-within:border-pink-500 focus-within:shadow-[0_0_0_4px_rgba(219,39,119,0.16)]">
                   <div className="flex items-center border-r border-[#C9A84C]/25 bg-[#F7EED8]/10 pl-4 pr-2 text-sm font-black tracking-[0.12em] text-[#F2DCA4]">
                     CT-
                   </div>
@@ -1102,18 +1102,18 @@ function Home() {
 
             <div className="relative mx-auto flex flex-col gap-4 lg:grid lg:max-w-7xl lg:grid-cols-2 lg:items-start lg:gap-6">
               <div className="w-full lg:col-start-1 lg:flex lg:flex-col lg:gap-4">
-                <div className="overflow-hidden rounded-[30px] border border-[#C9A84C]/25 bg-[#140D05] shadow-[0_30px_90px_rgba(0,0,0,0.38)]">
+                <div className="overflow-hidden rounded-[30px] border border-[#C9A84C]/25 bg-[#2E1508] shadow-[0_30px_90px_rgba(0,0,0,0.38)]">
                   {/* Hero image area — the branded placeholder renders instantly
                       from CSS while banner.jpg (189 KB) downloads in parallel.
                       A Vite build plugin injects <link rel="preload"> for the
                       hashed asset so the browser fetches it before React mounts. */}
-                  <div className="relative h-[260px] w-full overflow-hidden bg-[#140D05] sm:h-[340px] md:h-[440px]">
+                  <div className="relative h-[260px] w-full overflow-hidden bg-[#2E1508] sm:h-[340px] md:h-[440px]">
 
                     {/* Branded welcome placeholder — pure CSS, zero network cost.
                         Unmounted as soon as the banner image fires onLoad so it
                         never sits on top of the real photo. */}
                     {!bannerLoaded && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#4A2410] via-[#2B1A08] to-[#140D05]">
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#5A2B0F] via-[#2E1508] to-[#1E1005]">
                         <div className="absolute inset-0 opacity-10"
                           style={{ backgroundImage: "radial-gradient(circle at 30% 40%, #C9A84C 0%, transparent 55%), radial-gradient(circle at 75% 65%, #db2777 0%, transparent 45%)" }}
                         />
@@ -1155,9 +1155,9 @@ function Home() {
                 <div className="space-y-4">
                   <div className="space-y-4">
                   <div className="hidden rounded-[24px] bg-[#C9A84C]/15 p-1 lg:block">
-                    <div className="rounded-[20px] border border-[#C9A84C]/20 bg-[#3B1C09]/80 p-4">
+                    <div className="rounded-[20px] border border-[#C9A84C]/20 bg-[#5A2B0F]/80 p-4">
                       <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#F2DCA4]">Verified Shops and Services</p>
-                      <div className="flex h-[44px] overflow-hidden rounded-2xl border-[3px] border-[#C9A84C] bg-[#140D05] shadow-[0_0_0_4px_rgba(201,168,76,0.14)] transition focus-within:border-pink-500 focus-within:shadow-[0_0_0_4px_rgba(219,39,119,0.16)]">
+                      <div className="flex h-[44px] overflow-hidden rounded-2xl border-[3px] border-[#C9A84C] bg-[#2E1508] shadow-[0_0_0_4px_rgba(201,168,76,0.14)] transition focus-within:border-pink-500 focus-within:shadow-[0_0_0_4px_rgba(219,39,119,0.16)]">
                         <div className="flex items-center border-r border-[#C9A84C]/25 bg-[#F7EED8]/10 pl-4 pr-2 text-sm font-black tracking-[0.12em] text-[#F2DCA4]">
                           CT-
                         </div>
@@ -1251,7 +1251,7 @@ function Home() {
                           </button>
                         </div>
 
-                        <AuthButton type="submit" loading={loginLoading} className="!bg-[#4A2410] !text-[#F7EED8] hover:!bg-[#5E3016]">
+                        <AuthButton type="submit" loading={loginLoading} className="!bg-[#5A2B0F] !text-[#F7EED8] hover:!bg-[#7A3D1C]">
                           <span>Secure Sign In</span>
                           <FaArrowRight />
                         </AuthButton>

@@ -27,7 +27,7 @@ function MarketPulseTicker() {
   )
 
   return (
-    <div className="border-b border-[#C9A84C]/25 bg-[#3B1C09] py-2.5 text-[#F7EED8]">
+    <div className="border-b border-[#C9A84C]/25 bg-[#5A2B0F] py-2.5 text-[#F7EED8]">
       <div className="mx-auto flex max-w-7xl items-center px-4">
         <div className="mr-4 flex shrink-0 items-center gap-2 border-r border-[#C9A84C]/25 pr-4">
           <div className="flex h-[12px] w-[18px] flex-col overflow-hidden rounded-[2px] border border-white/20">
@@ -137,7 +137,7 @@ function Navbar() {
 
             <Link
               to="/staff-portal"
-              className="inline-flex items-center justify-center rounded-lg bg-[#3B1C09] px-4 py-1.5 text-sm font-semibold text-white no-underline shadow-sm transition hover:bg-[#5E3016]"
+              className="inline-flex items-center justify-center rounded-lg bg-[#5A2B0F] px-4 py-1.5 text-sm font-semibold text-white no-underline shadow-sm transition hover:bg-[#7A3D1C]"
             >
               Staff Portal
             </Link>
@@ -216,7 +216,7 @@ function Navbar() {
                 <Link
                   to="/staff-portal"
                   onClick={closeMenu}
-                  className="mt-2 inline-flex items-center justify-center rounded-xl bg-[#3B1C09] px-3 py-3 text-sm font-bold text-white no-underline transition hover:bg-[#5E3016]"
+                  className="mt-2 inline-flex items-center justify-center rounded-xl bg-[#5A2B0F] px-3 py-3 text-sm font-bold text-white no-underline transition hover:bg-[#7A3D1C]"
                 >
                   Staff Portal
                 </Link>
