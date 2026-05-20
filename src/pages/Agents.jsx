@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { Link } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
 import PageSeo from "../components/common/PageSeo"
 import { supabase } from "../lib/supabase"
