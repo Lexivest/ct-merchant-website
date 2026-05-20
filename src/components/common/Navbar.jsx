@@ -78,7 +78,7 @@ const navLinks = [
   { label: "Home", to: "/" },
   { label: "About", to: "/about", preload: () => import("../../pages/About") },
   { label: "Services", to: "/services", preload: () => import("../../pages/Services") },
-  { label: "Agents", to: "/agents", preload: () => import("../../pages/Agents") },
+  { label: "Accredited Agents", to: "/agents", preload: () => import("../../pages/Agents") },
   { label: "Careers", to: "/careers", preload: () => import("../../pages/Careers") },
   { label: "Contact", to: "/contact", preload: () => import("../../pages/Contact") },
 ]
