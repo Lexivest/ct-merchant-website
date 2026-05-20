@@ -314,7 +314,7 @@ export default function ShopCommunitySection({
           window.clearTimeout(debounceTimer)
           debounceTimer = window.setTimeout(() => {
             fetchComments()
-          }, 1500)
+          }, 300)
         }
       )
       .subscribe()
@@ -433,7 +433,7 @@ export default function ShopCommunitySection({
           user_id: user.id,
           parent_id: parentId,
           body: trimmedBody,
-          status: "pending",
+          status: "approved",
         })
 
         if (insertError) throw insertError
@@ -451,7 +451,7 @@ export default function ShopCommunitySection({
         notify({
           type: "success",
           title: "Comment submitted",
-          message: "Your comment is now awaiting moderation review.",
+          message: "Your comment has been posted.",
         })
 
         await fetchComments()
@@ -592,7 +592,7 @@ export default function ShopCommunitySection({
             />
             <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="text-[0.78rem] font-medium text-slate-500">
-                {commentBody.trim().length}/500 - Public after approval
+                {commentBody.trim().length}/500
               </div>
               <button
                 type="button"
@@ -661,9 +661,9 @@ export default function ShopCommunitySection({
                           Shop Owner
                         </span>
                       ) : null}
-                      {comment.status !== "approved" ? (
-                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[0.62rem] font-extrabold uppercase tracking-[0.12em] text-amber-700">
-                          {comment.status === "pending" ? "Awaiting Review" : comment.status}
+                      {comment.status === "hidden" || comment.status === "rejected" ? (
+                        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[0.62rem] font-extrabold uppercase tracking-[0.12em] text-slate-500">
+                          {comment.status}
                         </span>
                       ) : null}
                     </div>

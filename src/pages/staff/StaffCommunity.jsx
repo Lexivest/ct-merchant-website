@@ -50,7 +50,7 @@ export default function StaffCommunity() {
   const [commentThreads, setCommentThreads] = useState(() => prefetchedData?.commentThreads || [])
   const [loadingComments, setLoadingComments] = useState(() => !prefetchedData && !fetchingStaff)
   const [selectedCommentThread, setSelectedCommentThread] = useState(null)
-  const [commentFilter, setCommentFilter] = useState("pending")
+  const [commentFilter, setCommentFilter] = useState("all")
   const [ageFilter, setAgeFilter] = useState("all")
   const [moderatingCommentId, setModeratingCommentId] = useState(null)
   const [deletingCommentId, setDeletingCommentId] = useState(null)
@@ -287,10 +287,10 @@ export default function StaffCommunity() {
     })
   }, [ageFilter, commentFilter, commentThreads])
 
-  const pendingCommentCount = commentThreads.reduce((sum, thread) => sum + thread.pendingCount, 0)
   const approvedCommentTotal = commentThreads.reduce((sum, thread) => sum + thread.approvedCount, 0)
   const hiddenCommentTotal = commentThreads.reduce((sum, thread) => sum + thread.hiddenCount, 0)
   const rejectedCommentTotal = commentThreads.reduce((sum, thread) => sum + thread.rejectedCount, 0)
+  const totalComments = approvedCommentTotal + hiddenCommentTotal + rejectedCommentTotal
 
   return (
     <StaffPortalShell
@@ -301,7 +301,7 @@ export default function StaffCommunity() {
       <SectionHeading
         eyebrow="Trust & Safety"
         title="Shop Discussion Queue"
-        description="Review public discussion threads, approve valuable comments, filter older conversations, and remove stale or harmful discussions."
+        description="Monitor live community discussions across all shops. Hide or delete messages that violate guidelines — all messages post instantly without requiring approval."
         actions={
           <button
             type="button"
@@ -314,12 +314,12 @@ export default function StaffCommunity() {
       />
 
       <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-        <div className="rounded-2xl bg-amber-50 p-4">
-          <div className="text-xs font-bold uppercase tracking-wide text-amber-600">Pending</div>
-          <div className="mt-2 text-2xl font-black text-slate-900">{pendingCommentCount}</div>
+        <div className="rounded-2xl bg-blue-50 p-4">
+          <div className="text-xs font-bold uppercase tracking-wide text-blue-600">Total Messages</div>
+          <div className="mt-2 text-2xl font-black text-slate-900">{totalComments}</div>
         </div>
         <div className="rounded-2xl bg-green-50 p-4">
-          <div className="text-xs font-bold uppercase tracking-wide text-green-600">Approved</div>
+          <div className="text-xs font-bold uppercase tracking-wide text-green-600">Live</div>
           <div className="mt-2 text-2xl font-black text-slate-900">{approvedCommentTotal}</div>
         </div>
         <div className="rounded-2xl bg-slate-100 p-4">
@@ -327,7 +327,7 @@ export default function StaffCommunity() {
           <div className="mt-2 text-2xl font-black text-slate-900">{hiddenCommentTotal}</div>
         </div>
         <div className="rounded-2xl bg-rose-50 p-4">
-          <div className="text-xs font-bold uppercase tracking-wide text-rose-600">Rejected</div>
+          <div className="text-xs font-bold uppercase tracking-wide text-rose-600">Removed</div>
           <div className="mt-2 text-2xl font-black text-slate-900">{rejectedCommentTotal}</div>
         </div>
       </div>
@@ -335,11 +335,10 @@ export default function StaffCommunity() {
       <div className="mb-4 grid gap-3 lg:grid-cols-[1fr_auto]">
         <div className="flex flex-wrap gap-2">
           {[
-            { key: "pending", label: "Pending Review" },
-            { key: "approved", label: "Approved" },
-            { key: "hidden", label: "Hidden" },
-            { key: "rejected", label: "Rejected" },
             { key: "all", label: "All Threads" },
+            { key: "approved", label: "Live" },
+            { key: "hidden", label: "Hidden" },
+            { key: "rejected", label: "Removed" },
           ].map((option) => (
             <button
               key={option.key}
