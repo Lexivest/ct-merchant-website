@@ -140,6 +140,8 @@ function SponsoredProductCard({ sponsored, onOpenProduct, onOpenServiceProvider 
               <StableImage
                 src={img}
                 alt={product.name}
+                width={300}
+                height={300}
                 aspectRatio={1}
                 className="h-full w-full object-cover"
               />
@@ -418,6 +420,8 @@ const ShopCard = memo(function ShopCard({ shop, products, onOpenShop }) {
           <StableImage
             src={item.image_url}
             alt={name}
+            width={300}
+            height={300}
             aspectRatio={1}
             containerClassName="h-full w-full bg-[#F8FAFC]"
             className="h-full w-full object-cover"
@@ -472,6 +476,8 @@ const ShopCard = memo(function ShopCard({ shop, products, onOpenShop }) {
                 <StableImage
                   src={item.image_url}
                   alt=""
+                  width={68}
+                  height={68}
                   aspectRatio={1}
                   className="h-full w-full object-cover"
                 />
@@ -503,6 +509,8 @@ const ServiceMarketCard = memo(function ServiceMarketCard({ provider, onOpenServ
             <StableImage
               src={heroImage}
               alt={shop.name || "Service provider"}
+              width={300}
+              height={300}
               aspectRatio={1}
               containerClassName="h-full w-full bg-[#F8FAFC]"
               className="h-full w-full object-cover"
@@ -537,6 +545,8 @@ const ServiceMarketCard = memo(function ServiceMarketCard({ provider, onOpenServ
           <StableImage
             src={item.image_url || heroImage}
             alt={item.name || shop.name || "Service"}
+            width={300}
+            height={300}
             aspectRatio={1}
             containerClassName="h-full w-full bg-[#F8FAFC]"
             className="h-full w-full object-cover"
@@ -591,6 +601,8 @@ function DiscoveryCard({ item, onOpenDiscovery }) {
         <StableImage 
           src={item.image_url}
           alt={item.title}
+          width={380}
+          height={570}
           aspectRatio={2/3}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
         />
@@ -622,6 +634,8 @@ function FairlyUsedProductCard({ product, onOpenProduct }) {
         <StableImage 
           src={product.image_url}
           alt={product.name}
+          width={300}
+          height={300}
           aspectRatio={1}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
         />
@@ -820,6 +834,8 @@ function MarketSection({
                             <StableImage
                               src={product.image_url}
                               alt={product.name || area.name}
+                              width={150}
+                              height={150}
                               aspectRatio={1}
                               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                             />
@@ -827,6 +843,8 @@ function MarketSection({
                             <StableImage
                               src={area.image_url}
                               alt={area.name}
+                              width={150}
+                              height={150}
                               aspectRatio={1}
                               className="h-full w-full object-cover"
                             />
@@ -1028,6 +1046,8 @@ function MarketSection({
                   <StableImage
                     src={imageUrl}
                     alt={category.name}
+                    width={160}
+                    height={160}
                     aspectRatio={1}
                     containerClassName="cat-card-image"
                     className="h-full w-full object-contain bg-white"
