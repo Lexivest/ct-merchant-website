@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import {
   FaArrowLeft,
+  FaBan,
   FaBuildingUser,
   FaCircleCheck,
   FaCircleNotch,
@@ -15,15 +16,28 @@ import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { useStaffPortalSession } from "./StaffPortalShared";
 
+// Sort: pending first → active approved → suspended last
 function sortApplications(list) {
   return [...list].sort((a, b) => {
-    if (a.status === "pending" && b.status !== "pending") return -1;
-    if (a.status !== "pending" && b.status === "pending") return 1;
+    const rank = (item) => {
+      if (item.status === "pending") return 0;
+      if (item.status === "approved" && !item.is_suspended) return 1;
+      return 2; // suspended
+    };
+    const diff = rank(a) - rank(b);
+    if (diff !== 0) return diff;
     return new Date(b.created_at) - new Date(a.created_at);
   });
 }
 
-function StatusBadge({ status, agentId }) {
+function StatusBadge({ status, agentId, isSuspended }) {
+  if (status === "approved" && isSuspended) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-md bg-rose-100 px-2 py-0.5 text-[0.6rem] font-black uppercase tracking-widest text-rose-800 border border-rose-200">
+        <FaBan className="text-rose-600" /> Suspended
+      </span>
+    );
+  }
   if (status === "approved") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-100 px-2 py-0.5 text-[0.6rem] font-black uppercase tracking-widest text-emerald-800 border border-emerald-200">
@@ -111,6 +125,12 @@ export default function StaffAgentApplications() {
     if (!fetchingStaff) fetchApplications();
   }, [fetchApplications, fetchingStaff]);
 
+  // Shared helper — update one row in both state slices
+  const patchItem = (updated) => {
+    setItems((prev) => sortApplications(prev.map((item) => (item.id === updated.id ? updated : item))));
+    setSelectedItem(updated);
+  };
+
   const handleApprove = async () => {
     if (!selectedItem || !authUser?.id) return;
     setProcessing(true);
@@ -122,14 +142,11 @@ export default function StaffAgentApplications() {
         .select()
         .single();
       if (error) throw error;
-
-      const updated = data;
-      setItems((prev) => sortApplications(prev.map((item) => (item.id === updated.id ? updated : item))));
-      setSelectedItem(updated);
+      patchItem(data);
       notify({
         type: "success",
         title: "Application approved",
-        message: `Agent ID ${updated.agent_id} has been issued.`,
+        message: `Agent ID ${data.agent_id} has been issued.`,
       });
     } catch (err) {
       console.error("Error approving application:", err);
@@ -153,7 +170,6 @@ export default function StaffAgentApplications() {
         .delete()
         .eq("id", selectedItem.id);
       if (error) throw error;
-
       setItems((prev) => prev.filter((item) => item.id !== selectedItem.id));
       setSelectedItem(null);
       notify({
@@ -173,10 +189,83 @@ export default function StaffAgentApplications() {
     }
   };
 
+  const handleSuspend = async () => {
+    if (!selectedItem || !authUser?.id) return;
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase
+        .from("agent_applications")
+        .update({ is_suspended: true, suspended_by: authUser.id, suspended_at: new Date().toISOString() })
+        .eq("id", selectedItem.id)
+        .select()
+        .single();
+      if (error) throw error;
+      patchItem(data);
+      notify({
+        type: "info",
+        title: "Agent suspended",
+        message: `${data.full_name || "Agent"} (${data.agent_id}) has been suspended.`,
+      });
+    } catch (err) {
+      console.error("Error suspending agent:", err);
+      notify({
+        type: "error",
+        title: "Suspension failed",
+        message: "Could not suspend this agent. Please retry.",
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleUnsuspend = async () => {
+    if (!selectedItem || !authUser?.id) return;
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase
+        .from("agent_applications")
+        .update({ is_suspended: false, suspended_by: null, suspended_at: null })
+        .eq("id", selectedItem.id)
+        .select()
+        .single();
+      if (error) throw error;
+      patchItem(data);
+      notify({
+        type: "success",
+        title: "Agent reinstated",
+        message: `${data.full_name || "Agent"} (${data.agent_id}) is active again.`,
+      });
+    } catch (err) {
+      console.error("Error reinstating agent:", err);
+      notify({
+        type: "error",
+        title: "Reinstatement failed",
+        message: "Could not reinstate this agent. Please retry.",
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const q = selectedItem?.questionnaire || {};
   const applicantType = q.agentApplicantType || "individual";
   const isCorporate = applicantType === "corporate";
   const isPending = selectedItem?.status === "pending";
+  const isApproved = selectedItem?.status === "approved";
+  const isSuspended = Boolean(selectedItem?.is_suspended);
+
+  // Context banner colours
+  const bannerStyle = isPending
+    ? "bg-amber-50 border-amber-200 text-amber-800"
+    : isSuspended
+    ? "bg-rose-50 border-rose-200 text-rose-800"
+    : "bg-emerald-50 border-emerald-200 text-emerald-800";
+
+  const bannerSubtitle = isPending
+    ? "Review the application carefully before making a decision."
+    : isSuspended
+    ? "This agent is currently suspended and cannot operate."
+    : "This agent is active and approved.";
 
   return (
     <div className="flex h-[100dvh] flex-col bg-slate-50 font-sans">
@@ -216,22 +305,29 @@ export default function StaffAgentApplications() {
                 const iq = item.questionnaire || {};
                 const itemType = iq.agentApplicantType || "individual";
                 const isSelected = selectedItem?.id === item.id;
+                const itemSuspended = Boolean(item.is_suspended);
+
+                const hoverClass = itemSuspended
+                  ? "hover:bg-rose-50/40 border-transparent"
+                  : item.status === "approved"
+                  ? "hover:bg-emerald-50/40 border-transparent"
+                  : "hover:bg-amber-50/40 border-transparent";
+
+                const selectedClass = itemSuspended
+                  ? "bg-rose-50 border-rose-500 hidden lg:block"
+                  : item.status === "approved"
+                  ? "bg-emerald-50 border-emerald-600 hidden lg:block"
+                  : "bg-amber-50 border-amber-500 hidden lg:block";
 
                 return (
                   <div
                     key={item.id}
                     onClick={() => setSelectedItem(item)}
-                    className={`cursor-pointer p-4 transition-all border-l-4 ${
-                      isSelected
-                        ? "bg-emerald-50 border-emerald-600 hidden lg:block"
-                        : item.status === "approved"
-                        ? "hover:bg-emerald-50/40 border-transparent"
-                        : "hover:bg-amber-50/40 border-transparent"
-                    }`}
+                    className={`cursor-pointer p-4 transition-all border-l-4 ${isSelected ? selectedClass : hoverClass}`}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <TypeBadge type={itemType} />
-                      <StatusBadge status={item.status} agentId={item.agent_id} />
+                      <StatusBadge status={item.status} agentId={item.agent_id} isSuspended={itemSuspended} />
                     </div>
 
                     <h4 className="font-bold text-slate-900 line-clamp-1 pr-2 text-sm mb-1">
@@ -270,26 +366,44 @@ export default function StaffAgentApplications() {
                 <FaArrowLeft /> Back to list
               </button>
 
-              {/* Approved agent ID banner */}
-              {!isPending && selectedItem.agent_id && (
-                <div className="mb-4 flex items-center gap-3 rounded-xl bg-emerald-50 border border-emerald-200 p-4 shadow-sm">
-                  <FaCircleCheck className="text-2xl text-emerald-500 flex-shrink-0" />
+              {/* Agent ID banner — shows for all approved agents; red tint when suspended */}
+              {isApproved && selectedItem.agent_id && (
+                <div className={`mb-4 flex items-center gap-3 rounded-xl p-4 shadow-sm border ${isSuspended ? "bg-rose-50 border-rose-200" : "bg-emerald-50 border-emerald-200"}`}>
+                  {isSuspended
+                    ? <FaBan className="text-2xl text-rose-500 flex-shrink-0" />
+                    : <FaCircleCheck className="text-2xl text-emerald-500 flex-shrink-0" />
+                  }
                   <div>
-                    <p className="text-[0.65rem] font-black uppercase tracking-widest text-emerald-600">Agent ID Issued</p>
+                    <p className={`text-[0.65rem] font-black uppercase tracking-widest ${isSuspended ? "text-rose-600" : "text-emerald-600"}`}>
+                      {isSuspended ? "Agent Suspended" : "Agent ID Issued"}
+                    </p>
                     <p className="text-lg font-black text-slate-900 tracking-widest">{selectedItem.agent_id}</p>
                   </div>
                 </div>
               )}
 
+              {/* Suspension audit info */}
+              {isSuspended && selectedItem.suspended_at && (
+                <div className="mb-4 rounded-xl bg-rose-50 border border-rose-200 px-4 py-3">
+                  <p className="text-[0.65rem] font-black uppercase tracking-widest text-rose-500 mb-0.5">Suspended on</p>
+                  <p className="text-xs font-bold text-slate-700">
+                    {new Date(selectedItem.suspended_at).toLocaleString("en-NG", {
+                      day: "numeric", month: "short", year: "numeric",
+                      hour: "numeric", minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              )}
+
               {/* Context banner */}
-              <div className={`rounded-xl p-4 mb-4 sm:mb-6 shadow-sm border flex items-center gap-3 ${isPending ? "bg-amber-50 border-amber-200 text-amber-800" : "bg-emerald-50 border-emerald-200 text-emerald-800"}`}>
-                <FaHandshake className="text-xl sm:text-2xl flex-shrink-0" />
+              <div className={`rounded-xl p-4 mb-4 sm:mb-6 shadow-sm border flex items-center gap-3 ${bannerStyle}`}>
+                {isSuspended ? <FaBan className="text-xl sm:text-2xl flex-shrink-0" /> : <FaHandshake className="text-xl sm:text-2xl flex-shrink-0" />}
                 <div>
                   <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest">
                     {isCorporate ? "Corporate / Business Entity Application" : "Individual Agent Application"}
                   </h3>
                   <p className="text-[0.65rem] sm:text-xs font-medium opacity-80 mt-0.5">
-                    {isPending ? "Review the application carefully before making a decision." : "This application has been approved."}
+                    {bannerSubtitle}
                   </p>
                 </div>
               </div>
@@ -303,7 +417,7 @@ export default function StaffAgentApplications() {
                     </h2>
                     <TypeBadge type={applicantType} />
                   </div>
-                  <StatusBadge status={selectedItem.status} agentId={selectedItem.agent_id} />
+                  <StatusBadge status={selectedItem.status} agentId={selectedItem.agent_id} isSuspended={isSuspended} />
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -389,7 +503,9 @@ export default function StaffAgentApplications() {
                 </div>
               </div>
 
-              {/* Action Bar */}
+              {/* ── ACTION BAR ── */}
+
+              {/* Pending → Approve + Reject */}
               {isPending && (
                 <div className="fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto lg:left-auto lg:right-auto bg-white lg:rounded-2xl p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] lg:shadow-sm border-t lg:border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 z-30">
                   <p className="text-[0.65rem] font-black uppercase tracking-widest text-slate-400 hidden sm:block">
@@ -413,6 +529,40 @@ export default function StaffAgentApplications() {
                       Approve &amp; Issue ID
                     </button>
                   </div>
+                </div>
+              )}
+
+              {/* Approved + not suspended → Suspend */}
+              {isApproved && !isSuspended && (
+                <div className="fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto lg:left-auto lg:right-auto bg-white lg:rounded-2xl p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] lg:shadow-sm border-t lg:border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 z-30">
+                  <p className="text-[0.65rem] font-black uppercase tracking-widest text-slate-400 hidden sm:block">
+                    Agent is active
+                  </p>
+                  <button
+                    onClick={handleSuspend}
+                    disabled={processing}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-xl text-[0.7rem] sm:text-xs font-black uppercase tracking-widest transition disabled:opacity-50"
+                  >
+                    {processing ? <FaCircleNotch className="animate-spin" /> : <FaBan />}
+                    Suspend Agent
+                  </button>
+                </div>
+              )}
+
+              {/* Approved + suspended → Unsuspend */}
+              {isApproved && isSuspended && (
+                <div className="fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto lg:left-auto lg:right-auto bg-white lg:rounded-2xl p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] lg:shadow-sm border-t lg:border border-rose-200 flex flex-col sm:flex-row items-center justify-between gap-3 z-30">
+                  <p className="text-[0.65rem] font-black uppercase tracking-widest text-rose-400 hidden sm:block">
+                    Agent is suspended
+                  </p>
+                  <button
+                    onClick={handleUnsuspend}
+                    disabled={processing}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl text-[0.7rem] sm:text-xs font-black uppercase tracking-widest shadow-md transition disabled:opacity-50"
+                  >
+                    {processing ? <FaCircleNotch className="animate-spin" /> : <FaCircleCheck />}
+                    Reinstate Agent
+                  </button>
                 </div>
               )}
 
