@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react"
-import { Link } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
 import PageSeo from "../components/common/PageSeo"
 import { supabase } from "../lib/supabase"
@@ -199,25 +198,6 @@ function ActiveCard({ agent }) {
   )
 }
 
-/* ── Inactive agent card (suspended) ── */
-function InactiveCard() {
-  return (
-    <div className="rounded-3xl bg-slate-200 p-1 opacity-70">
-      <div className="flex flex-col items-center justify-center gap-3 rounded-[22px] border border-slate-200 bg-slate-50 py-12 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-200">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-7 w-7 text-slate-400">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
-          </svg>
-        </div>
-        <div>
-          <p className="text-xs font-black uppercase tracking-widest text-slate-400">Inactive</p>
-          <p className="mt-1 text-[10px] font-semibold text-slate-400">This agent is no longer active</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function SkeletonCard() {
   return <div className="h-72 animate-pulse rounded-3xl bg-slate-100" />
 }
@@ -233,9 +213,8 @@ export default function Agents() {
   useEffect(() => {
     supabase
       .from("agent_applications")
-      .select("full_name, agent_id, email, phone, questionnaire, bio, reviewed_at, created_at, is_suspended, profile_photo_url")
+      .select("full_name, agent_id, email, phone, questionnaire, bio, reviewed_at, created_at, profile_photo_url")
       .eq("status", "approved")
-      .order("is_suspended", { ascending: true, nullsFirst: true })
       .order("reviewed_at", { ascending: false })
       .then(({ data, error }) => {
         if (!error) setAgents(data || [])
@@ -243,28 +222,18 @@ export default function Agents() {
       })
   }, [])
 
-  /* active agents only, for filters + hero count */
-  const activeAgents = useMemo(
-    () => agents.filter((a) => a.is_suspended !== true),
-    [agents],
-  )
-  const inactiveAgents = useMemo(
-    () => agents.filter((a) => a.is_suspended === true),
-    [agents],
-  )
-
   const regions = useMemo(() => {
     const set = new Set()
-    activeAgents.forEach((a) => {
+    agents.forEach((a) => {
       const r = a.questionnaire?.preferredRegion
       if (r) set.add(r)
     })
     return Array.from(set).sort()
-  }, [activeAgents])
+  }, [agents])
 
-  const filteredActive = useMemo(() => {
+  const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return activeAgents.filter((a) => {
+    return agents.filter((a) => {
       const aq     = a.questionnaire || {}
       const name   = (a.full_name || "").toLowerCase()
       const type   = aq.agentApplicantType === "corporate" ? "corporate" : "individual"
@@ -275,7 +244,7 @@ export default function Agents() {
       if (typeFilter   !== "all" && type   !== typeFilter)   return false
       return true
     })
-  }, [activeAgents, search, regionFilter, typeFilter])
+  }, [agents, search, regionFilter, typeFilter])
 
   const clearFilters = () => {
     setSearch("")
@@ -283,9 +252,6 @@ export default function Agents() {
     setTypeFilter("all")
   }
   const hasFilters = search || regionFilter !== "all" || typeFilter !== "all"
-
-  /* all cards to show: filtered actives + all inactives at bottom */
-  const totalShown = filteredActive.length + inactiveAgents.length
 
   return (
     <MainLayout>
@@ -323,8 +289,8 @@ export default function Agents() {
 
           {!loading && (
             <p className="mt-5 text-sm font-semibold text-white/50">
-              <span className="text-2xl font-black text-[#C9A84C]">{activeAgents.length}</span>
-              {" "}active {activeAgents.length === 1 ? "agent" : "agents"} across Nigeria
+              <span className="text-2xl font-black text-[#C9A84C]">{agents.length}</span>
+              {" "}active {agents.length === 1 ? "agent" : "agents"} across Nigeria
             </p>
           )}
         </div>
@@ -393,7 +359,7 @@ export default function Agents() {
           </div>
 
           <span className="text-xs font-semibold text-slate-400">
-            {loading ? "…" : `${totalShown} ${totalShown === 1 ? "agent" : "agents"}`}
+            {loading ? "…" : `${filtered.length} ${filtered.length === 1 ? "agent" : "agents"}`}
           </span>
         </div>
       </div>
@@ -404,7 +370,7 @@ export default function Agents() {
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
-        ) : filteredActive.length === 0 && inactiveAgents.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="py-24 text-center">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-4 h-16 w-16 text-slate-300">
               <circle cx="11" cy="11" r="8" />
@@ -425,42 +391,61 @@ export default function Agents() {
             )}
           </div>
         ) : (
-          <>
-            {filteredActive.length === 0 && hasFilters && (
-              <div className="mb-8 text-center">
-                <p className="text-sm font-semibold text-slate-500">No active agents match your filters.</p>
-                <button type="button" onClick={clearFilters} className="mt-2 text-sm font-black text-[#3B1C09] underline">
-                  Clear filters
-                </button>
-              </div>
-            )}
-
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredActive.map((agent) => (
-                <ActiveCard key={agent.agent_id || agent.email} agent={agent} />
-              ))}
-              {inactiveAgents.map((agent) => (
-                <InactiveCard key={agent.agent_id || agent.email} />
-              ))}
-            </div>
-          </>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((agent) => (
+              <ActiveCard key={agent.agent_id || agent.email} agent={agent} />
+            ))}
+          </div>
         )}
       </div>
 
-      {/* ── BECOME AN AGENT CTA ── */}
-      <section className="border-t border-slate-100 bg-slate-50 px-4 py-12 text-center">
-        <p className="text-sm font-semibold text-slate-500">
-          Want to represent CTMerchant in your community?
-        </p>
-        <Link
-          to="/become-agent"
-          className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[#3B1C09] px-6 py-3 text-sm font-black text-[#C9A84C] shadow transition hover:bg-[#5E3016]"
-        >
-          Apply to Become an Agent
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-            <path fillRule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.638L10.23 5.29a.75.75 0 1 1 1.04-1.08l5.5 5.25a.75.75 0 0 1 0 1.08l-5.5 5.25a.75.75 0 1 1-1.04-1.08l4.158-3.96H3.75A.75.75 0 0 1 3 10Z" clipRule="evenodd" />
-          </svg>
-        </Link>
+      {/* ── BECOME AN AGENT ── */}
+      <section className="border-t border-slate-100 bg-slate-50 px-4 py-14">
+        <div className="mx-auto max-w-2xl">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#3B1C09]">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 text-[#C9A84C]">
+                <path d="M10 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM1.49 15.326a.78.78 0 0 1-.358-.442 3 3 0 0 1 4.308-3.516 6.484 6.484 0 0 0-1.905 3.959c-.023.222-.014.442.025.654a4.97 4.97 0 0 1-2.07-.655ZM16.44 15.98a4.97 4.97 0 0 0 2.07-.654.78.78 0 0 0 .357-.442 3 3 0 0 0-4.308-3.517 6.484 6.484 0 0 1 1.907 3.96 2.32 2.32 0 0 1-.026.654ZM18 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM5.304 16.19a.844.844 0 0 1-.277-.71 5 5 0 0 1 9.947 0 .843.843 0 0 1-.277.71A6.975 6.975 0 0 1 10 18a6.974 6.974 0 0 1-4.696-1.81Z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-black text-slate-900">Become a CTMerchant Agent</h2>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                step: "1",
+                title: "Create an account",
+                body: "Sign up on CTMerchant and log in to your dashboard. An active account is required before you can apply.",
+              },
+              {
+                step: "2",
+                title: "Submit your application",
+                body: "Inside your dashboard, find the \"Become an Agent\" section. Fill out the application form with your details, preferred region, and experience.",
+              },
+              {
+                step: "3",
+                title: "Wait for review",
+                body: "Our team reviews every application. You will be notified once a decision is made — approved agents receive a unique Agent ID and their profile appears on this page.",
+              },
+              {
+                step: "4",
+                title: "Start representing CTMerchant",
+                body: "Once approved, download your official Agent ID card from your dashboard and begin onboarding merchants and customers in your area.",
+              },
+            ].map(({ step, title, body }) => (
+              <div key={step} className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#3B1C09] text-sm font-black text-[#C9A84C]">
+                  {step}
+                </div>
+                <div>
+                  <p className="text-sm font-extrabold text-slate-900">{title}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{body}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
     </MainLayout>
   )
