@@ -31,7 +31,7 @@ function calcExpiry(dateStr) {
   return d.toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" });
 }
 
-/* ── ID Card (renders at exactly 370 × 390 px) ───────────── */
+/* ── ID Card — portrait CR80 (340 × 540 px) ─────────────── */
 function AgentCard({ agent, avatarUrl }) {
   const q          = agent.questionnaire || {};
   const name       = agent.full_name    || "Unknown Agent";
@@ -44,98 +44,103 @@ function AgentCard({ agent, avatarUrl }) {
   const initials   = getInitials(name);
   const qrValue    = `https://ctmerchant.com.ng/verify-agent?id=${encodeURIComponent(agentId)}`;
 
-  // shared style tokens
-  const lbl = { fontSize:7.5, fontWeight:800, color:"#94a3b8", letterSpacing:"0.2em", textTransform:"uppercase", marginBottom:3 };
-  const val = { fontSize:13, fontWeight:700, color:"#1e293b", lineHeight:1.3 };
-  const div = { height:1, background:"linear-gradient(90deg,transparent,#e2e8f0,transparent)", margin:"10px 0" };
+  const lbl = { fontSize:9, fontWeight:800, color:"#94a3b8", letterSpacing:"0.18em", textTransform:"uppercase", marginBottom:5 };
+  const val = { fontSize:15, fontWeight:700, color:"#1e293b", lineHeight:1.3 };
+  const divider = { height:1, background:"linear-gradient(90deg,transparent,#dde4ef,transparent)", marginTop:16 };
 
   return (
-    <div style={{ width:370, height:390, fontFamily:"'Inter',system-ui,-apple-system,sans-serif", position:"relative", overflow:"hidden", background:"#fff", borderRadius:20 }}>
+    <div style={{ width:340, height:540, fontFamily:"'Inter',system-ui,-apple-system,sans-serif", overflow:"hidden", background:"#fff", borderRadius:18, display:"flex", flexDirection:"column" }}>
 
-      {/* ── HEADER: avatar | centered text | QR ── */}
-      <div style={{ height:108, background:"linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 55%,#3b82f6 100%)", display:"flex", alignItems:"center", padding:"0 16px", gap:12 }}>
+      {/* ── HEADER ── */}
+      <div style={{ height:130, background:"linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 55%,#3b82f6 100%)", display:"flex", alignItems:"center", padding:"0 16px", gap:12, flexShrink:0 }}>
 
-        {/* Avatar — same visual size as QR tile */}
-        <div style={{ width:70, height:70, borderRadius:"50%", border:"2.5px solid rgba(255,255,255,0.3)", overflow:"hidden", background:avatarUrl?"transparent":"linear-gradient(135deg,#2563eb,#1d4ed8)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+        {/* Avatar */}
+        <div style={{ width:80, height:80, borderRadius:"50%", border:"3px solid rgba(255,255,255,0.3)", overflow:"hidden", background:avatarUrl?"transparent":"linear-gradient(135deg,#2563eb,#1d4ed8)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
           {avatarUrl
             ? <img src={avatarUrl} alt={name} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-            : <span style={{ fontSize:23, fontWeight:900, color:"#fff" }}>{initials}</span>
+            : <span style={{ fontSize:28, fontWeight:900, color:"#fff" }}>{initials}</span>
           }
         </div>
 
-        {/* Centered brand text + agent ID */}
-        <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
-          <div style={{ fontSize:15, fontWeight:900, letterSpacing:"0.05em", color:"#fff", lineHeight:1 }}>CTMerchant</div>
-          <div style={{ fontSize:8, fontWeight:800, letterSpacing:"0.28em", color:"#bfdbfe", textTransform:"uppercase" }}>Field Agent</div>
-          <div style={{ fontSize:9, fontWeight:800, color:"#fff", fontFamily:"ui-monospace,monospace", letterSpacing:"0.12em", marginTop:4, background:"rgba(255,255,255,0.15)", borderRadius:4, padding:"2px 8px" }}>{agentId}</div>
-          <div style={{ fontSize:6.5, fontWeight:600, color:"rgba(255,255,255,0.4)", marginTop:3, letterSpacing:"0.08em" }}>www.ctmerchant.com.ng</div>
+        {/* Brand text */}
+        <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:3 }}>
+          <div style={{ fontSize:20, fontWeight:900, letterSpacing:"0.04em", color:"#fff", lineHeight:1 }}>CTMerchant</div>
+          <div style={{ fontSize:10, fontWeight:800, letterSpacing:"0.28em", color:"#bfdbfe", textTransform:"uppercase" }}>Field Agent</div>
+          <div style={{ fontSize:11, fontWeight:800, color:"#fff", fontFamily:"ui-monospace,monospace", letterSpacing:"0.1em", marginTop:5, background:"rgba(255,255,255,0.15)", borderRadius:5, padding:"3px 10px" }}>{agentId}</div>
+          <div style={{ fontSize:8, fontWeight:600, color:"rgba(255,255,255,0.42)", marginTop:3, letterSpacing:"0.08em" }}>www.ctmerchant.com.ng</div>
         </div>
 
-        {/* QR code tile */}
+        {/* QR */}
         <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, flexShrink:0 }}>
           <div style={{ background:"#fff", padding:4, borderRadius:8, border:"1.5px solid rgba(255,255,255,0.2)" }}>
-            <QRCodeCanvas value={qrValue} size={60} level="H" includeMargin={false} bgColor="#ffffff" fgColor="#1e3a8a" />
+            <QRCodeCanvas value={qrValue} size={68} level="H" includeMargin={false} bgColor="#ffffff" fgColor="#1e3a8a" />
           </div>
-          <div style={{ fontSize:6, fontWeight:800, letterSpacing:"0.16em", color:"rgba(255,255,255,0.45)", textTransform:"uppercase" }}>Verify ID</div>
+          <div style={{ fontSize:7, fontWeight:800, letterSpacing:"0.16em", color:"rgba(255,255,255,0.45)", textTransform:"uppercase" }}>Verify ID</div>
         </div>
       </div>
 
       {/* ── ACCENT STRIPE ── */}
-      <div style={{ height:5, background:"linear-gradient(90deg,#10b981 0%,#db2777 52%,#7c3aed 100%)" }} />
+      <div style={{ height:5, background:"linear-gradient(90deg,#3b82f6 0%,#6366f1 52%,#1d4ed8 100%)", flexShrink:0 }} />
 
-      {/* ── WHITE BODY ── */}
-      <div style={{ padding:"16px 22px 0" }}>
+      {/* ── BODY — flex:1 fills remaining space evenly ── */}
+      <div style={{ flex:1, padding:"0 24px", display:"flex", flexDirection:"column", justifyContent:"space-evenly" }}>
 
         {/* Name + Phone */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:14, alignItems:"end" }}>
-          <div style={{ minWidth:0 }}>
-            <div style={lbl}>Full Name</div>
-            <div style={{ ...val, fontSize:15, fontWeight:900, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{name}</div>
+        <div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:16, alignItems:"end" }}>
+            <div style={{ minWidth:0 }}>
+              <div style={lbl}>Full Name</div>
+              <div style={{ ...val, fontSize:18, fontWeight:900, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{name}</div>
+            </div>
+            <div style={{ textAlign:"right", flexShrink:0 }}>
+              <div style={lbl}>Phone</div>
+              <div style={{ ...val, fontSize:14 }}>{phone || "—"}</div>
+            </div>
           </div>
-          <div style={{ textAlign:"right", flexShrink:0 }}>
-            <div style={lbl}>Phone</div>
-            <div style={{ ...val, fontSize:12 }}>{phone || "—"}</div>
-          </div>
+          <div style={divider} />
         </div>
-        <div style={div} />
 
         {/* Email + Location */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
-          <div style={{ minWidth:0 }}>
-            <div style={lbl}>Email</div>
-            <div style={{ ...val, fontSize:10, wordBreak:"break-all" }}>{email || "—"}</div>
+        <div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+            <div style={{ minWidth:0 }}>
+              <div style={lbl}>Email</div>
+              <div style={{ ...val, fontSize:12, wordBreak:"break-all" }}>{email || "—"}</div>
+            </div>
+            <div style={{ minWidth:0 }}>
+              <div style={lbl}>Region / Location</div>
+              <div style={{ ...val, fontSize:13, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{region || "—"}</div>
+            </div>
           </div>
-          <div style={{ minWidth:0 }}>
-            <div style={lbl}>Region / Location</div>
-            <div style={{ ...val, fontSize:11, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{region || "—"}</div>
-          </div>
+          <div style={divider} />
         </div>
-        <div style={div} />
 
         {/* Date Issued + Expiry */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
-          <div>
-            <div style={lbl}>Date Issued</div>
-            <div style={{ ...val, fontSize:12 }}>{issuedDate}</div>
-          </div>
-          <div>
-            <div style={lbl}>Expiry Date</div>
-            <div style={{ fontSize:12, fontWeight:800, color:"#dc2626" }}>{expiryDate}</div>
+        <div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+            <div>
+              <div style={lbl}>Date Issued</div>
+              <div style={{ ...val, fontSize:14 }}>{issuedDate}</div>
+            </div>
+            <div>
+              <div style={lbl}>Expiry Date</div>
+              <div style={{ fontSize:14, fontWeight:800, color:"#dc2626" }}>{expiryDate}</div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── FOOTER: small logo + text ── */}
-      <div style={{ position:"absolute", bottom:0, left:0, right:0, height:44, background:"linear-gradient(90deg,#1e3a8a 0%,#1d4ed8 100%)", display:"flex", alignItems:"center", padding:"0 18px", gap:10 }}>
+      {/* ── FOOTER — flush below body ── */}
+      <div style={{ height:48, background:"linear-gradient(90deg,#1e3a8a 0%,#1d4ed8 100%)", display:"flex", alignItems:"center", padding:"0 18px", gap:10, flexShrink:0 }}>
         <img
           src={ctmLogo}
           alt="CTM"
           crossOrigin="anonymous"
-          style={{ width:22, height:22, borderRadius:5, border:"1px solid rgba(255,255,255,0.14)", background:"#fff", objectFit:"cover", padding:1.5, flexShrink:0 }}
+          style={{ width:26, height:26, borderRadius:6, border:"1px solid rgba(255,255,255,0.2)", background:"#fff", objectFit:"cover", padding:2, flexShrink:0 }}
         />
         <div>
-          <div style={{ fontSize:9, fontWeight:800, color:"rgba(255,255,255,0.78)", letterSpacing:"0.05em" }}>CTMerchant Agent Network</div>
-          <div style={{ fontSize:6.5, fontWeight:600, color:"rgba(255,255,255,0.32)", letterSpacing:"0.1em", marginTop:1 }}>www.ctmerchant.com.ng</div>
+          <div style={{ fontSize:10, fontWeight:800, color:"rgba(255,255,255,0.85)", letterSpacing:"0.05em" }}>CTMerchant Agent Network</div>
+          <div style={{ fontSize:7.5, fontWeight:600, color:"rgba(255,255,255,0.4)", letterSpacing:"0.1em", marginTop:1 }}>www.ctmerchant.com.ng</div>
         </div>
       </div>
     </div>
@@ -290,7 +295,7 @@ export default function StaffAgentIDCard() {
 
         {/* Info text */}
         <p className="mt-7 text-[0.6rem] font-semibold text-slate-600 text-center max-w-xs leading-relaxed">
-          Downloads as a 1850 × 2150 px PNG — print-ready and suitable for digital sharing.
+          Downloads as a 1700 × 2700 px PNG — print-ready and suitable for digital sharing.
         </p>
 
         {/* Agent meta */}
