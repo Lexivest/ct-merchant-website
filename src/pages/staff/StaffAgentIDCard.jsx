@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { FaArrowLeft, FaCircleNotch, FaDownload } from "react-icons/fa6";
@@ -78,7 +78,11 @@ function clip(ctx, text, maxW) {
 }
 
 /* ── Canvas card generator ───────────────────────────────── */
-async function generateAgentCardBlob(agent, avatarDataUrl, ctmLogoSrc) {
+/* qrDataUrl is captured from the in-DOM QRCodeCanvas — no network, no CORS */
+async function generateAgentCardBlob(agent, avatarDataUrl, ctmLogoSrc, qrDataUrl) {
+  /* wait for web fonts (Inter etc.) before any canvas text draw */
+  await document.fonts.ready;
+
   const S  = 5;           // scale factor → print-ready 1700 × 2700 px
   const W  = 340 * S;
   const H  = 540 * S;
@@ -92,16 +96,12 @@ async function generateAgentCardBlob(agent, avatarDataUrl, ctmLogoSrc) {
   const issuedDate = fmtDate(agent.reviewed_at || agent.created_at);
   const expiryDate = calcExpiry(agent.reviewed_at || agent.created_at);
   const initials   = getInitials(name);
-  const qrApiUrl   = `https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(`https://ctmerchant.com.ng/verify-agent?id=${encodeURIComponent(agentId)}`)}`;
 
-  /* fetch QR + logo as data URLs in parallel */
-  const [qrDataUrl, logoDataUrl] = await Promise.all([
-    fetchDataUrl(qrApiUrl),
-    fetchDataUrl(ctmLogoSrc),
-  ]);
+  /* fetch only the CTM logo (same-origin asset — always works) */
+  const logoDataUrl = await fetchDataUrl(ctmLogoSrc);
   const [avatarImg, qrImg, logoImg] = await Promise.all([
     loadImg(avatarDataUrl),
-    loadImg(qrDataUrl),
+    loadImg(qrDataUrl),   // already a data URL from DOM canvas
     loadImg(logoDataUrl),
   ]);
 
@@ -484,7 +484,8 @@ export default function StaffAgentIDCard() {
   const { notify }       = useGlobalFeedback();
   usePreventPullToRefresh();
 
-  const agent = state?.agent ?? null;
+  const agent      = state?.agent ?? null;
+  const qrCanvasRef = useRef(null);
 
   const [avatarUrl,   setAvatarUrl]   = useState(null);
   const [downloading, setDownloading] = useState(false);
@@ -530,12 +531,15 @@ export default function StaffAgentIDCard() {
 
   if (!agent) return null;
 
-  const agentId = agent.agent_id || "CTM-AGT-?????";
+  const agentId  = agent.agent_id || "CTM-AGT-?????";
+  const qrValue  = `https://ctmerchant.com.ng/verify-agent?id=${encodeURIComponent(agentId)}`;
 
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      const blob = await generateAgentCardBlob(agent, avatarUrl, ctmLogo);
+      /* capture QR from the already-rendered in-DOM canvas — zero network cost */
+      const qrDataUrl = qrCanvasRef.current?.toDataURL("image/png") ?? "";
+      const blob = await generateAgentCardBlob(agent, avatarUrl, ctmLogo, qrDataUrl);
       const url  = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href     = url;
@@ -592,6 +596,20 @@ export default function StaffAgentIDCard() {
           <span>·</span>
           <span>{agent.status === "approved" ? "Active Agent" : "Pending"}</span>
         </div>
+      </div>
+
+      {/* Hidden QR canvas — rendered at 5× (340 px) so it's already print-resolution.
+          Captured via ref.toDataURL() at download time — no network, no CORS. */}
+      <div aria-hidden="true" style={{ position:"fixed", top:-9999, left:-9999, pointerEvents:"none" }}>
+        <QRCodeCanvas
+          ref={qrCanvasRef}
+          value={qrValue}
+          size={340}
+          level="H"
+          includeMargin={false}
+          bgColor="#ffffff"
+          fgColor="#1e3a8a"
+        />
       </div>
     </div>
   );
