@@ -275,12 +275,6 @@ export default function Agents() {
             Always verify before you engage.
           </p>
 
-          {!loading && (
-            <p className="mt-5 text-sm font-semibold text-white/50">
-              <span className="text-2xl font-black text-[#C9A84C]">{agents.length}</span>
-              {" "}active {agents.length === 1 ? "agent" : "agents"} across Nigeria
-            </p>
-          )}
         </div>
       </section>
 
