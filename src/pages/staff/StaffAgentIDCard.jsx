@@ -97,7 +97,7 @@ function AgentCard({ agent, avatarUrl }) {
         <div style={{ position:"relative" }}>
           <div style={{ width:76, height:76, borderRadius:"50%", border:"3px solid #10b981", overflow:"hidden", background:avatarUrl?"transparent":"linear-gradient(135deg,#059669,#0d9488)", display:"flex", alignItems:"center", justifyContent:"center" }}>
             {avatarUrl
-              ? <img src={avatarUrl} alt={name} crossOrigin="anonymous" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+              ? <img src={avatarUrl} alt={name} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
               : <span style={{ fontSize:25, fontWeight:900, color:"#fff" }}>{initials}</span>
             }
           </div>
@@ -178,15 +178,37 @@ export default function StaffAgentIDCard() {
     }
   }, [agent, fetchingStaff, navigate]);
 
-  /* fetch profile avatar once */
+  /* fetch profile avatar → convert to base64 data URL to avoid CORS */
   useEffect(() => {
     if (!agent?.user_id) return;
-    supabase
-      .from("profiles")
-      .select("avatar_url")
-      .eq("id", agent.user_id)
-      .maybeSingle()
-      .then(({ data }) => { if (data?.avatar_url) setAvatarUrl(data.avatar_url); });
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("avatar_url")
+          .eq("id", agent.user_id)
+          .maybeSingle();
+
+        if (!data?.avatar_url || cancelled) return;
+
+        const res = await fetch(data.avatar_url);
+        if (!res.ok || cancelled) return;
+
+        const blob = await res.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (!cancelled) setAvatarUrl(reader.result); // data URL — no CORS issues
+        };
+        reader.readAsDataURL(blob);
+      } catch {
+        // silently fall back to initials
+      }
+    };
+
+    run();
+    return () => { cancelled = true; };
   }, [agent?.user_id]);
 
   if (!agent) return null;
