@@ -178,30 +178,41 @@ export default function StaffAgentIDCard() {
     }
   }, [agent, fetchingStaff, navigate]);
 
-  /* fetch profile avatar → convert to base64 data URL to avoid CORS */
+  /* resolve avatar URL → convert to base64 data URL to sidestep CORS entirely.
+     Priority: agent.profile_photo_url → RPC lookup by email → initials */
   useEffect(() => {
-    if (!agent?.user_id) return;
+    if (!agent?.email) return;
     let cancelled = false;
+
+    const toDataUrl = async (url) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("fetch failed");
+      const blob = await res.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror  = reject;
+        reader.readAsDataURL(blob);
+      });
+    };
 
     const run = async () => {
       try {
-        const { data } = await supabase
-          .from("profiles")
-          .select("avatar_url")
-          .eq("id", agent.user_id)
-          .maybeSingle();
+        // 1. Prefer the manually-set photo on the agent record itself
+        let rawUrl = agent.profile_photo_url || null;
 
-        if (!data?.avatar_url || cancelled) return;
+        // 2. Fall back to profile avatar looked up by email via RPC
+        if (!rawUrl) {
+          const { data } = await supabase.rpc("get_agent_avatar_by_email", {
+            p_email: agent.email,
+          });
+          rawUrl = data || null;
+        }
 
-        const res = await fetch(data.avatar_url);
-        if (!res.ok || cancelled) return;
+        if (!rawUrl || cancelled) return;
 
-        const blob = await res.blob();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          if (!cancelled) setAvatarUrl(reader.result); // data URL — no CORS issues
-        };
-        reader.readAsDataURL(blob);
+        const dataUrl = await toDataUrl(rawUrl);
+        if (!cancelled) setAvatarUrl(dataUrl);
       } catch {
         // silently fall back to initials
       }
@@ -209,7 +220,7 @@ export default function StaffAgentIDCard() {
 
     run();
     return () => { cancelled = true; };
-  }, [agent?.user_id]);
+  }, [agent?.email, agent?.profile_photo_url]);
 
   if (!agent) return null;
 
