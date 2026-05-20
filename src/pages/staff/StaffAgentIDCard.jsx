@@ -17,12 +17,10 @@ function getInitials(name) {
     .slice(0, 2)
     .join("");
 }
-
 function fmtDate(dateStr) {
   if (!dateStr) return "—";
   return new Date(dateStr).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" });
 }
-
 function calcExpiry(dateStr) {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
@@ -30,10 +28,10 @@ function calcExpiry(dateStr) {
   return d.toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" });
 }
 
-/* ── Canvas helpers (mirrors MerchantPromoBanner approach) ── */
+/* ── Canvas helpers (same pattern as MerchantPromoBanner) ── */
 function fetchDataUrl(url) {
   if (!url) return Promise.resolve("");
-  return fetch(url, { mode: "cors" })
+  return fetch(url, { cache: "force-cache", mode: "cors" })
     .then((r) => r.blob())
     .then((blob) => new Promise((res, rej) => {
       const reader = new FileReader();
@@ -43,7 +41,6 @@ function fetchDataUrl(url) {
     }))
     .catch(() => "");
 }
-
 function loadImg(src) {
   return new Promise((res) => {
     if (!src) return res(null);
@@ -53,8 +50,6 @@ function loadImg(src) {
     img.src = src;
   });
 }
-
-/* rounded-rect path used for clipping and filling */
 function rrect(ctx, x, y, w, h, r) {
   const s = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
@@ -69,23 +64,26 @@ function rrect(ctx, x, y, w, h, r) {
   ctx.quadraticCurveTo(x, y, x + s, y);
   ctx.closePath();
 }
-
-function clip(ctx, text, maxW) {
+function clipText(ctx, text, maxW) {
   if (ctx.measureText(text).width <= maxW) return text;
   let t = text;
   while (t.length > 1 && ctx.measureText(t + "…").width > maxW) t = t.slice(0, -1).trimEnd();
   return t + "…";
 }
 
-/* ── Canvas card generator ───────────────────────────────── */
-/* qrDataUrl is captured from the in-DOM QRCodeCanvas — no network, no CORS */
+/* ── Canvas card — 800 × 1080 px (matches promo banner exactly) ── */
 async function generateAgentCardBlob(agent, avatarDataUrl, ctmLogoSrc, qrDataUrl) {
-  /* wait for web fonts (Inter etc.) before any canvas text draw */
   await document.fonts.ready;
 
-  const S  = 5;           // scale factor → print-ready 1700 × 2700 px
-  const W  = 340 * S;
-  const H  = 540 * S;
+  /* dimensions mirror MerchantPromoBanner exactly */
+  const W       = 800;
+  const H       = 1080;
+  const hdrH    = 240;   /* same as promobanner headerHeight */
+  const ftH     = 88;    /* same as promobanner footerHeight */
+  const strH    = 6;     /* accent stripe */
+  const bdY     = hdrH + strH;
+  const bdH     = H - hdrH - strH - ftH;   /* 746 px */
+  const ftY     = H - ftH;
 
   const q          = agent.questionnaire || {};
   const name       = agent.full_name    || "Unknown Agent";
@@ -97,11 +95,10 @@ async function generateAgentCardBlob(agent, avatarDataUrl, ctmLogoSrc, qrDataUrl
   const expiryDate = calcExpiry(agent.reviewed_at || agent.created_at);
   const initials   = getInitials(name);
 
-  /* fetch only the CTM logo (same-origin asset — always works) */
   const logoDataUrl = await fetchDataUrl(ctmLogoSrc);
   const [avatarImg, qrImg, logoImg] = await Promise.all([
     loadImg(avatarDataUrl),
-    loadImg(qrDataUrl),   // already a data URL from DOM canvas
+    loadImg(qrDataUrl),
     loadImg(logoDataUrl),
   ]);
 
@@ -110,8 +107,7 @@ async function generateAgentCardBlob(agent, avatarDataUrl, ctmLogoSrc, qrDataUrl
   canvas.height = H;
   const ctx = canvas.getContext("2d");
 
-  /* ── HEADER ──────────────────────────────────────────────── */
-  const hdrH = 130 * S;
+  /* ── HEADER (0 – 240 px) ───────────────────────────────── */
   const hg = ctx.createLinearGradient(0, 0, W, hdrH);
   hg.addColorStop(0,    "#1e3a8a");
   hg.addColorStop(0.55, "#1d4ed8");
@@ -119,10 +115,10 @@ async function generateAgentCardBlob(agent, avatarDataUrl, ctmLogoSrc, qrDataUrl
   ctx.fillStyle = hg;
   ctx.fillRect(0, 0, W, hdrH);
 
-  /* avatar circle */
-  const avD  = 80 * S;
-  const avX  = 16 * S;
-  const avY  = (hdrH - avD) / 2;
+  /* avatar — mirrors promobanner logoSize=152, logoX=24 */
+  const avD  = 152;
+  const avX  = 24;
+  const avY  = (hdrH - avD) / 2;   /* 44 */
   const avCX = avX + avD / 2;
   const avCY = avY + avD / 2;
 
@@ -138,130 +134,112 @@ async function generateAgentCardBlob(agent, avatarDataUrl, ctmLogoSrc, qrDataUrl
     ag.addColorStop(1, "#1d4ed8");
     ctx.fillStyle = ag;
     ctx.fillRect(avX, avY, avD, avD);
-    ctx.font = `900 ${28 * S}px Inter,Arial,sans-serif`;
+    ctx.font = `900 56px Inter,Arial,sans-serif`;
     ctx.fillStyle    = "#fff";
     ctx.textAlign    = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(initials, avCX, avCY);
   }
   ctx.restore();
-  /* avatar border ring */
   ctx.beginPath();
   ctx.arc(avCX, avCY, avD / 2, 0, Math.PI * 2);
   ctx.strokeStyle = "rgba(255,255,255,0.3)";
-  ctx.lineWidth   = 3 * S;
+  ctx.lineWidth   = 4;
   ctx.stroke();
 
-  /* QR tile */
-  const qrSz   = 68 * S;
-  const qrPd   = 4 * S;
-  const qrTile = qrSz + qrPd * 2;
-  const qrX    = W - 16 * S - qrTile;
-  const qrY    = (hdrH - qrTile) / 2;
+  /* QR tile — mirrors promobanner qrX = W - logoX - logoSize */
+  const qrTile = 152;
+  const qrPad  = 10;
+  const qrSz   = qrTile - qrPad * 2;   /* 132 */
+  const qrX    = W - avX - qrTile;     /* 624 */
+  const qrY    = (hdrH - qrTile) / 2;  /* 44 */
 
   ctx.fillStyle = "#fff";
-  rrect(ctx, qrX, qrY, qrTile, qrTile, 8 * S);
+  rrect(ctx, qrX, qrY, qrTile, qrTile, 12);
   ctx.fill();
-  if (qrImg) ctx.drawImage(qrImg, qrX + qrPd, qrY + qrPd, qrSz, qrSz);
+  if (qrImg) ctx.drawImage(qrImg, qrX + qrPad, qrY + qrPad, qrSz, qrSz);
 
-  ctx.font         = `800 ${7 * S}px Inter,Arial,sans-serif`;
+  ctx.font         = `800 14px Inter,Arial,sans-serif`;
   ctx.fillStyle    = "#fde68a";
   ctx.textAlign    = "center";
   ctx.textBaseline = "top";
-  ctx.fillText("VERIFY ID", qrX + qrTile / 2, qrY + qrTile + 4 * S);
+  ctx.fillText("VERIFY ID", qrX + qrTile / 2, qrY + qrTile + 6);
 
-  /* brand text block, centered between avatar and QR */
-  const brandCX = avX + avD + (qrX - avX - avD) / 2;
+  /* brand text — centered in the band between avatar and QR */
+  const brandCX = (avX + avD + qrX) / 2;  /* 400 — exact center */
+  let bY = 48;
+
   ctx.textAlign = "center";
 
-  const line1Size = 20 * S;
-  const line2Size = 10 * S;
-  const line3Size = 11 * S;
-  const line4Size = 8 * S;
-  const totalBrandH = line1Size * 1.25 + 3 * S
-                    + line2Size * 1.25 + 5 * S
-                    + 22 * S           + 3 * S  /* pill */
-                    + line4Size * 1.25;
-  let bY = (hdrH - totalBrandH) / 2;
-
-  ctx.font         = `900 ${line1Size}px Inter,Arial,sans-serif`;
+  ctx.font         = `900 36px Inter,Arial,sans-serif`;
   ctx.fillStyle    = "#fff";
   ctx.textBaseline = "top";
   ctx.fillText("CTMerchant", brandCX, bY);
-  bY += line1Size * 1.25 + 3 * S;
+  bY += 46;
 
-  ctx.font      = `800 ${line2Size}px Inter,Arial,sans-serif`;
+  ctx.font      = `800 16px Inter,Arial,sans-serif`;
   ctx.fillStyle = "#bfdbfe";
   ctx.fillText("FIELD AGENT", brandCX, bY);
-  bY += line2Size * 1.25 + 5 * S;
+  bY += 24;
 
   /* agent ID pill */
-  ctx.font = `800 ${line3Size}px ui-monospace,monospace`;
-  const pillW = ctx.measureText(agentId).width + 20 * S;
-  const pillH = 22 * S;
+  ctx.font = `800 17px ui-monospace,monospace`;
+  const pillW = ctx.measureText(agentId).width + 28;
+  const pillH = 32;
   ctx.fillStyle = "rgba(255,255,255,0.15)";
-  rrect(ctx, brandCX - pillW / 2, bY, pillW, pillH, 5 * S);
+  rrect(ctx, brandCX - pillW / 2, bY, pillW, pillH, 7);
   ctx.fill();
   ctx.fillStyle    = "#fff";
   ctx.textBaseline = "middle";
   ctx.fillText(agentId, brandCX, bY + pillH / 2);
-  bY += pillH + 3 * S;
+  bY += pillH + 6;
 
-  ctx.font         = `700 ${line4Size}px Inter,Arial,sans-serif`;
+  ctx.font         = `700 13px Inter,Arial,sans-serif`;
   ctx.fillStyle    = "#fde68a";
   ctx.textBaseline = "top";
   ctx.fillText("www.ctmerchant.com.ng", brandCX, bY);
 
-  /* ── ACCENT STRIPE ───────────────────────────────────────── */
-  const strH = 5 * S;
-  const strY = hdrH;
-  const sg   = ctx.createLinearGradient(0, 0, W, 0);
+  /* ── ACCENT STRIPE ──────────────────────────────────────── */
+  const sg = ctx.createLinearGradient(0, 0, W, 0);
   sg.addColorStop(0,    "#3b82f6");
   sg.addColorStop(0.52, "#6366f1");
   sg.addColorStop(1,    "#1d4ed8");
   ctx.fillStyle = sg;
-  ctx.fillRect(0, strY, W, strH);
+  ctx.fillRect(0, hdrH, W, strH);
 
-  /* ── FOOTER ──────────────────────────────────────────────── */
-  const ftH = 48 * S;
-  const ftY = H - ftH;
-  const fg  = ctx.createLinearGradient(0, 0, W, 0);
+  /* ── FOOTER ─────────────────────────────────────────────── */
+  const fg = ctx.createLinearGradient(0, 0, W, 0);
   fg.addColorStop(0, "#1e3a8a");
   fg.addColorStop(1, "#1d4ed8");
   ctx.fillStyle = fg;
   ctx.fillRect(0, ftY, W, ftH);
 
-  /* footer logo */
-  const lgSz = 26 * S;
-  const lgX  = 18 * S;
+  const lgSz = 44;
+  const lgX  = 28;
   const lgY  = ftY + (ftH - lgSz) / 2;
   if (logoImg) {
     ctx.save();
-    rrect(ctx, lgX, lgY, lgSz, lgSz, 6 * S);
+    rrect(ctx, lgX, lgY, lgSz, lgSz, 8);
     ctx.clip();
     ctx.drawImage(logoImg, lgX, lgY, lgSz, lgSz);
     ctx.restore();
   }
-
-  const ftTX = lgX + lgSz + 10 * S;
+  const ftTX = lgX + lgSz + 14;
   ctx.textAlign    = "left";
   ctx.textBaseline = "middle";
-  ctx.font         = `800 ${10 * S}px Inter,Arial,sans-serif`;
-  ctx.fillStyle    = "rgba(255,255,255,0.85)";
-  ctx.fillText("CTMerchant Agent Network", ftTX, ftY + ftH * 0.37);
-  ctx.font      = `700 ${7.5 * S}px Inter,Arial,sans-serif`;
+  ctx.font         = `800 18px Inter,Arial,sans-serif`;
+  ctx.fillStyle    = "rgba(255,255,255,0.88)";
+  ctx.fillText("CTMerchant Agent Network", ftTX, ftY + ftH * 0.36);
+  ctx.font      = `700 13px Inter,Arial,sans-serif`;
   ctx.fillStyle = "#fde68a";
   ctx.fillText("www.ctmerchant.com.ng", ftTX, ftY + ftH * 0.70);
 
-  /* ── BODY ────────────────────────────────────────────────── */
-  const bdY  = strY + strH;
-  const bdH  = ftY - bdY;
-
+  /* ── BODY (246 – 992 px = 746 px) ──────────────────────── */
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, bdY, W, bdH);
 
   /* chocolate-pink vertical bars */
-  const barW = 5 * S;
+  const barW = 8;
   const mkBar = () => {
     const g = ctx.createLinearGradient(0, bdY, 0, bdY + bdH);
     g.addColorStop(0,   "#7b2d42");
@@ -272,47 +250,47 @@ async function generateAgentCardBlob(agent, avatarDataUrl, ctmLogoSrc, qrDataUrl
   ctx.fillStyle = mkBar(); ctx.fillRect(0,       bdY, barW, bdH);
   ctx.fillStyle = mkBar(); ctx.fillRect(W - barW, bdY, barW, bdH);
 
-  /* body layout constants */
-  const pad   = 24 * S;
-  const cX    = pad;
-  const cW    = W - pad * 2;
-  const halfX = cX + cW / 2 + 8 * S;
-  const halfW = cW / 2 - 8 * S;
+  /* body content */
+  const pad  = 40;
+  const cX   = pad;
+  const cW   = W - pad * 2;
+  const half = cX + cW / 2 + 12;
+  const halfW = cW / 2 - 12;
 
-  const lblSz  = 9  * S;
-  const nameSz = 18 * S;
-  const phSz   = 14 * S;
-  const emSz   = 12 * S;
-  const locSz  = 13 * S;
-  const dtSz   = 14 * S;
+  /* font sizes — sized for legibility at 800 × 1080 */
+  const lblSz  = 18;
+  const nameSz = 48;
+  const phSz   = 36;
+  const emSz   = 28;
+  const locSz  = 30;
+  const dtSz   = 34;
+  const lblMB  = 12;
+  const divMT  = 32;
+  const divH   = 2;
 
-  const lblH  = lblSz * 1.3;
-  const lblMB = 5 * S;
-  const divMT = 16 * S;
-  const divH  = 1 * S;
+  /* section heights for space-evenly calculation */
+  const sec1H = lblSz * 1.3 + lblMB + nameSz * 1.3 + divMT + divH;
+  const sec2H = lblSz * 1.3 + lblMB + locSz  * 1.3 + divMT + divH;
+  const sec3H = lblSz * 1.3 + lblMB + dtSz   * 1.3;
+  const gap   = (bdH - sec1H - sec2H - sec3H) / 4;
 
-  /* estimated heights of each section (label + margin + value) */
-  const sec1H = lblH + lblMB + nameSz * 1.3 + divMT + divH;
-  const sec2H = lblH + lblMB + emSz   * 1.3 + divMT + divH;
-  const sec3H = lblH + lblMB + dtSz   * 1.3;
-  const gap   = (bdH - sec1H - sec2H - sec3H) / 4;  /* space-evenly */
-
-  /* helpers */
-  const drawLbl = (text, x, y, align = "left") => {
+  const drawLbl = (text, x, align = "left") => (y) => {
     ctx.font         = `800 ${lblSz}px Inter,Arial,sans-serif`;
     ctx.fillStyle    = "#94a3b8";
     ctx.textAlign    = align;
     ctx.textBaseline = "alphabetic";
     ctx.fillText(text, x, y);
+    return y + lblSz * 1.3 + lblMB;
   };
-  const drawVal = (text, x, y, sz, color = "#1e293b", weight = 700, align = "left") => {
+  const drawVal = (text, x, sz, color, weight, align = "left") => (y) => {
     ctx.font         = `${weight} ${sz}px Inter,Arial,sans-serif`;
     ctx.fillStyle    = color;
     ctx.textAlign    = align;
     ctx.textBaseline = "alphabetic";
     ctx.fillText(text, x, y);
+    return y + sz * 1.3;
   };
-  const drawDivider = (y) => {
+  const drawDiv = (y) => {
     const dg = ctx.createLinearGradient(0, 0, W, 0);
     dg.addColorStop(0,   "rgba(221,228,239,0)");
     dg.addColorStop(0.5, "#dde4ef");
@@ -322,47 +300,39 @@ async function generateAgentCardBlob(agent, avatarDataUrl, ctmLogoSrc, qrDataUrl
   };
 
   /* SECTION 1 — Name + Phone */
-  const s1Top  = bdY + gap;
-  const s1LblY = s1Top + lblH;
-  const s1ValY = s1LblY + lblMB + nameSz * 1.2;
-
+  let y = bdY + gap;
   ctx.font = `900 ${nameSz}px Inter,Arial,sans-serif`;
-  drawLbl("FULL NAME", cX, s1LblY);
-  drawVal(clip(ctx, name, cW * 0.56), cX, s1ValY, nameSz, "#1e293b", 900);
-
+  const nameAvail = cW * 0.55;
+  y = drawLbl("FULL NAME", cX)(y);
+  y = drawVal(clipText(ctx, name, nameAvail), cX, nameSz, "#1e293b", 900)(y);
+  /* phone aligned right */
+  const phLblY = bdY + gap;
+  const phValY = phLblY + lblSz * 1.3 + lblMB;
+  drawLbl("PHONE", cX + cW, "right")(phLblY);
   ctx.font = `700 ${phSz}px Inter,Arial,sans-serif`;
-  drawLbl("PHONE", cX + cW, s1LblY, "right");
-  drawVal(phone, cX + cW, s1ValY, phSz, "#1e293b", 700, "right");
-
-  drawDivider(s1ValY + divMT);
+  drawVal(phone, cX + cW, phSz, "#1e293b", 700, "right")(phValY);
+  drawDiv(y + divMT - divH);
 
   /* SECTION 2 — Email + Location */
-  const s2Top  = s1Top + sec1H + gap;
-  const s2LblY = s2Top + lblH;
-  const s2ValY = s2LblY + lblMB + emSz * 1.2;
-
+  y = bdY + gap + sec1H + gap;
+  const s2LblY = y;
+  const s2ValY = y + lblSz * 1.3 + lblMB;
   ctx.font = `700 ${emSz}px Inter,Arial,sans-serif`;
-  drawLbl("EMAIL", cX, s2LblY);
-  drawVal(clip(ctx, email, cW / 2 - 12 * S), cX, s2ValY, emSz);
-
+  drawLbl("EMAIL", cX)(s2LblY);
+  drawVal(clipText(ctx, email, cW / 2 - 16), cX, emSz, "#1e293b", 700)(s2ValY);
+  drawLbl("REGION / LOCATION", half)(s2LblY);
   ctx.font = `700 ${locSz}px Inter,Arial,sans-serif`;
-  drawLbl("REGION / LOCATION", halfX, s2LblY);
-  drawVal(clip(ctx, region, halfW), halfX, s2ValY, locSz);
-
-  drawDivider(s2ValY + divMT);
+  drawVal(clipText(ctx, region, halfW), half, locSz, "#1e293b", 700)(s2ValY);
+  drawDiv(s2ValY + locSz * 1.3 + divMT - divH);
 
   /* SECTION 3 — Dates */
-  const s3Top  = s2Top + sec2H + gap;
-  const s3LblY = s3Top + lblH;
-  const s3ValY = s3LblY + lblMB + dtSz * 1.2;
-
-  ctx.font = `700 ${dtSz}px Inter,Arial,sans-serif`;
-  drawLbl("DATE ISSUED", cX, s3LblY);
-  drawVal(issuedDate, cX, s3ValY, dtSz);
-
-  ctx.font = `800 ${dtSz}px Inter,Arial,sans-serif`;
-  drawLbl("EXPIRY DATE", halfX, s3LblY);
-  drawVal(expiryDate, halfX, s3ValY, dtSz, "#dc2626", 800);
+  y = bdY + gap + sec1H + gap + sec2H + gap;
+  const s3LblY = y;
+  const s3ValY = y + lblSz * 1.3 + lblMB;
+  drawLbl("DATE ISSUED", cX)(s3LblY);
+  drawVal(issuedDate, cX, dtSz, "#1e293b", 700)(s3ValY);
+  drawLbl("EXPIRY DATE", half)(s3LblY);
+  drawVal(expiryDate, half, dtSz, "#dc2626", 800)(s3ValY);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(
@@ -373,8 +343,8 @@ async function generateAgentCardBlob(agent, avatarDataUrl, ctmLogoSrc, qrDataUrl
   });
 }
 
-/* ── ID Card preview component (screen only) ─────────────── */
-function AgentCard({ agent, avatarUrl }) {
+/* ── Screen preview — 340 × 459 px (800:1080 scaled at 0.425×) ── */
+function AgentCard({ agent, avatarUrl, qrCanvasRef }) {
   const q          = agent.questionnaire || {};
   const name       = agent.full_name    || "Unknown Agent";
   const agentId    = agent.agent_id     || "CTM-AGT-?????";
@@ -386,58 +356,64 @@ function AgentCard({ agent, avatarUrl }) {
   const initials   = getInitials(name);
   const qrValue    = `https://ctmerchant.com.ng/verify-agent?id=${encodeURIComponent(agentId)}`;
 
-  const lbl     = { fontSize:9, fontWeight:800, color:"#94a3b8", letterSpacing:"0.18em", textTransform:"uppercase", marginBottom:5 };
-  const val     = { fontSize:15, fontWeight:700, color:"#1e293b", lineHeight:1.3 };
-  const divider = { height:1, background:"linear-gradient(90deg,transparent,#dde4ef,transparent)", marginTop:16 };
+  /* all px values = canvas values × 0.425 */
+  const lbl = { fontSize:7.5, fontWeight:800, color:"#94a3b8", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:5 };
+  const val = { fontWeight:700, color:"#1e293b", lineHeight:1.3 };
+  const div = { height:1, background:"linear-gradient(90deg,transparent,#dde4ef,transparent)", marginTop:14 };
 
   return (
-    <div style={{ width:340, height:540, fontFamily:"'Inter',system-ui,-apple-system,sans-serif", overflow:"hidden", background:"#fff", borderRadius:18, display:"flex", flexDirection:"column" }}>
+    <div style={{ width:340, height:459, fontFamily:"'Inter',system-ui,-apple-system,sans-serif", overflow:"hidden", background:"#fff", borderRadius:14, display:"flex", flexDirection:"column" }}>
 
-      {/* ── HEADER ── */}
-      <div style={{ height:130, background:"linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 55%,#3b82f6 100%)", display:"flex", alignItems:"center", padding:"0 16px", gap:12, flexShrink:0 }}>
-        <div style={{ width:80, height:80, borderRadius:"50%", border:"3px solid rgba(255,255,255,0.3)", overflow:"hidden", background:avatarUrl?"transparent":"linear-gradient(135deg,#2563eb,#1d4ed8)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+      {/* HEADER — 102 px */}
+      <div style={{ height:102, background:"linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 55%,#3b82f6 100%)", display:"flex", alignItems:"center", padding:"0 10px", gap:8, flexShrink:0 }}>
+        {/* avatar — 64 px */}
+        <div style={{ width:64, height:64, borderRadius:"50%", border:"2px solid rgba(255,255,255,0.3)", overflow:"hidden", background:avatarUrl?"transparent":"linear-gradient(135deg,#2563eb,#1d4ed8)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
           {avatarUrl
             ? <img src={avatarUrl} alt={name} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-            : <span style={{ fontSize:28, fontWeight:900, color:"#fff" }}>{initials}</span>
+            : <span style={{ fontSize:23, fontWeight:900, color:"#fff" }}>{initials}</span>
           }
         </div>
-        <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:3 }}>
-          <div style={{ fontSize:20, fontWeight:900, letterSpacing:"0.04em", color:"#fff", lineHeight:1 }}>CTMerchant</div>
-          <div style={{ fontSize:10, fontWeight:800, letterSpacing:"0.28em", color:"#bfdbfe", textTransform:"uppercase" }}>Field Agent</div>
-          <div style={{ fontSize:11, fontWeight:800, color:"#fff", fontFamily:"ui-monospace,monospace", letterSpacing:"0.1em", marginTop:5, background:"rgba(255,255,255,0.15)", borderRadius:5, padding:"3px 10px" }}>{agentId}</div>
-          <div style={{ fontSize:8, fontWeight:700, color:"#fde68a", marginTop:3, letterSpacing:"0.08em" }}>www.ctmerchant.com.ng</div>
+        {/* brand */}
+        <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
+          <div style={{ fontSize:15, fontWeight:900, letterSpacing:"0.04em", color:"#fff", lineHeight:1 }}>CTMerchant</div>
+          <div style={{ fontSize:6, fontWeight:800, letterSpacing:"0.25em", color:"#bfdbfe", textTransform:"uppercase" }}>Field Agent</div>
+          <div style={{ fontSize:7, fontWeight:800, color:"#fff", fontFamily:"ui-monospace,monospace", letterSpacing:"0.1em", marginTop:3, background:"rgba(255,255,255,0.15)", borderRadius:4, padding:"2px 8px" }}>{agentId}</div>
+          <div style={{ fontSize:5, fontWeight:700, color:"#fde68a", marginTop:2, letterSpacing:"0.08em" }}>www.ctmerchant.com.ng</div>
         </div>
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, flexShrink:0 }}>
-          <div style={{ background:"#fff", padding:4, borderRadius:8, border:"1.5px solid rgba(255,255,255,0.2)" }}>
-            <QRCodeCanvas value={qrValue} size={68} level="H" includeMargin={false} bgColor="#ffffff" fgColor="#1e3a8a" />
+        {/* QR — 64 px tile */}
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3, flexShrink:0 }}>
+          <div style={{ background:"#fff", padding:4, borderRadius:6, border:"1px solid rgba(255,255,255,0.2)" }}>
+            <QRCodeCanvas ref={qrCanvasRef} value={qrValue} size={56} level="H" includeMargin={false} bgColor="#ffffff" fgColor="#1e3a8a" />
           </div>
-          <div style={{ fontSize:7, fontWeight:800, letterSpacing:"0.16em", color:"#fde68a", textTransform:"uppercase" }}>Verify ID</div>
+          <div style={{ fontSize:5, fontWeight:800, letterSpacing:"0.14em", color:"#fde68a", textTransform:"uppercase" }}>Verify ID</div>
         </div>
       </div>
 
-      {/* ── ACCENT STRIPE ── */}
-      <div style={{ height:5, background:"linear-gradient(90deg,#3b82f6 0%,#6366f1 52%,#1d4ed8 100%)", flexShrink:0 }} />
+      {/* ACCENT STRIPE — 3 px */}
+      <div style={{ height:3, background:"linear-gradient(90deg,#3b82f6 0%,#6366f1 52%,#1d4ed8 100%)", flexShrink:0 }} />
 
-      {/* ── BODY ── */}
+      {/* BODY — flex:1 */}
       <div style={{ flex:1, position:"relative" }}>
-        <div style={{ position:"absolute", top:0, bottom:0, left:0, width:5, background:"linear-gradient(to bottom,#7b2d42,#c2607a,#8b3a52)", borderRadius:"0 3px 3px 0", zIndex:1 }} />
-        <div style={{ position:"absolute", top:0, bottom:0, right:0, width:5, background:"linear-gradient(to bottom,#7b2d42,#c2607a,#8b3a52)", borderRadius:"3px 0 0 3px", zIndex:1 }} />
-        <div style={{ height:"100%", padding:"0 24px", display:"flex", flexDirection:"column", justifyContent:"space-evenly", boxSizing:"border-box" }}>
+        <div style={{ position:"absolute", top:0, bottom:0, left:0, width:3, background:"linear-gradient(to bottom,#7b2d42,#c2607a,#8b3a52)", zIndex:1 }} />
+        <div style={{ position:"absolute", top:0, bottom:0, right:0, width:3, background:"linear-gradient(to bottom,#7b2d42,#c2607a,#8b3a52)", zIndex:1 }} />
+        <div style={{ height:"100%", padding:"0 17px", display:"flex", flexDirection:"column", justifyContent:"space-evenly", boxSizing:"border-box" }}>
+
           <div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:16, alignItems:"end" }}>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:10, alignItems:"end" }}>
               <div style={{ minWidth:0 }}>
                 <div style={lbl}>Full Name</div>
-                <div style={{ ...val, fontSize:18, fontWeight:900, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{name}</div>
+                <div style={{ ...val, fontSize:20, fontWeight:900, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{name}</div>
               </div>
               <div style={{ textAlign:"right", flexShrink:0 }}>
                 <div style={lbl}>Phone</div>
-                <div style={{ ...val, fontSize:14 }}>{phone || "—"}</div>
+                <div style={{ ...val, fontSize:15 }}>{phone || "—"}</div>
               </div>
             </div>
-            <div style={divider} />
+            <div style={div} />
           </div>
+
           <div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
               <div style={{ minWidth:0 }}>
                 <div style={lbl}>Email</div>
                 <div style={{ ...val, fontSize:12, wordBreak:"break-all" }}>{email || "—"}</div>
@@ -447,10 +423,11 @@ function AgentCard({ agent, avatarUrl }) {
                 <div style={{ ...val, fontSize:13, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{region || "—"}</div>
               </div>
             </div>
-            <div style={divider} />
+            <div style={div} />
           </div>
+
           <div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
               <div>
                 <div style={lbl}>Date Issued</div>
                 <div style={{ ...val, fontSize:14 }}>{issuedDate}</div>
@@ -464,12 +441,12 @@ function AgentCard({ agent, avatarUrl }) {
         </div>
       </div>
 
-      {/* ── FOOTER ── */}
-      <div style={{ height:48, background:"linear-gradient(90deg,#1e3a8a 0%,#1d4ed8 100%)", display:"flex", alignItems:"center", padding:"0 18px", gap:10, flexShrink:0 }}>
-        <img src={ctmLogo} alt="CTM" crossOrigin="anonymous" style={{ width:26, height:26, borderRadius:6, border:"1px solid rgba(255,255,255,0.2)", background:"#fff", objectFit:"cover", padding:2, flexShrink:0 }} />
+      {/* FOOTER — 37 px */}
+      <div style={{ height:37, background:"linear-gradient(90deg,#1e3a8a 0%,#1d4ed8 100%)", display:"flex", alignItems:"center", padding:"0 10px", gap:7, flexShrink:0 }}>
+        <img src={ctmLogo} alt="CTM" crossOrigin="anonymous" style={{ width:19, height:19, borderRadius:4, border:"1px solid rgba(255,255,255,0.2)", background:"#fff", objectFit:"cover", padding:1.5, flexShrink:0 }} />
         <div>
-          <div style={{ fontSize:10, fontWeight:800, color:"rgba(255,255,255,0.85)", letterSpacing:"0.05em" }}>CTMerchant Agent Network</div>
-          <div style={{ fontSize:7.5, fontWeight:700, color:"#fde68a", letterSpacing:"0.1em", marginTop:1 }}>www.ctmerchant.com.ng</div>
+          <div style={{ fontSize:7, fontWeight:800, color:"rgba(255,255,255,0.88)", letterSpacing:"0.04em" }}>CTMerchant Agent Network</div>
+          <div style={{ fontSize:5, fontWeight:700, color:"#fde68a", letterSpacing:"0.08em", marginTop:1 }}>www.ctmerchant.com.ng</div>
         </div>
       </div>
     </div>
@@ -478,10 +455,10 @@ function AgentCard({ agent, avatarUrl }) {
 
 /* ── Page ─────────────────────────────────────────────────── */
 export default function StaffAgentIDCard() {
-  const navigate         = useNavigate();
-  const { state }        = useLocation();
-  const { fetchingStaff }= useStaffPortalSession();
-  const { notify }       = useGlobalFeedback();
+  const navigate          = useNavigate();
+  const { state }         = useLocation();
+  const { fetchingStaff } = useStaffPortalSession();
+  const { notify }        = useGlobalFeedback();
   usePreventPullToRefresh();
 
   const agent      = state?.agent ?? null;
@@ -491,16 +468,13 @@ export default function StaffAgentIDCard() {
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    if (!fetchingStaff && !agent) {
-      navigate("/staff-agent-applications", { replace: true });
-    }
+    if (!fetchingStaff && !agent) navigate("/staff-agent-applications", { replace: true });
   }, [agent, fetchingStaff, navigate]);
 
-  /* resolve avatar → base64 data URL (CORS-free) */
+  /* resolve avatar → base64 data URL */
   useEffect(() => {
     if (!agent?.email) return;
     let cancelled = false;
-
     const toDataUrl = async (url) => {
       const res = await fetch(url);
       if (!res.ok) throw new Error("fetch failed");
@@ -512,7 +486,6 @@ export default function StaffAgentIDCard() {
         reader.readAsDataURL(blob);
       });
     };
-
     (async () => {
       try {
         let rawUrl = agent.profile_photo_url || null;
@@ -525,19 +498,17 @@ export default function StaffAgentIDCard() {
         if (!cancelled) setAvatarUrl(dataUrl);
       } catch { /* fall back to initials */ }
     })();
-
     return () => { cancelled = true; };
   }, [agent?.email, agent?.profile_photo_url]);
 
   if (!agent) return null;
 
-  const agentId  = agent.agent_id || "CTM-AGT-?????";
-  const qrValue  = `https://ctmerchant.com.ng/verify-agent?id=${encodeURIComponent(agentId)}`;
+  const agentId = agent.agent_id || "CTM-AGT-?????";
 
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      /* capture QR from the already-rendered in-DOM canvas — zero network cost */
+      /* capture QR from the in-DOM QRCodeCanvas — instant, no network */
       const qrDataUrl = qrCanvasRef.current?.toDataURL("image/png") ?? "";
       const blob = await generateAgentCardBlob(agent, avatarUrl, ctmLogo, qrDataUrl);
       const url  = URL.createObjectURL(blob);
@@ -583,33 +554,19 @@ export default function StaffAgentIDCard() {
         <p className="mb-5 text-[0.6rem] font-black uppercase tracking-widest text-slate-500">
           Preview — {agentId}
         </p>
-        <div className="overflow-x-auto w-full flex justify-center" style={{ WebkitOverflowScrolling: "touch" }}>
-          <div className="shadow-[0_24px_80px_rgba(0,0,0,0.7)] origin-top" style={{ borderRadius: 20, overflow: "hidden", flexShrink: 0 }}>
-            <AgentCard agent={agent} avatarUrl={avatarUrl} />
+        <div className="overflow-x-auto w-full flex justify-center" style={{ WebkitOverflowScrolling:"touch" }}>
+          <div className="shadow-[0_24px_80px_rgba(0,0,0,0.7)]" style={{ borderRadius:14, overflow:"hidden", flexShrink:0 }}>
+            <AgentCard agent={agent} avatarUrl={avatarUrl} qrCanvasRef={qrCanvasRef} />
           </div>
         </div>
         <p className="mt-7 text-[0.6rem] font-semibold text-slate-600 text-center max-w-xs leading-relaxed">
-          Downloads as a 1700 × 2700 px PNG — print-ready and suitable for digital sharing.
+          Downloads as an 800 × 1080 px PNG — same format as the promo banner.
         </p>
         <div className="mt-6 flex gap-3 text-[0.6rem] font-black uppercase tracking-widest text-slate-700">
           <span>{agent.email}</span>
           <span>·</span>
           <span>{agent.status === "approved" ? "Active Agent" : "Pending"}</span>
         </div>
-      </div>
-
-      {/* Hidden QR canvas — rendered at 5× (340 px) so it's already print-resolution.
-          Captured via ref.toDataURL() at download time — no network, no CORS. */}
-      <div aria-hidden="true" style={{ position:"fixed", top:-9999, left:-9999, pointerEvents:"none" }}>
-        <QRCodeCanvas
-          ref={qrCanvasRef}
-          value={qrValue}
-          size={340}
-          level="H"
-          includeMargin={false}
-          bgColor="#ffffff"
-          fgColor="#1e3a8a"
-        />
       </div>
     </div>
   );
