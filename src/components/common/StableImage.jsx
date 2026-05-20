@@ -143,8 +143,14 @@ function StableImageFrame({
   }, [shouldEagerLoad, isPreviouslyLoaded])
 
   function handleLoad(event) {
+    // naturalWidth === 0 means the browser got a 200 response but couldn't decode the image
+    // (Supabase render endpoint can return an empty/corrupt body on transform failure)
+    if (event.target.naturalWidth === 0) {
+      handleError(event)
+      return
+    }
     setLoaded(true)
-    GLOBAL_IMAGE_REGISTRY.add(finalSrc)
+    GLOBAL_IMAGE_REGISTRY.add(usedOriginalFallback ? src : finalSrc)
     onLoad?.(event)
   }
 
