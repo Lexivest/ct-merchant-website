@@ -159,42 +159,42 @@ async function generateAgentCardBlob(agent, avatarDataUrl, ctmLogoSrc, qrDataUrl
   ctx.fill();
   if (qrImg) ctx.drawImage(qrImg, qrX + qrPad, qrY + qrPad, qrSz, qrSz);
 
-  ctx.font         = `800 14px Inter,Arial,sans-serif`;
+  ctx.font         = `800 19px Inter,Arial,sans-serif`;
   ctx.fillStyle    = "#fde68a";
   ctx.textAlign    = "center";
   ctx.textBaseline = "top";
-  ctx.fillText("VERIFY ID", qrX + qrTile / 2, qrY + qrTile + 6);
+  ctx.fillText("VERIFY ID", qrX + qrTile / 2, qrY + qrTile + 7);
 
   /* brand text — centered in the band between avatar and QR */
   const brandCX = (avX + avD + qrX) / 2;  /* 400 — exact center */
-  let bY = 48;
+  let bY = 35;
 
   ctx.textAlign = "center";
 
-  ctx.font         = `900 36px Inter,Arial,sans-serif`;
+  ctx.font         = `900 52px Inter,Arial,sans-serif`;
   ctx.fillStyle    = "#fff";
   ctx.textBaseline = "top";
   ctx.fillText("CTMerchant", brandCX, bY);
-  bY += 46;
+  bY += 65;
 
-  ctx.font      = `800 16px Inter,Arial,sans-serif`;
+  ctx.font      = `800 24px Inter,Arial,sans-serif`;
   ctx.fillStyle = "#bfdbfe";
   ctx.fillText("FIELD AGENT", brandCX, bY);
-  bY += 24;
+  bY += 35;
 
   /* agent ID pill */
-  ctx.font = `800 17px ui-monospace,monospace`;
-  const pillW = ctx.measureText(agentId).width + 28;
-  const pillH = 32;
+  ctx.font = `800 23px ui-monospace,monospace`;
+  const pillW = ctx.measureText(agentId).width + 32;
+  const pillH = 42;
   ctx.fillStyle = "rgba(255,255,255,0.15)";
-  rrect(ctx, brandCX - pillW / 2, bY, pillW, pillH, 7);
+  rrect(ctx, brandCX - pillW / 2, bY, pillW, pillH, 8);
   ctx.fill();
   ctx.fillStyle    = "#fff";
   ctx.textBaseline = "middle";
   ctx.fillText(agentId, brandCX, bY + pillH / 2);
-  bY += pillH + 6;
+  bY += pillH + 7;
 
-  ctx.font         = `700 13px Inter,Arial,sans-serif`;
+  ctx.font         = `700 19px Inter,Arial,sans-serif`;
   ctx.fillStyle    = "#fde68a";
   ctx.textBaseline = "top";
   ctx.fillText("www.ctmerchant.com.ng", brandCX, bY);
@@ -374,18 +374,18 @@ function AgentCard({ agent, avatarUrl, qrCanvasRef }) {
           }
         </div>
         {/* brand */}
-        <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
-          <div style={{ fontSize:15, fontWeight:900, letterSpacing:"0.04em", color:"#fff", lineHeight:1 }}>CTMerchant</div>
-          <div style={{ fontSize:6, fontWeight:800, letterSpacing:"0.25em", color:"#bfdbfe", textTransform:"uppercase" }}>Field Agent</div>
-          <div style={{ fontSize:7, fontWeight:800, color:"#fff", fontFamily:"ui-monospace,monospace", letterSpacing:"0.1em", marginTop:3, background:"rgba(255,255,255,0.15)", borderRadius:4, padding:"2px 8px" }}>{agentId}</div>
-          <div style={{ fontSize:5, fontWeight:700, color:"#fde68a", marginTop:2, letterSpacing:"0.08em" }}>www.ctmerchant.com.ng</div>
+        <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:3 }}>
+          <div style={{ fontSize:22, fontWeight:900, letterSpacing:"0.04em", color:"#fff", lineHeight:1 }}>CTMerchant</div>
+          <div style={{ fontSize:10, fontWeight:800, letterSpacing:"0.22em", color:"#bfdbfe", textTransform:"uppercase" }}>Field Agent</div>
+          <div style={{ fontSize:10, fontWeight:800, color:"#fff", fontFamily:"ui-monospace,monospace", letterSpacing:"0.1em", marginTop:3, background:"rgba(255,255,255,0.15)", borderRadius:4, padding:"3px 9px" }}>{agentId}</div>
+          <div style={{ fontSize:8, fontWeight:700, color:"#fde68a", marginTop:2, letterSpacing:"0.07em" }}>www.ctmerchant.com.ng</div>
         </div>
         {/* QR — 64 px tile */}
         <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3, flexShrink:0 }}>
           <div style={{ background:"#fff", padding:4, borderRadius:6, border:"1px solid rgba(255,255,255,0.2)" }}>
             <QRCodeCanvas ref={qrCanvasRef} value={qrValue} size={56} level="H" includeMargin={false} bgColor="#ffffff" fgColor="#1e3a8a" />
           </div>
-          <div style={{ fontSize:5, fontWeight:800, letterSpacing:"0.14em", color:"#fde68a", textTransform:"uppercase" }}>Verify ID</div>
+          <div style={{ fontSize:8, fontWeight:800, letterSpacing:"0.14em", color:"#fde68a", textTransform:"uppercase" }}>Verify ID</div>
         </div>
       </div>
 
