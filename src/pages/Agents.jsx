@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react"
-import { Link } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
 import PageSeo from "../components/common/PageSeo"
 import { supabase } from "../lib/supabase"
@@ -178,21 +177,9 @@ function ActiveCard({ agent }) {
             <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-slate-500">{bio}</p>
           )}
 
-          {/* footer row */}
-          <div className="mt-4 flex items-center gap-3">
-            {sinceYear && (
-              <span className="text-[10px] font-semibold text-slate-400">Since {sinceYear}</span>
-            )}
-            <Link
-              to={`/verify-agent?id=${encodeURIComponent(agentId)}`}
-              className="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-[#3B1C09] px-3.5 py-2 text-[11px] font-black uppercase tracking-widest text-[#C9A84C] transition hover:bg-[#5E3016]"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
-                <path fillRule="evenodd" d="M16.403 12.652a3 3 0 0 0 0-5.304 3 3 0 0 0-3.75-3.751 3 3 0 0 0-5.305 0 3 3 0 0 0-3.751 3.75 3 3 0 0 0 0 5.305 3 3 0 0 0 3.75 3.751 3 3 0 0 0 5.305 0 3 3 0 0 0 3.751-3.75Zm-2.546-4.46a.75.75 0 0 0-1.214-.883l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" />
-              </svg>
-              Verify Agent
-            </Link>
-          </div>
+          {sinceYear && (
+            <p className="mt-4 text-[10px] font-semibold text-slate-400">Since {sinceYear}</p>
+          )}
         </div>
       </div>
     </div>

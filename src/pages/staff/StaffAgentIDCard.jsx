@@ -360,7 +360,7 @@ function AgentCard({ agent, avatarUrl, qrCanvasRef }) {
   const issuedDate = fmtDate(agent.reviewed_at || agent.created_at);
   const expiryDate = calcExpiry(agent.reviewed_at || agent.created_at);
   const initials   = getInitials(name);
-  const qrValue    = `https://ctmerchant.com.ng/verify-agent?id=${encodeURIComponent(agentId)}`;
+  const qrValue    = "https://ctmerchant.com.ng/agents";
 
   /* all px values = canvas values × 0.425 */
   const lbl = { fontSize:7.5, fontWeight:800, color:"#94a3b8", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:5 };
