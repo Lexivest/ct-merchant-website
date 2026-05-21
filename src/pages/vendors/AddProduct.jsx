@@ -567,7 +567,7 @@ export default function AddProduct() {
       setSubmitting(true);
       const priceVal = parseFloat(form.price);
       let discountPrice = null;
-      if (!isSubmittingService && form.isDiscount && form.condition !== "Fairly Used") {
+      if (!isSubmittingService && form.isDiscount && form.condition === "New") {
         const perc = parseFloat(form.discountPercent);
         if (!perc || perc <= 0 || perc > 20) throw new Error("Discount must be between 1% and 20%");
         discountPrice = priceVal - priceVal * (perc / 100);
@@ -650,7 +650,7 @@ export default function AddProduct() {
 
   const livePrice = parseFloat(form.price) || 0;
   const liveDiscPerc = parseFloat(form.discountPercent) || 0;
-  const isLiveDiscValid = form.isDiscount && form.condition !== "Fairly Used" && liveDiscPerc > 0 && liveDiscPerc <= 20;
+  const isLiveDiscValid = form.isDiscount && form.condition === "New" && liveDiscPerc > 0 && liveDiscPerc <= 20;
   const liveFinalPrice = isLiveDiscValid ? livePrice - livePrice * (liveDiscPerc / 100) : livePrice;
   const categoryOptions = useMemo(
     () => shopData?.is_service ? toServiceCategoryOptions(form.category) : toProductCategoryOptions(categoryRows, form.category),
@@ -794,6 +794,7 @@ export default function AddProduct() {
                 {previews[1] ? <img src={previews[1]} className="h-full w-full object-contain bg-white" alt="Preview" /> : <FaImage className="text-3xl text-[#D5D9D9]" />}
                 {isLiveDiscValid && <div className="absolute left-1 top-1 z-10 rounded bg-red-600 px-1.5 py-0.5 text-[0.65rem] font-extrabold text-white">-{form.discountPercent}%</div>}
                 {form.condition === "Fairly Used" && <div className="absolute right-1 top-1 z-10 rounded bg-amber-500 px-1.5 py-0.5 text-[0.65rem] font-extrabold text-white">Used</div>}
+                {form.condition === "Foreign Used" && <div className="absolute right-1 top-1 z-10 rounded bg-blue-600 px-1.5 py-0.5 text-[0.65rem] font-extrabold text-white">Foreign</div>}
               </div>
               <div className="truncate text-[0.75rem] font-medium text-[#0F1111]">{form.name || editorCopy.previewName}</div>
               <div className="truncate text-[0.8rem] font-extrabold text-[#db2777]">
@@ -889,11 +890,11 @@ export default function AddProduct() {
           {/* CONDITION (CUSTOM DROPDOWN) */}
           {!isServiceListing && <div className="mb-5">
             <label className="mb-1.5 block text-[0.9rem] font-bold">Condition</label>
-            <CustomSelect value={form.condition} onChange={handleConditionChange} options={[{ value: "New", label: "New" }, { value: "Fairly Used", label: "Fairly Used" }]} className="rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]" />
+            <CustomSelect value={form.condition} onChange={handleConditionChange} options={[{ value: "New", label: "New" }, { value: "Fairly Used", label: "Fairly Used" }, { value: "Foreign Used", label: "Foreign Used" }]} className="rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]" />
           </div>}
 
           {/* DISCOUNT SECTION */}
-          {!isServiceListing && form.condition !== "Fairly Used" && (
+          {!isServiceListing && form.condition === "New" && (
             <div className="mb-6 rounded-lg border border-[#D5D9D9] bg-[#F7F7F7] p-4 transition-all">
               <div className={`flex items-center justify-between ${activeOffersCount >= MAX_SPECIAL_OFFERS ? 'opacity-50' : ''}`}>
                 <div>
