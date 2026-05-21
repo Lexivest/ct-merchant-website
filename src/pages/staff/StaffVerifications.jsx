@@ -995,7 +995,15 @@ export default function StaffVerifications() {
                   <div className="space-y-6">
                     <div className="overflow-hidden rounded-[32px] border-4 border-white bg-slate-900 shadow-xl">
                       {selectedShop.kyc_video_url ? (
-                        <video src={signedUrls.video} controls preload="metadata" className="aspect-video w-full" />
+                        <video controls preload="metadata" className="aspect-video w-full" key={signedUrls.video}>
+                          {signedUrls.video && (
+                            <source
+                              src={signedUrls.video}
+                              type={signedUrls.video?.includes('.mp4') ? 'video/mp4' : 'video/webm'}
+                            />
+                          )}
+                          Your browser does not support video playback. Use the download button below.
+                        </video>
                       ) : (
                         <div className="flex aspect-video flex-col items-center justify-center text-slate-400">
                           <FaVideo className="mb-4 text-4xl opacity-20" />
