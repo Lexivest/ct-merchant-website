@@ -1936,35 +1936,6 @@ function ShopRegistration() {
                   />
                   
                   <div className="space-y-6">
-                    {!isEdit ? (
-                      <FieldBlock label="Registration Type">
-                        <div className="grid gap-2 sm:grid-cols-2">
-                          <button
-                            type="button"
-                            onClick={() => handleRegistrationTypeChange("shop")}
-                            className={`rounded-2xl border px-4 py-3 text-left text-sm font-black transition ${
-                              !isServiceMode
-                                ? "border-indigo-300 bg-indigo-50 text-indigo-800"
-                                : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200"
-                            }`}
-                          >
-                            <FaStore className="mb-2" /> Shop Registration
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleRegistrationTypeChange("service")}
-                            className={`rounded-2xl border px-4 py-3 text-left text-sm font-black transition ${
-                              isServiceMode
-                                ? "border-pink-300 bg-pink-50 text-pink-800"
-                                : "border-slate-200 bg-white text-slate-600 hover:border-pink-200"
-                            }`}
-                          >
-                            <FaScrewdriverWrench className="mb-2" /> Service Registration
-                          </button>
-                        </div>
-                      </FieldBlock>
-                    ) : null}
-
                     <FieldBlock label={isServiceMode ? "What is your service/business name?" : "What is your business name?"}>
                       <InputWithIcon icon={<FaShop />} value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} placeholder={isServiceMode ? "e.g. Musa Plumbing Services" : "e.g. Ade & Sons Enterprise"} />
                     </FieldBlock>
