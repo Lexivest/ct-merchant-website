@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from "react"
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   FaBolt,
   FaBriefcase,
@@ -387,73 +387,113 @@ function FeaturedCitySlider({ banners, onOpenShop }) {
 
 const ShopCard = memo(function ShopCard({ shop, products, onOpenShop }) {
   const shopProducts = products || EMPTY_PRODUCTS
-  const gridProducts = shopProducts.slice(0, 4)
   const stripProducts = shopProducts.slice(4, 11)
 
-  const cells = Array.from({ length: 4 }).map((_, index) => {
-    const item = gridProducts[index]
+  // Pool of substitute products (beyond the first 4) available when a grid
+  // image fails to load. Initialised once — mutations are intentional.
+  const substitutePool = useRef(null)
+  if (substitutePool.current === null) {
+    substitutePool.current = [...shopProducts.slice(4)]
+  }
+  // Guard against the same cell triggering onError multiple times
+  const handledCells = useRef(new Set())
 
-    if (!item) {
-      return (
-        <div key={`empty-${index}`} className="shop-grid-item-wrap">
-          <div className="shop-grid-item empty">
-            <FaImage className="text-[1.2rem] text-slate-300" />
+  // The product currently displayed in each of the 4 grid slots. Starts as
+  // shopProducts[0..3]; updates when a substitute is assigned.
+  const [effectiveItems, setEffectiveItems] = useState(
+    () => Array.from({ length: 4 }, (_, i) => shopProducts[i] || null)
+  )
+  // Indices of cells whose image failed and had no substitute — we hide them.
+  const [hiddenCells, setHiddenCells] = useState(() => new Set())
+
+  const handleImageError = useCallback((index) => {
+    if (handledCells.current.has(index)) return
+    handledCells.current.add(index)
+    const sub = substitutePool.current.shift()
+    if (sub) {
+      setEffectiveItems(prev => {
+        const next = [...prev]
+        next[index] = sub
+        return next
+      })
+    } else {
+      setHiddenCells(prev => {
+        const next = new Set(prev)
+        next.add(index)
+        return next
+      })
+    }
+  }, [])
+
+  const cells = Array.from({ length: 4 })
+    .map((_, index) => {
+      if (hiddenCells.has(index)) return null
+
+      const item = effectiveItems[index]
+
+      if (!item) {
+        return (
+          <div key={`empty-${index}`} className="shop-grid-item-wrap">
+            <div className="shop-grid-item empty">
+              <FaImage className="text-[1.2rem] text-slate-300" />
+            </div>
+            <div className="shop-grid-caption select-none text-transparent">
+              <div className="sg-name">-</div>
+              <div className="sg-price">-</div>
+            </div>
           </div>
-          <div className="shop-grid-caption select-none text-transparent">
-            <div className="sg-name">-</div>
-            <div className="sg-price">-</div>
+        )
+      }
+
+      const name = item.name || item.product_name || item.title || "Product"
+      const price = item.price || item.product_price
+      const discount = item.discount_price
+      const discounted = discount && price && discount < price
+      const discountPct =
+        discounted && price ? Math.round(((price - discount) / price) * 100) : 0
+
+      return (
+        <div key={`${shop.id}-${item.id}-${index}`} className="shop-grid-item-wrap">
+          <div className="shop-grid-item">
+            <StableImage
+              src={item.image_url}
+              alt={name}
+              width={300}
+              height={300}
+              aspectRatio={1}
+              containerClassName="h-full w-full bg-[#F8FAFC]"
+              className="h-full w-full object-cover"
+              onError={() => handleImageError(index)}
+            />
+            {discounted ? (
+              <div className="grid-badge flash-offer">-{discountPct}%</div>
+            ) : null}
+          </div>
+
+          <div className="shop-grid-caption">
+            <div className="sg-name" title={name}>
+              {name}
+            </div>
+
+            <div className={discounted ? "sg-price flash-price" : "sg-price"}>
+              {discounted ? (
+                <>
+                  <span className="sg-price-old">
+                    ₦{Number(price).toLocaleString()}
+                  </span>
+                  ₦{Number(discount).toLocaleString()}
+                </>
+              ) : price ? (
+                <>₦{Number(price).toLocaleString()}</>
+              ) : (
+                ""
+              )}
+            </div>
           </div>
         </div>
       )
-    }
-
-    const name = item.name || item.product_name || item.title || "Product"
-    const price = item.price || item.product_price
-    const discount = item.discount_price
-    const discounted = discount && price && discount < price
-    const discountPct =
-      discounted && price ? Math.round(((price - discount) / price) * 100) : 0
-
-    return (
-        <div key={`${shop.id}-${item.id}-${index}`} className="shop-grid-item-wrap">
-        <div className="shop-grid-item">
-          <StableImage
-            src={item.image_url}
-            alt={name}
-            width={300}
-            height={300}
-            aspectRatio={1}
-            containerClassName="h-full w-full bg-[#F8FAFC]"
-            className="h-full w-full object-cover"
-          />
-          {discounted ? (
-            <div className="grid-badge flash-offer">-{discountPct}%</div>
-          ) : null}
-        </div>
-
-        <div className="shop-grid-caption">
-          <div className="sg-name" title={name}>
-            {name}
-          </div>
-
-          <div className={discounted ? "sg-price flash-price" : "sg-price"}>
-            {discounted ? (
-              <>
-                <span className="sg-price-old">
-                  ₦{Number(price).toLocaleString()}
-                </span>
-                ₦{Number(discount).toLocaleString()}
-              </>
-            ) : price ? (
-              <>₦{Number(price).toLocaleString()}</>
-            ) : (
-              ""
-            )}
-          </div>
-        </div>
-      </div>
-    )
-  })
+    })
+    .filter(Boolean)
 
   return (
     <div className="premium-shop-card-wrap min-w-[280px] w-[85vw] max-w-[340px] shrink-0">
@@ -499,70 +539,134 @@ const ServiceMarketCard = memo(function ServiceMarketCard({ provider, onOpenServ
     .filter((price) => Number.isFinite(price) && price > 0)
     .sort((a, b) => a - b)
   const minPrice = pricedProducts[0]
-  const cells = Array.from({ length: 4 }).map((_, index) => {
-    const item = serviceProducts[index]
 
-    if (!item && index === 0 && heroImage) {
+  // Pool of alternative images to try when the hero image fails.
+  // Order: storefront URL → each service product image, excluding the primary heroImage.
+  const heroFallbackPool = useRef(null)
+  if (heroFallbackPool.current === null) {
+    const candidates = [
+      shop.storefront_url,
+      ...serviceProducts.map(p => p?.image_url),
+    ].filter(Boolean).filter(src => src !== heroImage)
+    heroFallbackPool.current = [...new Set(candidates)]
+  }
+
+  // Pool of substitute products (beyond the first 4) for product cell failures.
+  const substitutePool = useRef(null)
+  if (substitutePool.current === null) {
+    substitutePool.current = [...serviceProducts.slice(4)]
+  }
+  const handledCells = useRef(new Set())
+
+  // Live hero image source — advances through heroFallbackPool on each failure.
+  const [heroSrc, setHeroSrc] = useState(() => heroImage)
+  // Effective product displayed in each of the 4 grid slots.
+  const [effectiveItems, setEffectiveItems] = useState(
+    () => Array.from({ length: 4 }, (_, i) => serviceProducts[i] || null)
+  )
+  // Cell indices that are hidden because all image sources were exhausted.
+  const [hiddenCells, setHiddenCells] = useState(() => new Set())
+
+  // Called when the hero slot image fails — tries the next candidate or hides cell 0.
+  const handleHeroError = useCallback(() => {
+    const next = heroFallbackPool.current.shift()
+    if (next) {
+      setHeroSrc(next)
+    } else {
+      setHiddenCells(prev => { const s = new Set(prev); s.add(0); return s })
+    }
+  }, [])
+
+  // Called when a product-cell image fails — substitutes or hides the cell.
+  const handleImageError = useCallback((index) => {
+    if (handledCells.current.has(index)) return
+    handledCells.current.add(index)
+    const sub = substitutePool.current.shift()
+    if (sub) {
+      setEffectiveItems(prev => {
+        const next = [...prev]
+        next[index] = sub
+        return next
+      })
+    } else {
+      setHiddenCells(prev => {
+        const s = new Set(prev)
+        s.add(index)
+        return s
+      })
+    }
+  }, [])
+
+  const cells = Array.from({ length: 4 })
+    .map((_, index) => {
+      if (hiddenCells.has(index)) return null
+
+      const item = effectiveItems[index]
+
+      if (!item && index === 0 && heroSrc) {
+        return (
+          <div key={`${shop.id}-service-hero`} className="shop-grid-item-wrap">
+            <div className="shop-grid-item">
+              <StableImage
+                src={heroSrc}
+                alt={shop.name || "Service provider"}
+                width={300}
+                height={300}
+                aspectRatio={1}
+                containerClassName="h-full w-full bg-[#F8FAFC]"
+                className="h-full w-full object-cover"
+                onError={handleHeroError}
+              />
+              <div className="grid-badge bg-pink-600 text-white">Service</div>
+            </div>
+            <div className="shop-grid-caption">
+              <div className="sg-name">{shop.category || "Local Service"}</div>
+              <div className="sg-price">{formatServicePrice(minPrice)}</div>
+            </div>
+          </div>
+        )
+      }
+
+      if (!item) {
+        return (
+          <div key={`${shop.id}-service-empty-${index}`} className="shop-grid-item-wrap">
+            <div className="shop-grid-item empty">
+              <FaBriefcase className="text-[1.2rem] text-pink-200" />
+            </div>
+            <div className="shop-grid-caption select-none text-transparent">
+              <div className="sg-name">-</div>
+              <div className="sg-price">-</div>
+            </div>
+          </div>
+        )
+      }
+
       return (
-        <div key={`${shop.id}-service-hero`} className="shop-grid-item-wrap">
+        <div key={`${shop.id}-${item.id}-${index}`} className="shop-grid-item-wrap">
           <div className="shop-grid-item">
             <StableImage
-              src={heroImage}
-              alt={shop.name || "Service provider"}
+              src={item.image_url || heroSrc}
+              alt={item.name || shop.name || "Service"}
               width={300}
               height={300}
               aspectRatio={1}
               containerClassName="h-full w-full bg-[#F8FAFC]"
               className="h-full w-full object-cover"
+              onError={() => handleImageError(index)}
             />
-            <div className="grid-badge bg-pink-600 text-white">Service</div>
+            {index === 0 ? <div className="grid-badge bg-pink-600 text-white">Service</div> : null}
           </div>
+
           <div className="shop-grid-caption">
-            <div className="sg-name">{shop.category || "Local Service"}</div>
-            <div className="sg-price">{formatServicePrice(minPrice)}</div>
+            <div className="sg-name" title={item.name || shop.category || "Service"}>
+              {item.name || shop.category || "Service"}
+            </div>
+            <div className="sg-price">{formatServicePrice(item.price)}</div>
           </div>
         </div>
       )
-    }
-
-    if (!item) {
-      return (
-        <div key={`${shop.id}-service-empty-${index}`} className="shop-grid-item-wrap">
-          <div className="shop-grid-item empty">
-            <FaBriefcase className="text-[1.2rem] text-pink-200" />
-          </div>
-          <div className="shop-grid-caption select-none text-transparent">
-            <div className="sg-name">-</div>
-            <div className="sg-price">-</div>
-          </div>
-        </div>
-      )
-    }
-
-    return (
-      <div key={`${shop.id}-${item.id}-${index}`} className="shop-grid-item-wrap">
-        <div className="shop-grid-item">
-          <StableImage
-            src={item.image_url || heroImage}
-            alt={item.name || shop.name || "Service"}
-            width={300}
-            height={300}
-            aspectRatio={1}
-            containerClassName="h-full w-full bg-[#F8FAFC]"
-            className="h-full w-full object-cover"
-          />
-          {index === 0 ? <div className="grid-badge bg-pink-600 text-white">Service</div> : null}
-        </div>
-
-        <div className="shop-grid-caption">
-          <div className="sg-name" title={item.name || shop.category || "Service"}>
-            {item.name || shop.category || "Service"}
-          </div>
-          <div className="sg-price">{formatServicePrice(item.price)}</div>
-        </div>
-      </div>
-    )
-  })
+    })
+    .filter(Boolean)
 
   return (
     <div className="premium-shop-card-wrap min-w-[280px] w-[85vw] max-w-[340px] shrink-0">
