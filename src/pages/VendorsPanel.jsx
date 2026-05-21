@@ -984,23 +984,20 @@ function VendorsPanel() {
             href="https://whatsapp.com/channel/0029VbCWRCpE50Uf8EyYIl1G"
             target="_blank"
             rel="noreferrer"
-            className="mt-6 flex items-center gap-4 rounded-2xl border border-[#25D366]/30 bg-gradient-to-r from-[#f0fdf4] to-[#dcfce7] px-5 py-4 shadow-sm transition hover:shadow-md hover:border-[#25D366]/60 group"
+            className="mt-6 flex items-center gap-3 rounded-2xl border border-[#25D366]/30 bg-gradient-to-r from-[#f0fdf4] to-[#dcfce7] px-4 py-3.5 shadow-sm transition hover:shadow-md hover:border-[#25D366]/60 group"
           >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#25D366] text-white shadow-sm text-2xl">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#25D366] text-white shadow-sm text-xl">
               <FaWhatsapp />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[0.7rem] font-extrabold uppercase tracking-[0.18em] text-[#16a34a]">
-                Official Merchant Channel
+              <p className="truncate text-[0.85rem] font-extrabold text-slate-900">
+                CTMerchant Official WhatsApp Channel
               </p>
-              <h3 className="mt-0.5 text-[0.95rem] font-extrabold text-slate-900">
-                Follow CTMerchant on WhatsApp
-              </h3>
-              <p className="mt-0.5 text-[0.78rem] font-semibold leading-snug text-slate-500">
-                Get updates, tips, and announcements for verified merchants.
+              <p className="mt-0.5 truncate text-[0.73rem] font-semibold text-slate-500">
+                Updates, tips &amp; announcements for verified merchants
               </p>
             </div>
-            <div className="shrink-0 rounded-xl bg-[#25D366] px-3.5 py-2 text-[0.75rem] font-extrabold text-white shadow-sm transition group-hover:bg-[#1ebe5d]">
+            <div className="shrink-0 whitespace-nowrap rounded-xl bg-[#25D366] px-4 py-2 text-[0.75rem] font-extrabold text-white shadow-sm transition group-hover:bg-[#1ebe5d]">
               Follow
             </div>
           </a>
