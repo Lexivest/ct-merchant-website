@@ -481,7 +481,7 @@ export default function StaffVerifications() {
         }
         nextShopData = { ...selectedShop, ...updateData }
       } else {
-        updateData = { status: "approved" }
+        updateData = { status: "approved", updated_at: new Date().toISOString() }
 
         const { data: approvedShop, error } = await supabase
           .from("shops")
