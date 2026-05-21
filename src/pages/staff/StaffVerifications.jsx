@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { 
   FaCircleCheck, 
@@ -172,6 +172,15 @@ export default function StaffVerifications() {
   const [downloadingVideo, setDownloadingVideo] = useState(false)
   const [rejectionNote, setRejectionReason] = useState("")
   const [showRejectionInput, setShowRejectionInput] = useState(false)
+  const rejectionPanelRef = useRef(null)
+
+  // Scroll the rejection form into view whenever it appears
+  useEffect(() => {
+    if (showRejectionInput) {
+      rejectionPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+      rejectionPanelRef.current?.querySelector("input")?.focus()
+    }
+  }, [showRejectionInput])
   const [filterStatus, setFilterStatus] = useState("all") // 'all' | 'pending' | 'kyc_submitted'
   const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
 
@@ -1065,23 +1074,17 @@ export default function StaffVerifications() {
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* Modal Footer / Action Bar */}
-            <div className="border-t border-slate-100 bg-white px-8 py-6">
-              {showRejectionInput ? (
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-black text-rose-600 uppercase tracking-widest">Rejection Reason</label>
-                    <button onClick={() => setShowRejectionInput(false)} className="text-xs font-bold text-slate-400 hover:text-slate-600">Cancel</button>
-                  </div>
+              {/* Rejection form — lives inside the scrollable body so it's always visible */}
+              {showRejectionInput && (
+                <div ref={rejectionPanelRef} className="mt-6 rounded-2xl border-2 border-rose-100 bg-rose-50/50 p-5">
+                  <p className="mb-3 text-sm font-black uppercase tracking-widest text-rose-600">Rejection Reason</p>
                   <div className="flex gap-3">
                     <input
-                      autoFocus
                       value={rejectionNote}
                       onChange={e => setRejectionReason(e.target.value)}
                       placeholder="Explain what is missing or incorrect..."
-                      className="flex-1 rounded-2xl border-2 border-rose-100 bg-rose-50/30 px-5 py-3 text-sm font-bold text-slate-900 outline-none focus:border-rose-500"
+                      className="flex-1 rounded-2xl border-2 border-rose-100 bg-white px-5 py-3 text-sm font-bold text-slate-900 outline-none focus:border-rose-500"
                     />
                     <button
                       onClick={() => handleReject(reviewTab)}
@@ -1092,43 +1095,53 @@ export default function StaffVerifications() {
                     </button>
                   </div>
                 </div>
-              ) : (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-6">
-                    <div>
-                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</div>
-                      <div className="mt-1">
-                        <StatusBadge 
-                          status={reviewTab === 'kyc' ? selectedShop.kyc_status : selectedShop.status} 
-                          type={reviewTab === 'kyc' ? 'kyc' : 'shop'} 
-                        />
-                      </div>
+              )}
+            </div>
+
+            {/* Modal Footer / Action Bar */}
+            <div className="border-t border-slate-100 bg-white px-8 py-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</div>
+                    <div className="mt-1">
+                      <StatusBadge
+                        status={reviewTab === 'kyc' ? selectedShop.kyc_status : selectedShop.status}
+                        type={reviewTab === 'kyc' ? 'kyc' : 'shop'}
+                      />
                     </div>
                   </div>
-
-                  <div className="flex gap-3">
-                    {(reviewTab === 'application' || isSuperAdmin) && (
-                      <button
-                        onClick={() => setShowRejectionInput(true)}
-                        disabled={processing || !canApproveSelectedReview}
-                        className="flex items-center gap-2 rounded-2xl border-2 border-rose-100 bg-white px-6 py-3 text-sm font-black text-rose-600 transition hover:bg-rose-50 disabled:opacity-50"
-                      >
-                        <FaXmark /> Reject
-                      </button>
-                    )}
-                    
-                    {(reviewTab === 'application' || isSuperAdmin) && (
-                      <button
-                        onClick={() => handleApprove(reviewTab)}
-                        disabled={processing || !canApproveSelectedReview}
-                        className="flex items-center gap-2 rounded-2xl bg-emerald-600 px-8 py-3 text-sm font-black text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700 active:scale-95 disabled:opacity-50"
-                      >
-                        {processing ? <FaCircleNotch className="animate-spin" /> : <><FaCheck /> Approve</>}
-                      </button>
-                    )}
-                  </div>
                 </div>
-              )}
+
+                <div className="flex gap-3">
+                  {(reviewTab === 'application' || isSuperAdmin) && (
+                    <button
+                      onClick={() => {
+                        setShowRejectionInput(prev => !prev)
+                        if (showRejectionInput) setRejectionReason("")
+                      }}
+                      disabled={processing || !canApproveSelectedReview}
+                      className={`flex items-center gap-2 rounded-2xl border-2 px-6 py-3 text-sm font-black transition disabled:opacity-50 ${
+                        showRejectionInput
+                          ? "border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100"
+                          : "border-rose-100 bg-white text-rose-600 hover:bg-rose-50"
+                      }`}
+                    >
+                      <FaXmark /> {showRejectionInput ? "Cancel" : "Reject"}
+                    </button>
+                  )}
+
+                  {(reviewTab === 'application' || isSuperAdmin) && (
+                    <button
+                      onClick={() => handleApprove(reviewTab)}
+                      disabled={processing || !canApproveSelectedReview}
+                      className="flex items-center gap-2 rounded-2xl bg-emerald-600 px-8 py-3 text-sm font-black text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700 active:scale-95 disabled:opacity-50"
+                    >
+                      {processing ? <FaCircleNotch className="animate-spin" /> : <><FaCheck /> Approve</>}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
