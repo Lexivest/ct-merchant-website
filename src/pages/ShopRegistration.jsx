@@ -2043,13 +2043,13 @@ function ShopRegistration() {
 
                     <div className="h-px bg-slate-100" />
 
-                    <FieldBlock label={form.businessType === "Limited Liability (Ltd)" ? "RC Number *" : "Business Registration (Optional)"}>
-                      <InputWithIcon icon={<FaFileContract />} value={form.cacNumber} onChange={(e) => setForm((prev) => ({ ...prev, cacNumber: e.target.value }))} placeholder="BN or RC Number" />
+                    <FieldBlock label={isServiceMode ? "Registration / Cert. Number (Optional)" : (form.businessType === "Limited Liability (Ltd)" ? "RC Number *" : "Business Registration (Optional)")}>
+                      <InputWithIcon icon={<FaFileContract />} value={form.cacNumber} onChange={(e) => setForm((prev) => ({ ...prev, cacNumber: e.target.value }))} placeholder={isServiceMode ? "CAC, CORAN, or professional body number" : "BN or RC Number"} />
                     </FieldBlock>
 
                     <UploadCard
-                      title="CAC Certificate"
-                      subtitle={`Required for Ltd | ${cacRuleLabel}`}
+                      title={isServiceMode ? "CAC / Professional Certificate (Optional)" : "CAC Certificate"}
+                      subtitle={isServiceMode ? `CAC, CORAN, professional body, or any relevant cert | ${cacRuleLabel}` : `Required for Ltd | ${cacRuleLabel}`}
                       onFileClick={() => openImagePicker("cac", null)}
                       onCameraClick={() => openCustomCamera("cac", 3 / 4)}
                       onPdfClick={() => openPdfPicker("cac")}
@@ -2327,7 +2327,7 @@ function ReviewModal({ form, cityName, areaName, logoPreview, storefrontPreview,
           <ReviewThumb label={isServiceMode ? "Service Logo" : "Shop Logo"} content={logoPreview} />
           <ReviewThumb label={isServiceMode ? "Service Cover" : "Store Front"} content={storefrontPreview} />
           <ReviewThumb label="ID Document" content={idPreview} />
-          {showCac && <ReviewThumb label="CAC Certificate" content={cacPreview} />}
+          {showCac && <ReviewThumb label={isServiceMode ? "Certificate / Professional Doc" : "CAC Certificate"} content={cacPreview} />}
         </div>
 
         <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -2352,7 +2352,7 @@ function ReviewModal({ form, cityName, areaName, logoPreview, storefrontPreview,
           <div className="my-2 h-px bg-slate-200" />
           
           <DetailRow label={form.idType || "ID Document"} value={form.idNumber} />
-          {form.cacNumber && <DetailRow label="CAC Number" value={form.cacNumber} />}
+          {form.cacNumber && <DetailRow label={isServiceMode ? "Cert. / Reg. Number" : "CAC Number"} value={form.cacNumber} />}
         </div>
 
         <div className="mt-6 space-y-3">
