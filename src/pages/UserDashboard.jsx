@@ -1519,7 +1519,11 @@ function UserDashboard() {
   }
 
   function openNotificationAction(item) {
-    const actionPath = String(item?.action_path || "").trim()
+    // /merchant-payment was an incorrect path used in older notifications — remap to the real route
+    const rawPath = String(item?.action_path || "").trim()
+    const actionPath = rawPath.startsWith("/merchant-payment")
+      ? rawPath.replace("/merchant-payment", "/remita")
+      : rawPath
     if (!actionPath) return
 
     if (actionPath.startsWith("/merchant-video-kyc")) {
