@@ -437,7 +437,7 @@ const ShopCard = memo(function ShopCard({ shop, products, onOpenShop }) {
             <div className="shop-grid-item empty">
               <FaImage className="text-[1.2rem] text-slate-300" />
             </div>
-            <div className="shop-grid-caption select-none text-transparent">
+            <div className="shop-grid-caption select-none invisible">
               <div className="sg-name">-</div>
               <div className="sg-price">-</div>
             </div>
@@ -633,7 +633,7 @@ const ServiceMarketCard = memo(function ServiceMarketCard({ provider, onOpenServ
             <div className="shop-grid-item empty">
               <FaBriefcase className="text-[1.2rem] text-pink-200" />
             </div>
-            <div className="shop-grid-caption select-none text-transparent">
+            <div className="shop-grid-caption select-none invisible">
               <div className="sg-name">-</div>
               <div className="sg-price">-</div>
             </div>
