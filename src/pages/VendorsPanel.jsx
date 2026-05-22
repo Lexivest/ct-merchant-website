@@ -6,14 +6,17 @@ import {
   FaBullhorn,
   FaCamera,
   FaChartLine,
+  FaCheck,
   FaCheckDouble,
+  FaCopy,
   FaEye,
   FaFileInvoiceDollar,
   FaGear,
   FaHourglassHalf,
-  FaImage,
+  FaIdCard,
   FaLock,
   FaPenToSquare,
+  FaShareNodes,
   FaStoreSlash,
   FaTriangleExclamation,
   FaVideo,
@@ -89,6 +92,7 @@ function VendorsPanel() {
   const { user, loading: authLoading, isOffline } = useAuthSession()
   const [realtimeShop, setRealtimeShop] = useState(null)
   const [verificationAccessOverride, setVerificationAccessOverride] = useState(null)
+  const [copiedKey, setCopiedKey] = useState(null)
   const retryRouteTransitionRef = useRef(null)
   const [routeTransition, setRouteTransition] = useState({
     pending: false,
@@ -335,6 +339,9 @@ function VendorsPanel() {
   const viewRoute = isServiceMode
     ? `/service-provider?id=${activeShop.id}&service=${encodeURIComponent(activeShop.category || "")}`
     : `/shop-detail?id=${activeShop.id}`
+  const storefrontUrl = isServiceMode
+    ? `https://www.ctmerchant.com.ng/service-provider?id=${activeShop.id}&service=${encodeURIComponent(activeShop.category || "")}`
+    : `https://www.ctmerchant.com.ng/shop-detail?id=${activeShop.id}`
 
   const isApplicationApproved = activeShop.status === "approved"
   const isVerified = Boolean(activeShop.is_verified)
@@ -354,6 +361,32 @@ function VendorsPanel() {
     activeShop.kyc_status === "submitted" ||
     activeShop.kyc_status === "rejected" ||
     isVerified
+
+  async function handleCopy(text, key) {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedKey(key)
+      setTimeout(() => setCopiedKey(null), 2000)
+    } catch {
+      notify({
+        type: "error",
+        title: "Copy failed",
+        message: "Please copy the text manually.",
+      })
+    }
+  }
+
+  async function handleShare(url, title) {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url })
+      } catch {
+        // User cancelled or share failed — silently ignore
+      }
+    } else {
+      await handleCopy(url, "share-url")
+    }
+  }
 
   function beginRouteTransition(retryAction = null) {
     retryRouteTransitionRef.current = retryAction
@@ -664,6 +697,78 @@ function VendorsPanel() {
             </div>
           )}
         </div>
+
+        {/* ── Store Identity Card ─────────────────────────────────── */}
+        <div className="mb-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          {/* Card header */}
+          <div className="flex items-center gap-3 bg-[#131921] px-4 py-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white text-base">
+              <FaIdCard />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[0.88rem] font-extrabold text-white">Store Identity</div>
+              <div className="text-[0.72rem] font-medium text-white/50">Your unique ID &amp; shareable storefront link</div>
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-100">
+            {/* CT-ID row */}
+            <div className="flex items-center gap-3 px-4 py-3.5">
+              <div className="flex-1 min-w-0">
+                <div className="text-[0.68rem] font-bold uppercase tracking-widest text-slate-400">CT-ID</div>
+                <div className="mt-0.5 font-mono text-[1.1rem] font-extrabold text-[#0F1111]">
+                  #{activeShop.id}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleCopy(String(activeShop.id), "ct-id")}
+                className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[0.78rem] font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900"
+              >
+                {copiedKey === "ct-id" ? (
+                  <><FaCheck className="text-green-600" /><span className="text-green-600">Copied!</span></>
+                ) : (
+                  <><FaCopy /> Copy</>
+                )}
+              </button>
+            </div>
+
+            {/* Storefront URL row */}
+            <div className="flex items-center gap-3 px-4 py-3.5">
+              <div className="flex-1 min-w-0">
+                <div className="text-[0.68rem] font-bold uppercase tracking-widest text-slate-400">Storefront URL</div>
+                <div className="mt-0.5 truncate text-[0.8rem] font-semibold text-[#2563EB]" title={storefrontUrl}>
+                  {storefrontUrl}
+                </div>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleCopy(storefrontUrl, "store-url")}
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[0.78rem] font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900"
+                >
+                  {copiedKey === "store-url" ? (
+                    <><FaCheck className="text-green-600" /><span className="text-green-600">Copied!</span></>
+                  ) : (
+                    <><FaCopy /> Copy</>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleShare(storefrontUrl, `${activeShop.name} on CTMerchant`)}
+                  className="flex items-center gap-1.5 rounded-xl border border-pink-200 bg-pink-50 px-3 py-2 text-[0.78rem] font-bold text-pink-600 transition hover:bg-pink-100 hover:border-pink-300"
+                >
+                  {copiedKey === "share-url" ? (
+                    <><FaCheck className="text-green-600" /><span className="text-green-600">Copied!</span></>
+                  ) : (
+                    <><FaShareNodes /> Share</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* ────────────────────────────────────────────────────────── */}
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-5">
           {!isApplicationApproved ? (
