@@ -22,6 +22,7 @@ const staffRouteLoaders = {
   "/staff-agent-id-card": () => import("../pages/staff/StaffAgentIDCard"),
   "/staff-studio": () => import("../pages/vendors/ImageOptimizer"),
   "/staff-issue-id": () => import("../pages/staff/StaffIDGenerator"),
+  "/staff-materials": () => import("../pages/staff/StaffMaterials"),
 }
 
 const staffRouteModuleCache = new Map()

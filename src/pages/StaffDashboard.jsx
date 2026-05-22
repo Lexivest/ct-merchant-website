@@ -474,6 +474,15 @@ export default function StaffDashboard() {
         locked: superLocked,
         lockedMessage: "Agent application reviews are reserved for super admins.",
       },
+      {
+        title: "Materials",
+        icon: <FaFolderOpen />,
+        badge: "Resources",
+        tone: "amber",
+        path: "/staff-materials",
+        locked: superLocked,
+        lockedMessage: "Materials management is reserved for super admins.",
+      },
     ]
   }, [counts, hasAdminRole, isSuperAdmin, summary])
 

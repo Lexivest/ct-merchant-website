@@ -232,6 +232,7 @@ const StaffAnnouncements = createPreloadableStaffRoute("/staff-announcements")
 const StaffNotifications = createPreloadableStaffRoute("/staff-notifications")
 const StaffAgentApplications = createPreloadableStaffRoute("/staff-agent-applications")
 const StaffAgentIDCard = createPreloadableStaffRoute("/staff-agent-id-card")
+const StaffMaterials = createPreloadableStaffRoute("/staff-materials")
 const UserDashboard = resilientLazy(loadUserDashboard, { pageLabel: "user dashboard" })
 const ShopRegistration = resilientLazy(loadShopRegistration, { pageLabel: "shop registration" })
 const Area = resilientLazy(loadArea, { pageLabel: "area view" })
@@ -517,6 +518,11 @@ function getRouteMeta(pathname) {
     "/staff-agent-id-card": {
       title: "Agent ID Card | CTMerchant",
       description: "Generate and download the official CTMerchant agent ID card.",
+      noindex: true,
+    },
+    "/staff-materials": {
+      title: "Materials Manager | CTMerchant",
+      description: "Super-admin upload and management of downloadable merchant resources.",
       noindex: true,
     },
     "/user-dashboard": {
@@ -910,6 +916,7 @@ function AppShell() {
         <Route path="/staff-notifications" element={<ProtectedStaffRoute adminOnly><StaffNotifications /></ProtectedStaffRoute>} />
         <Route path="/staff-agent-applications" element={<ProtectedStaffRoute superOnly><StaffAgentApplications /></ProtectedStaffRoute>} />
         <Route path="/staff-agent-id-card" element={<ProtectedStaffRoute superOnly><StaffAgentIDCard /></ProtectedStaffRoute>} />
+        <Route path="/staff-materials" element={<ProtectedStaffRoute superOnly><StaffMaterials /></ProtectedStaffRoute>} />
 
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
