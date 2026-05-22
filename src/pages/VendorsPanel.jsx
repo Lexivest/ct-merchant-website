@@ -9,6 +9,7 @@ import {
   FaCheck,
   FaCheckDouble,
   FaCopy,
+  FaDownload,
   FaEye,
   FaFileInvoiceDollar,
   FaGear,
@@ -763,6 +764,21 @@ function VendorsPanel() {
                   )}
                 </button>
               </div>
+            </div>
+            {/* Merchant Guide download row */}
+            <div className="flex items-center justify-between gap-3 px-4 py-3 bg-slate-50/60">
+              <div className="flex-1 min-w-0">
+                <div className="text-[0.68rem] font-bold uppercase tracking-widest text-slate-400">Merchant Guide</div>
+                <div className="mt-0.5 text-[0.78rem] font-semibold text-slate-500">Official onboarding &amp; seller manual</div>
+              </div>
+              <a
+                href="https://xdchacdjcgazyckacbpc.supabase.co/storage/v1/object/public/brand-assets/CTMerchant_Merchant_Onboarding_Manual.pdf"
+                target="_blank"
+                rel="noreferrer"
+                className="flex shrink-0 items-center gap-1.5 rounded-xl border border-pink-200 bg-pink-50 px-3 py-2 text-[0.78rem] font-bold text-pink-600 transition hover:bg-pink-100 hover:border-pink-300"
+              >
+                <FaDownload /> Download
+              </a>
             </div>
           </div>
         </div>

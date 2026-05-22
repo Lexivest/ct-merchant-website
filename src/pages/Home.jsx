@@ -4,6 +4,7 @@ import {
   FaArrowRight,
   FaCalendarDays,
   FaClock,
+  FaDownload,
   FaEnvelope,
   FaEye,
   FaEyeSlash,
@@ -1188,7 +1189,18 @@ function Home() {
 
                   <div className="rounded-[26px] bg-[#C9A84C]/25 p-1">
                     <div className="rounded-[22px] border border-[#C9A84C]/35 bg-[#F7EED8] p-6 text-[#4A2410] shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
-                      <div className="mb-4 h-1 w-16 rounded-full bg-pink-600" />
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <div className="h-1 w-16 shrink-0 rounded-full bg-pink-600" />
+                        <a
+                          href="https://xdchacdjcgazyckacbpc.supabase.co/storage/v1/object/public/brand-assets/CTMerchant_Merchant_Onboarding_Manual.pdf"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1.5 rounded-lg border border-pink-200 bg-pink-50 px-2.5 py-1.5 text-[0.7rem] font-bold text-pink-700 transition hover:bg-pink-100 hover:border-pink-300"
+                        >
+                          <FaDownload className="text-[0.65rem]" />
+                          Merchant Guide
+                        </a>
+                      </div>
                       <h2 className="flex items-center gap-2 font-serif text-2xl font-semibold text-[#4A2410]">
                         <FaLock className="text-[#9B7A25]" />
                         <span>Users Login</span>
