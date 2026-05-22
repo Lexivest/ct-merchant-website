@@ -406,6 +406,8 @@ function ShopIndex() {
                     alt={shop.name}
                     containerClassName="h-16 w-16 shrink-0 rounded-lg border border-slate-200 bg-white"
                     className="h-full w-full object-contain p-1"
+                    width={200}
+                    quality={70}
                   />
                 ) : (
                   <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-pink-200 bg-pink-50 text-[1.4rem] font-extrabold text-pink-600">

@@ -727,6 +727,8 @@ function ProductDetail() {
             alt={product.name}
             containerClassName="h-full w-full bg-white"
             className="h-full w-full object-contain mix-blend-multiply"
+            width={400}
+            quality={80}
           />
         </div>
 
@@ -895,6 +897,8 @@ function ProductDetail() {
                           loading={index === 0 ? "eager" : "lazy"}
                           fetchPriority={index === 0 ? "high" : undefined}
                           onError={index === activeImageIndex ? handleSelectedImageError : undefined}
+                          width={1000}
+                          quality={85}
                         />
                       </div>
                     ))
@@ -905,6 +909,8 @@ function ProductDetail() {
                       containerClassName="h-full w-full bg-[#F7F7F7]"
                       className="block h-full w-full object-contain mix-blend-multiply"
                       onError={handleSelectedImageError}
+                      width={1000}
+                      quality={85}
                     />
                   )}
 

@@ -111,6 +111,8 @@ function ShopDetailProductCard({ product, onOpenProduct }) {
           alt={product.name}
           containerClassName="h-full w-full bg-white"
           className="prod-img h-full w-full object-contain transition duration-300 hover:scale-105"
+          width={400}
+          quality={80}
         />
         {hasDiscount ? (
           <span className="badge badge-discount absolute left-1 top-1 z-[2] rounded bg-red-600 px-2 py-1 text-[0.65rem] font-extrabold text-white">
@@ -745,6 +747,8 @@ function ShopDetail() {
               alt="Store Front"
               containerClassName="flex min-h-[240px] w-full items-center justify-center overflow-hidden rounded-[16px] border border-slate-200 bg-slate-50"
               className="max-h-[560px] w-full object-contain"
+              width={1200}
+              quality={85}
             />
           ) : (
             <div className="rounded-[16px] border border-dashed border-orange-200 bg-orange-50 px-5 py-10 text-center">
@@ -816,6 +820,10 @@ function ShopDetail() {
                 alt="Shop Logo"
                 containerClassName="h-[64px] w-[64px] shrink-0 rounded-xl border border-slate-300 bg-white"
                 className="h-full w-full object-cover"
+                width={200}
+                height={200}
+                quality={75}
+                resize="cover"
               />
               <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <h2 className="truncate text-[1.25rem] font-black leading-tight text-[#0F1111]">
@@ -1025,6 +1033,8 @@ function ShopDetail() {
               className="absolute inset-0 block h-full w-full bg-white object-contain object-center"
               loading="eager"
               fetchPriority="high"
+              width={1280}
+              quality={85}
             />
           </section>
         ) : null}
