@@ -133,6 +133,9 @@ function ProductDetail() {
   const [isSlideshowFrozen, setIsSlideshowFrozen] = useState(false)
   const [isInWishlist, setIsInWishlist] = useState(false)
   const isTogglingWishlistRef = useRef(false)
+  // Prevents background re-fetches (Realtime, cache invalidation) from
+  // overriding the wishlist state after the user has manually toggled it
+  const hasManuallyToggledWishlistRef = useRef(false)
   const [securityModalOpen, setSecurityModalOpen] = useState(false)
   const [descriptionModalOpen, setDescriptionModalOpen] = useState(false)
   const [openingWhatsApp, setOpeningWhatsApp] = useState(false)
@@ -206,9 +209,10 @@ function ProductDetail() {
       .filter(Boolean)
   }, [currentProduct])
 
-  // Sync optimistic states once data arrives
+  // Sync wishlist state from data — but only if the user hasn't manually
+  // toggled it this session. Once they tap the heart, we own the state locally.
   useEffect(() => {
-    if (data) {
+    if (data && !hasManuallyToggledWishlistRef.current) {
       setIsInWishlist(data.initialWishlist)
     }
   }, [data])
@@ -302,6 +306,7 @@ function ProductDetail() {
     setActiveImageIndex(0)
     setSelectedImage(productImages[0] || "")
     setIsSlideshowFrozen(false)
+    hasManuallyToggledWishlistRef.current = false
   }, [currentProduct, productImages])
 
   useEffect(() => {
@@ -415,6 +420,9 @@ function ProductDetail() {
     if (isTogglingWishlistRef.current) return
     isTogglingWishlistRef.current = true
 
+    // Take ownership — stop data re-fetches from overriding this state
+    hasManuallyToggledWishlistRef.current = true
+
     const next = !isInWishlist
     setIsInWishlist(next) // Optimistic update
 
@@ -455,12 +463,23 @@ function ProductDetail() {
         if (removeError) throw removeError
       }
 
-      // Invalidate wishlist list, dashboard count, AND this product's own cached
-      // initialWishlist flag — prevents stale heart state on back navigation
+      // Patch the product detail cache in-place so the correct initialWishlist
+      // is there on back navigation — without triggering a live re-fetch that
+      // would race against this optimistic state
+      const cachedEntry = readCachedFetchStore(cacheKey)
+      if (cachedEntry?.data) {
+        primeCachedFetchStore(
+          cacheKey,
+          { ...cachedEntry.data, initialWishlist: next },
+          Date.now(),
+          { persist: "session" }
+        )
+      }
+
+      // Force-refresh views that count or list wishlist items
       clearCachedFetchStore((key) =>
         key.startsWith("wishlist_items_") ||
-        key.startsWith("dashboard_dynamic_") ||
-        key.startsWith(`prod_detail_${productId}_`)
+        key.startsWith("dashboard_dynamic_")
       )
     } catch (error) {
       console.error("Wishlist error:", error)
