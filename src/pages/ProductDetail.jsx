@@ -9,7 +9,9 @@ import {
   FaHeart,
   FaLocationDot,
   FaMapPin,
+  FaPause,
   FaPhone,
+  FaPlay,
   FaShareNodes,
   FaShieldHalved,
   FaStar,
@@ -128,6 +130,7 @@ function ProductDetail() {
   // 4. Local Optimistic States
   const [selectedImage, setSelectedImage] = useState("")
   const [activeImageIndex, setActiveImageIndex] = useState(0)
+  const [isSlideshowFrozen, setIsSlideshowFrozen] = useState(false)
   const [isInWishlist, setIsInWishlist] = useState(false)
   const [securityModalOpen, setSecurityModalOpen] = useState(false)
   const [descriptionModalOpen, setDescriptionModalOpen] = useState(false)
@@ -297,17 +300,19 @@ function ProductDetail() {
 
     setActiveImageIndex(0)
     setSelectedImage(productImages[0] || "")
+    setIsSlideshowFrozen(false)
   }, [currentProduct, productImages])
 
   useEffect(() => {
     if (galleryImages.length <= 1) return undefined
+    if (isSlideshowFrozen) return undefined
 
     const intervalId = window.setInterval(() => {
       setActiveImageIndex((current) => (current + 1) % galleryImages.length)
     }, 3400)
 
     return () => window.clearInterval(intervalId)
-  }, [currentProduct?.id, galleryImages.length])
+  }, [currentProduct?.id, galleryImages.length, isSlideshowFrozen])
 
   useEffect(() => {
     const nextImage = galleryImages[activeImageIndex] || galleryImages[0] || ""
@@ -872,10 +877,57 @@ function ProductDetail() {
           <div className="left-col lg:flex-1">
             <section className="content-block mb-2 overflow-hidden bg-white !p-0 lg:mb-6 lg:rounded-lg lg:border lg:border-slate-300 lg:shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
               <div className="image-container flex w-full flex-col items-center bg-white">
-                <div className="main-img-wrapper relative flex aspect-square w-full items-center justify-center overflow-hidden bg-[#F7F7F7] lg:max-h-[500px]">
+                <div
+                  className={`main-img-wrapper relative flex aspect-square w-full items-center justify-center overflow-hidden bg-[#F7F7F7] lg:max-h-[500px] ${
+                    galleryImages.length > 1 ? "cursor-pointer select-none" : ""
+                  }`}
+                  onClick={() => {
+                    if (galleryImages.length > 1) {
+                      setIsSlideshowFrozen((prev) => !prev)
+                    }
+                  }}
+                  role={galleryImages.length > 1 ? "button" : undefined}
+                  tabIndex={galleryImages.length > 1 ? 0 : undefined}
+                  onKeyDown={(e) => {
+                    if (galleryImages.length > 1 && (e.key === "Enter" || e.key === " ")) {
+                      e.preventDefault()
+                      setIsSlideshowFrozen((prev) => !prev)
+                    }
+                  }}
+                  aria-label={
+                    galleryImages.length > 1
+                      ? isSlideshowFrozen
+                        ? "Tap to resume image slideshow"
+                        : "Tap to pause image slideshow"
+                      : undefined
+                  }
+                >
                   {hasDiscount ? (
                     <div className="flash-offer absolute left-4 top-4 z-10 rounded-md bg-red-600 px-2.5 py-1 text-[0.85rem] font-extrabold text-white shadow-[0_4px_10px_rgba(220,38,38,0.3)] lg:left-5 lg:top-5 lg:px-3 lg:py-1.5 lg:text-[0.95rem]">
                       -{discountPercent}% OFF
+                    </div>
+                  ) : null}
+
+                  {galleryImages.length > 1 ? (
+                    <div
+                      className={`absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.7rem] font-bold backdrop-blur-sm transition-all duration-300 lg:right-4 lg:top-4 lg:px-3 lg:py-1.5 lg:text-[0.78rem] ${
+                        isSlideshowFrozen
+                          ? "bg-black/70 text-white opacity-100"
+                          : "bg-black/35 text-white/90 opacity-0 pointer-events-none"
+                      }`}
+                      aria-hidden="true"
+                    >
+                      {isSlideshowFrozen ? (
+                        <>
+                          <FaPause className="text-[0.65rem]" />
+                          <span>Paused — tap to resume</span>
+                        </>
+                      ) : (
+                        <>
+                          <FaPlay className="text-[0.65rem]" />
+                          <span>Auto</span>
+                        </>
+                      )}
                     </div>
                   ) : null}
 
@@ -917,12 +969,20 @@ function ProductDetail() {
                   {galleryImages.length > 1 ? (
                     <div className="absolute bottom-4 left-0 right-0 z-10 flex items-center justify-center gap-2">
                       {galleryImages.map((image, index) => (
-                        <span
+                        <button
                           key={`${image}-indicator`}
-                          className={`h-1.5 rounded-full transition-all duration-500 ${
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setActiveImageIndex(index)
+                            setIsSlideshowFrozen(true)
+                          }}
+                          aria-label={`View image ${index + 1} of ${galleryImages.length}`}
+                          aria-current={index === activeImageIndex}
+                          className={`h-1.5 rounded-full transition-all duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-1 ${
                             index === activeImageIndex
                               ? "w-8 bg-pink-600 shadow-[0_0_12px_rgba(219,39,119,0.45)]"
-                              : "w-2 bg-slate-300/90"
+                              : "w-2 bg-slate-300/90 hover:bg-slate-400"
                           }`}
                         />
                       ))}
