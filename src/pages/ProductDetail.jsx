@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
@@ -132,6 +132,7 @@ function ProductDetail() {
   const [activeImageIndex, setActiveImageIndex] = useState(0)
   const [isSlideshowFrozen, setIsSlideshowFrozen] = useState(false)
   const [isInWishlist, setIsInWishlist] = useState(false)
+  const isTogglingWishlistRef = useRef(false)
   const [securityModalOpen, setSecurityModalOpen] = useState(false)
   const [descriptionModalOpen, setDescriptionModalOpen] = useState(false)
   const [openingWhatsApp, setOpeningWhatsApp] = useState(false)
@@ -410,62 +411,63 @@ function ProductDetail() {
       return
     }
 
+    // Prevent double-tap race condition
+    if (isTogglingWishlistRef.current) return
+    isTogglingWishlistRef.current = true
+
     const next = !isInWishlist
     setIsInWishlist(next) // Optimistic update
 
     try {
+      const numericProductId = Number(productId)
+
       if (next) {
+        // Check current count before inserting
         const { data: existingItems, error: fetchError } = await supabase
           .from("wishlist")
           .select("id")
           .eq("user_id", user.id)
-          .order("created_at", { ascending: true })
 
         if (fetchError) throw fetchError
 
-        // Limit wishlist items per user to prevent abuse
+        // Block if wishlist is full — notify user so they can manage it themselves
         if (existingItems && existingItems.length >= 5) {
-          const numToDelete = existingItems.length - 4
-          const idsToDelete = existingItems.slice(0, numToDelete).map((item) => item.id)
-
-          if (idsToDelete.length > 0) {
-            const { error: deleteError } = await supabase
-              .from("wishlist")
-              .delete()
-              .in("id", idsToDelete)
-            if (deleteError) throw deleteError
-          }
+          setIsInWishlist(false) // rollback optimistic
+          notify({
+            type: "info",
+            title: "Wishlist is full",
+            message: "You can save up to 5 items. Open your wishlist and remove one to add this.",
+          })
+          return
         }
 
         const { error: insertError } = await supabase.from("wishlist").insert({
           user_id: user.id,
-          product_id: productId,
+          product_id: numericProductId,
         })
         if (insertError) throw insertError
-
-        // Invalidate relevant caches so dashboard and wishlist view update
-        clearCachedFetchStore((key) => 
-          key.startsWith("wishlist_items_") || 
-          key.startsWith("dashboard_dynamic_")
-        )
       } else {
         const { error: removeError } = await supabase
           .from("wishlist")
           .delete()
           .eq("user_id", user.id)
-          .eq("product_id", productId)
+          .eq("product_id", numericProductId)
         if (removeError) throw removeError
-
-        // Invalidate relevant caches so dashboard and wishlist view update
-        clearCachedFetchStore((key) => 
-          key.startsWith("wishlist_items_") || 
-          key.startsWith("dashboard_dynamic_")
-        )
       }
+
+      // Invalidate wishlist list, dashboard count, AND this product's own cached
+      // initialWishlist flag — prevents stale heart state on back navigation
+      clearCachedFetchStore((key) =>
+        key.startsWith("wishlist_items_") ||
+        key.startsWith("dashboard_dynamic_") ||
+        key.startsWith(`prod_detail_${productId}_`)
+      )
     } catch (error) {
       console.error("Wishlist error:", error)
       setIsInWishlist(!next) // Rollback
       notify({ type: "error", title: "Wishlist update failed", message: "We could not update your wishlist. Please try again." })
+    } finally {
+      isTogglingWishlistRef.current = false
     }
   }
 
@@ -732,7 +734,6 @@ function ProductDetail() {
             alt={product.name}
             containerClassName="h-full w-full bg-white"
             className="h-full w-full object-contain mix-blend-multiply"
-            width={400}
             quality={80}
           />
         </div>
@@ -949,7 +950,6 @@ function ProductDetail() {
                           loading={index === 0 ? "eager" : "lazy"}
                           fetchPriority={index === 0 ? "high" : undefined}
                           onError={index === activeImageIndex ? handleSelectedImageError : undefined}
-                          width={1000}
                           quality={85}
                         />
                       </div>
@@ -961,7 +961,6 @@ function ProductDetail() {
                       containerClassName="h-full w-full bg-[#F7F7F7]"
                       className="block h-full w-full object-contain mix-blend-multiply"
                       onError={handleSelectedImageError}
-                      width={1000}
                       quality={85}
                     />
                   )}

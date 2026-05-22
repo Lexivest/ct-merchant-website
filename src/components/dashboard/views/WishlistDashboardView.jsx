@@ -4,6 +4,7 @@ import { FaArrowLeft, FaHeart, FaTrash } from "react-icons/fa6"
 import { supabase } from "../../../lib/supabase"
 import StableImage from "../../../components/common/StableImage"
 import { clearCachedFetchStore } from "../../../hooks/useCachedFetch"
+import { useGlobalFeedback } from "../../common/GlobalFeedbackProvider"
 
 function WishlistDashboardView({
   onBack,
@@ -12,7 +13,10 @@ function WishlistDashboardView({
   prefetchedItems = null,
 }) {
   const navigate = useNavigate()
+  const { notify } = useGlobalFeedback()
   const [loading, setLoading] = useState(() => !prefetchedItems)
+  const [fetchError, setFetchError] = useState(null)
+  const [retryCount, setRetryCount] = useState(0)
   const [items, setItems] = useState(() => prefetchedItems || [])
 
   useEffect(() => {
@@ -31,6 +35,7 @@ function WishlistDashboardView({
 
       try {
         setLoading(true)
+        setFetchError(null)
 
         const { data, error } = await supabase
           .from("wishlist")
@@ -43,6 +48,7 @@ function WishlistDashboardView({
         setItems((data || []).filter((item) => item.products))
       } catch (err) {
         console.error("Error fetching wishlist:", err)
+        setFetchError("We could not load your wishlist. Please try again.")
         setItems([])
       } finally {
         setLoading(false)
@@ -50,10 +56,13 @@ function WishlistDashboardView({
     }
 
     fetchWishlist()
-  }, [prefetchedItems, user?.id])
+  }, [prefetchedItems, user?.id, retryCount])
 
   async function removeItem(productId) {
     if (!user?.id) return
+
+    // Optimistic removal
+    setItems((prev) => prev.filter((item) => item.product_id !== productId))
 
     try {
       const { error } = await supabase
@@ -64,12 +73,27 @@ function WishlistDashboardView({
 
       if (error) throw error
 
-      setItems((prev) => prev.filter((item) => item.product_id !== productId))
-
-      // Invalidate dashboard dynamic cache so count updates
-      clearCachedFetchStore((key) => key.startsWith("dashboard_dynamic_"))
+      // Invalidate dashboard count + wishlist cache
+      clearCachedFetchStore((key) =>
+        key.startsWith("dashboard_dynamic_") ||
+        key.startsWith("wishlist_items_")
+      )
     } catch (err) {
       console.error("Failed to remove item:", err)
+      // Restore the item back into the list by re-fetching from DB
+      // (we don't have the item data anymore so a re-fetch is the safest rollback)
+      notify({
+        type: "error",
+        title: "Could not remove item",
+        message: "We could not remove this item from your wishlist. Please try again.",
+      })
+      // Re-fetch to restore accurate state
+      const { data } = await supabase
+        .from("wishlist")
+        .select("product_id, created_at, products(*)")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+      if (data) setItems(data.filter((item) => item.products))
     }
   }
 
@@ -117,6 +141,21 @@ function WishlistDashboardView({
             <div className="py-20">
               <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#2E1065]" />
             </div>
+          ) : fetchError ? (
+            <div className="py-16 text-center text-slate-500">
+              <FaHeart className="mx-auto mb-4 text-6xl text-slate-200" />
+              <p className="mb-3 font-semibold text-slate-700">{fetchError}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setFetchError(null)
+                  setRetryCount((c) => c + 1)
+                }}
+                className="rounded-lg bg-[#2E1065] px-5 py-2 text-sm font-bold text-white transition hover:bg-[#3b1580]"
+              >
+                Try again
+              </button>
+            </div>
           ) : items.length === 0 ? (
             <div className="py-16 text-center text-slate-500">
               <FaHeart className="mx-auto mb-4 text-6xl text-slate-200" />
@@ -151,10 +190,11 @@ function WishlistDashboardView({
                 >
                     <div className="relative aspect-square border-b border-slate-200 bg-slate-50 p-2">
                       <StableImage
-                        src={product.image_url || "https://via.placeholder.com/150"}
+                        src={product.image_url || ""}
                         alt={product.name || "Product"}
                         containerClassName="flex h-full w-full items-center justify-center overflow-hidden rounded-[18px] bg-white"
                         className="h-full w-full object-contain p-2"
+                        quality={80}
                       />
                     </div>
 

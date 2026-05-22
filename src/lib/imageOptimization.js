@@ -21,15 +21,13 @@ export function getOptimizedImageUrl(src, options = {}) {
     resize = 'cover' // cover, contain, fill
   } = options
 
-  // If no specific dimensions are requested, return original
-  if (!width && !height) return src
-
   const params = new URLSearchParams()
   if (width) params.append('width', width.toString())
   if (height) params.append('height', height.toString())
   if (quality) params.append('quality', quality.toString())
   if (format && format !== 'origin') params.append('format', format)
-  params.append('resize', resize)
+  // Only add resize mode when actually resizing — quality-only transforms don't need it
+  if (width || height) params.append('resize', resize)
 
   const queryString = params.toString()
   if (!queryString) return src

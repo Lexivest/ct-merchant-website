@@ -406,7 +406,6 @@ function ShopIndex() {
                     alt={shop.name}
                     containerClassName="h-16 w-16 shrink-0 rounded-lg border border-slate-200 bg-white"
                     className="h-full w-full object-contain p-1"
-                    width={200}
                     quality={70}
                   />
                 ) : (
