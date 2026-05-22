@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { QRCodeCanvas } from "qrcode.react";
 import {
   FaArrowLeft,
   FaCircleNotch,
@@ -202,9 +203,9 @@ async function generatePromoBannerCanvasBlob({
   address,
   uniqueId,
   websiteText,
-  shopId,
   shopLogoUrl,
   cityName,
+  qrDataUrl = null,
 }) {
   const width = 800;
   const height = 1080;
@@ -228,16 +229,15 @@ async function generatePromoBannerCanvasBlob({
   // Keep image ≈ 69% of tile height to leave room for name + price text
   const imageHeight = Math.round(tileHeight * 0.692);
 
-  const qrUrl = `https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(`https://www.ctmerchant.com.ng/shop-detail?id=${shopId || ""}`)}`;
-  const [shopLogoDataUrl, qrDataUrl, productDataUrls, stripDataUrls] = await Promise.all([
+  // qrDataUrl is generated locally from the hidden QRCodeCanvas — no external fetch needed
+  const [shopLogoDataUrl, productDataUrls, stripDataUrls] = await Promise.all([
     imageUrlToDataUrl(shopLogoUrl),
-    imageUrlToDataUrl(qrUrl),
     Promise.all(gridProducts4.map((product) => imageUrlToDataUrl(product.image_url))),
     Promise.all(stripItems.map((product) => imageUrlToDataUrl(product.image_url))),
   ]);
   const [shopLogo, qr, productImages, stripImages] = await Promise.all([
     loadImageElement(shopLogoDataUrl).catch(() => null),
-    loadImageElement(qrDataUrl).catch(() => null),
+    loadImageElement(qrDataUrl || "").catch(() => null),
     Promise.all(productDataUrls.map((dataUrl) => loadImageElement(dataUrl).catch(() => null))),
     Promise.all(stripDataUrls.map((dataUrl) => loadImageElement(dataUrl).catch(() => null))),
   ]);
@@ -598,6 +598,8 @@ export default function MerchantPromoBanner() {
 
   const { user, loading: authLoading, isOffline } = useAuthSession();
   const { notify } = useGlobalFeedback();
+  // Hidden off-screen canvas used to generate the QR code locally (no external API / CORS)
+  const qrCanvasRef = useRef(null);
 
   const [loading, setLoading] = useState(() => !prefetchedData);
   const [error, setError] = useState(null);
@@ -686,6 +688,7 @@ export default function MerchantPromoBanner() {
   }, [user, authLoading, urlShopId, isOffline, prefetchedData]);
 
   const generateBannerBlob = async () => {
+    const qrDataUrl = qrCanvasRef.current?.toDataURL("image/png") || null;
     return generatePromoBannerCanvasBlob({
       products,
       shopName: shopData?.name || "",
@@ -696,6 +699,7 @@ export default function MerchantPromoBanner() {
       shopId: shopData?.id,
       shopLogoUrl: shopData?.image_url,
       cityName: displayCityName,
+      qrDataUrl,
     });
   };
 
@@ -771,6 +775,7 @@ export default function MerchantPromoBanner() {
     async function renderPreview() {
       try {
         setPreviewLoading(true);
+        const qrDataUrl = qrCanvasRef.current?.toDataURL("image/png") || null;
         const blob = await generatePromoBannerCanvasBlob({
           products,
           shopName: shopData?.name || "",
@@ -781,6 +786,7 @@ export default function MerchantPromoBanner() {
           shopId: shopData?.id,
           shopLogoUrl: shopData?.image_url,
           cityName: displayCityName,
+          qrDataUrl,
         });
         if (cancelled) return;
         objectUrl = URL.createObjectURL(blob);
@@ -817,12 +823,26 @@ export default function MerchantPromoBanner() {
     );
   }
 
+  const shopDetailUrl = shopData?.id
+    ? `https://www.ctmerchant.com.ng/shop-detail?id=${shopData.id}`
+    : "https://www.ctmerchant.com.ng";
+
   return (
     <div
       className={`flex min-h-screen flex-col items-center bg-[#F4F7FB] text-[#0F1111] ${
         location.state?.fromVendorTransition ? "ctm-page-enter" : ""
       }`}
     >
+      {/* Hidden QR canvas — rendered off-screen so ref is ready when effects fire */}
+      <div aria-hidden="true" style={{ position: "absolute", left: "-99999px", top: 0, pointerEvents: "none" }}>
+        <QRCodeCanvas
+          ref={qrCanvasRef}
+          value={shopDetailUrl}
+          size={200}
+          level="M"
+          marginSize={1}
+        />
+      </div>
       <header className="sticky top-0 z-40 w-full px-4 py-4 backdrop-blur">
         <div className="mx-auto flex w-full max-w-[860px] items-center rounded-[24px] bg-[#111827] px-4 py-4 text-white shadow-[0_14px_30px_rgba(15,23,42,0.18)]">
           <button
