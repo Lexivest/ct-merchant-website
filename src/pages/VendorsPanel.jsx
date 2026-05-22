@@ -339,9 +339,7 @@ function VendorsPanel() {
   const viewRoute = isServiceMode
     ? `/service-provider?id=${activeShop.id}&service=${encodeURIComponent(activeShop.category || "")}`
     : `/shop-detail?id=${activeShop.id}`
-  const storefrontUrl = isServiceMode
-    ? `https://www.ctmerchant.com.ng/service-provider?id=${activeShop.id}&service=${encodeURIComponent(activeShop.category || "")}`
-    : `https://www.ctmerchant.com.ng/shop-detail?id=${activeShop.id}`
+  const storefrontUrl = `https://www.ctmerchant.com.ng/shop-detail?id=${activeShop.id}`
 
   const isApplicationApproved = activeShop.status === "approved"
   const isVerified = Boolean(activeShop.is_verified)
@@ -717,12 +715,12 @@ function VendorsPanel() {
               <div className="flex-1 min-w-0">
                 <div className="text-[0.68rem] font-bold uppercase tracking-widest text-slate-400">CT-ID</div>
                 <div className="mt-0.5 font-mono text-[1.1rem] font-extrabold text-[#0F1111]">
-                  #{activeShop.id}
+                  {activeShop.unique_id || "Pending"}
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => handleCopy(String(activeShop.id), "ct-id")}
+                onClick={() => handleCopy(activeShop.unique_id || "", "ct-id")}
                 className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[0.78rem] font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900"
               >
                 {copiedKey === "ct-id" ? (
