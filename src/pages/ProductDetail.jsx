@@ -41,7 +41,6 @@ import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import {
   normalizeWhatsAppPhone,
   openWhatsAppConversation,
-  shouldUseDirectWhatsAppHandoff,
 } from "../lib/whatsapp"
 import {
   buildProductDetailCacheKey,
@@ -136,9 +135,7 @@ function ProductDetail() {
   // Prevents background re-fetches (Realtime, cache invalidation) from
   // overriding the wishlist state after the user has manually toggled it
   const hasManuallyToggledWishlistRef = useRef(false)
-  const [securityModalOpen, setSecurityModalOpen] = useState(false)
   const [descriptionModalOpen, setDescriptionModalOpen] = useState(false)
-  const [openingWhatsApp, setOpeningWhatsApp] = useState(false)
   const [productTransition, setProductTransition] = useState({
     pending: false,
     productId: "",
@@ -525,20 +522,6 @@ function ProductDetail() {
     window.location.href = `tel:${currentShop.phone}`
   }
 
-  function showSecurityModal() {
-    if (!currentShop?.whatsapp) {
-      notify({ type: "error", title: "WhatsApp unavailable", message: "This merchant has not provided a WhatsApp number." })
-      return
-    }
-    setOpeningWhatsApp(false)
-    setSecurityModalOpen(true)
-  }
-
-  function hideSecurityModal() {
-    setSecurityModalOpen(false)
-    setOpeningWhatsApp(false)
-  }
-
   function launchWhatsApp() {
     if (!currentShop?.whatsapp || !currentProduct) return
 
@@ -553,11 +536,8 @@ function ProductDetail() {
       price || 0
     ).toLocaleString()})`
 
-    const isDirectHandoff = shouldUseDirectWhatsAppHandoff()
-    setOpeningWhatsApp(true)
     const didLaunch = openWhatsAppConversation(phone, message)
     if (!didLaunch) {
-      setOpeningWhatsApp(false)
       notify({ type: "error", title: "WhatsApp did not open", message: "Please try again in a moment." })
       return
     }
@@ -576,29 +556,7 @@ function ProductDetail() {
         },
       })
     }
-
-    if (!isDirectHandoff) {
-      hideSecurityModal()
-    }
   }
-
-  useEffect(() => {
-    if (!securityModalOpen || typeof document === "undefined") return undefined
-
-    const resetLaunchState = () => {
-      if (document.visibilityState === "visible") {
-        setOpeningWhatsApp(false)
-      }
-    }
-
-    document.addEventListener("visibilitychange", resetLaunchState)
-    window.addEventListener("pageshow", resetLaunchState)
-
-    return () => {
-      document.removeEventListener("visibilitychange", resetLaunchState)
-      window.removeEventListener("pageshow", resetLaunchState)
-    }
-  }, [securityModalOpen])
 
   async function shareProductWithImage() {
     if (!currentProduct) return
@@ -1013,7 +971,7 @@ function ProductDetail() {
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
-                        onClick={showSecurityModal}
+                        onClick={launchWhatsApp}
                         disabled={!isLoggedIn || !currentShop.whatsapp || stockCount <= 0}
                         title={stockCount > 0 ? "Contact seller on WhatsApp" : "Out of stock"}
                         className="group relative min-h-[86px] overflow-hidden rounded-[24px] bg-gradient-to-br from-[#18A84C] via-[#25D366] to-[#0F8F3A] px-3 py-4 text-center text-white shadow-[0_16px_30px_rgba(37,211,102,0.26)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_38px_rgba(37,211,102,0.35)] disabled:cursor-not-allowed disabled:from-slate-300 disabled:via-slate-300 disabled:to-slate-400 disabled:shadow-none"
@@ -1296,36 +1254,6 @@ function ProductDetail() {
         } : null}
       />
 
-      {securityModalOpen ? (
-        <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-[rgba(19,25,33,0.8)] px-4 backdrop-blur-[2px]">
-          <div className="w-full max-w-[350px] rounded-lg border border-slate-300 bg-white p-8 text-center shadow-[0_20px_25px_-5px_rgba(0,0,0,0.2)]">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-pink-100">
-              <FaShieldHalved className="text-[1.8rem] text-pink-600" />
-            </div>
-            <h3 className="mb-3 text-[1.25rem] font-extrabold text-[#0F1111]">Security Notice</h3>
-            <p className="text-[0.9rem] leading-6 text-slate-600">
-              To protect merchants from spam, your User ID will be securely recorded. Please ensure this inquiry is business-related.
-            </p>
-            <div className="mt-6 flex gap-3">
-              <button
-                type="button"
-                onClick={hideSecurityModal}
-                className="flex-1 rounded-md border border-slate-300 bg-white px-4 py-3 font-bold text-[#0F1111] transition hover:bg-[#F7FAFA]"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={launchWhatsApp}
-                disabled={openingWhatsApp}
-                className="flex-1 rounded-md bg-[#25D366] px-4 py-3 font-bold text-white transition hover:bg-green-600 disabled:cursor-wait disabled:opacity-70"
-              >
-                {openingWhatsApp ? "Opening WhatsApp..." : "Continue to Chat"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       {descriptionModalOpen ? (
         <div className="fixed inset-0 z-[5000] flex items-end justify-center bg-[rgba(15,23,42,0.72)] px-3 pb-3 backdrop-blur-[2px] sm:items-center sm:p-4">
