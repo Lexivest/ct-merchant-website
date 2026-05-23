@@ -340,7 +340,9 @@ function VendorsPanel() {
   const viewRoute = isServiceMode
     ? `/service-provider?id=${activeShop.id}&service=${encodeURIComponent(activeShop.category || "")}`
     : `/shop-detail?id=${activeShop.id}`
-  const storefrontUrl = `https://www.ctmerchant.com.ng/shop-detail?id=${activeShop.id}`
+  const storefrontUrl = isServiceMode
+    ? `https://www.ctmerchant.com.ng/service-provider?id=${activeShop.id}&service=${encodeURIComponent(activeShop.category || "")}`
+    : `https://www.ctmerchant.com.ng/shop-detail?id=${activeShop.id}`
 
   const isApplicationApproved = activeShop.status === "approved"
   const isVerified = Boolean(activeShop.is_verified)
@@ -385,6 +387,11 @@ function VendorsPanel() {
     } else {
       await handleCopy(url, "share-url")
     }
+  }
+
+  function handleWhatsAppShare() {
+    const text = `🏪 *${activeShop.name}*\n${activeShop.address ? activeShop.address + "\n" : ""}Visit our store on CTMerchant:\n${storefrontUrl}`
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer")
   }
 
   function beginRouteTransition(retryAction = null) {
@@ -1100,6 +1107,14 @@ function VendorsPanel() {
                   ) : (
                     <><FaShareNodes /> Share</>
                   )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleWhatsAppShare}
+                  className="flex items-center gap-1.5 rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-[0.78rem] font-bold text-green-700 transition hover:bg-green-100 hover:border-green-300"
+                  title="Share on WhatsApp"
+                >
+                  <FaWhatsapp className="text-[1rem]" /> WhatsApp
                 </button>
               </div>
             </div>
