@@ -7,10 +7,9 @@
  *
  * Real users pass through via next() to the SPA index.html as normal.
  *
- * Required Cloudflare Pages environment variables (set in Cloudflare Dashboard
- * → Pages → your project → Settings → Environment variables):
- *   SUPABASE_URL       – https://xdchacdjcgazyckacbpc.supabase.co
- *   SUPABASE_ANON_KEY  – your public anon JWT
+ * Reads from the existing Cloudflare Pages environment variables:
+ *   VITE_SUPABASE_URL       – https://xdchacdjcgazyckacbpc.supabase.co
+ *   VITE_SUPABASE_ANON_KEY  – your public anon JWT
  */
 
 const BOT_UA =
@@ -27,8 +26,8 @@ export async function handleShopOg(context) {
   const shopId = url.searchParams.get("id")
   if (!shopId) return next()
 
-  const SUPABASE_URL = env.SUPABASE_URL
-  const SUPABASE_KEY = env.SUPABASE_ANON_KEY
+  const SUPABASE_URL = env.VITE_SUPABASE_URL
+  const SUPABASE_KEY = env.VITE_SUPABASE_ANON_KEY
   if (!SUPABASE_URL || !SUPABASE_KEY) return next()
 
   try {
