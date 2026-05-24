@@ -12,7 +12,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@resvg/resvg-wasm": "^2.6.2",
     "@supabase/supabase-js": "^2.99.2",
     "cropperjs": "^1.6.2",
     "html2canvas": "^1.4.1",
