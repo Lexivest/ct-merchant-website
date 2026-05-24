@@ -55,8 +55,9 @@ export async function handleShopOg(context) {
       ? shop.description.slice(0, 200)
       : `Visit ${shop.name} on CTMerchant — a ${shop.is_verified ? "verified " : ""}local ${shop.category || "shop"} in Nigeria.`
 
-    // Use the shop's own logo; fall back to CTM logo so og:image is never blank
-    const image = shop.image_url || "https://www.ctmerchant.com.ng/ctm-logo.jpg"
+    // Dynamic product-grid image — falls back to shop logo or CTM logo automatically
+    const origin = new URL(request.url).origin
+    const image = `${origin}/og-image?id=${encodeURIComponent(shopId)}`
     const pageUrl = request.url
 
     const html = buildHtml({ title, description, image, pageUrl, shopName: shop.name })
@@ -93,8 +94,8 @@ function buildHtml({ title, description, image, pageUrl, shopName }) {
   <meta property="og:title"        content="${esc(title)}">
   <meta property="og:description"  content="${esc(description)}">
   <meta property="og:image"        content="${esc(image)}">
-  <meta property="og:image:width"  content="400">
-  <meta property="og:image:height" content="400">
+  <meta property="og:image:width"  content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:url"          content="${esc(pageUrl)}">
   <meta property="og:type"         content="website">
   <meta property="og:site_name"    content="CTMerchant">
