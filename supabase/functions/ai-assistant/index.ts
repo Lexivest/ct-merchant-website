@@ -471,7 +471,88 @@ serve(async (req) => {
       const data2 = await callAI(messages)
       finalReplyText = data2.choices[0].message.content
     } else {
-      finalReplyText = aiMsg.content
+      finalReplyText = aiMsg.content || ""
+
+      // Guard: LLaMA sometimes emits raw tool-call syntax in content instead of
+      // populating tool_calls (e.g. `search_products{"name":"Computer"}`).
+      // Detect it, execute the tool, then get a proper natural-language reply.
+      const rawCallRx = /^(search_products|search_shops|get_shops_in_user_area)\s*(\{[\s\S]*?\})\s*$/m
+      const rawMatch = finalReplyText.trim().match(rawCallRx)
+      if (rawMatch) {
+        try {
+          const name = rawMatch[1]
+          const argsRaw = rawMatch[2]
+          const args = JSON.parse(argsRaw)
+          let result = ""
+
+          if (name === "get_shops_in_user_area") {
+            const cid = profile?.city_id || context.profile?.city_id
+            const aid = profile?.area_id || context.profile?.area_id
+            if (!cid) {
+              result = "Location not set."
+            } else {
+              const areaShopIsService = context.page === 'shop_detail'
+                ? context.shop?.is_service === true : false
+              let q = adminClient.from('shops')
+                .select('id, name, address, is_verified, category, cities(name), areas(name)')
+                .eq('city_id', cid).eq('status', 'approved').eq('is_open', true)
+                .gt('subscription_end_date', nowIso).eq('is_service', areaShopIsService)
+              if (aid) q = q.eq('area_id', aid)
+              if (context.page === 'shop_detail' && context.shop?.id) q = q.neq('id', context.shop.id)
+              const { data: shops, error: shopsErr } = await q.limit(5)
+              if (shopsErr) console.warn("[get_shops_in_user_area fallback]", shopsErr.message)
+              result = shops?.length ? JSON.stringify(shops) : "no other shops yet in your area"
+            }
+          } else if (name === "search_products") {
+            const rawTerm = String(args.name || "").trim()
+            const keywords = rawTerm.split(/\s+/)
+              .map((w: string) => w.replace(/[%_]/g, ""))
+              .filter((w: string) => w.length > 1)
+            const orFilter = keywords.length > 0
+              ? keywords.map((w: string) => `name.ilike.%${w}%`).join(",")
+              : `name.ilike.%${rawTerm}%`
+            const { data: prods, error: prodsErr } = await adminClient.from('products')
+              .select('id, name, price, discount_price, stock_count, shop_id, shops!inner(name, is_verified, status, subscription_end_date, is_open)')
+              .eq('is_available', true).eq('is_approved', true)
+              .eq('shops.status', 'approved').eq('shops.is_open', true)
+              .gt('shops.subscription_end_date', nowIso).or(orFilter).limit(20)
+            if (prodsErr) console.warn("[search_products fallback]", prodsErr.message)
+            let filtered = prods || []
+            if (context.product?.id) filtered = filtered.filter((p: any) => p.id !== context.product.id)
+            filtered.sort((a: any, b: any) => (a.discount_price ?? a.price) - (b.discount_price ?? b.price))
+            result = filtered.length ? JSON.stringify(filtered.slice(0, 5)) : "did not find any similar product"
+          } else if (name === "search_shops") {
+            const shopIsService = context.page === 'shop_detail'
+              ? context.shop?.is_service === true : false
+            let q = adminClient.from('shops')
+              .select('id, name, address, is_verified, category, area_id, cities!inner(name)')
+              .eq('status', 'approved').eq('is_open', true)
+              .gt('subscription_end_date', nowIso).eq('is_service', shopIsService)
+            if (args.name) q = q.ilike('name', `%${args.name}%`)
+            if (args.category) q = q.ilike('category', `%${args.category}%`)
+            const targetCity = args.city || userCity
+            if (targetCity) q = q.ilike('cities.name', `%${targetCity}%`)
+            if (context.shop?.id) q = q.neq('id', context.shop.id)
+            const { data: shops, error: shopsErr } = await q.limit(5)
+            if (shopsErr) console.warn("[search_shops fallback]", shopsErr.message)
+            result = shops?.length ? JSON.stringify(shops) : "no other shops yet in the category"
+          }
+
+          // Inject synthetic tool result and call AI again for a clean reply
+          const syntheticId = `call_fallback_${Date.now()}`
+          messages.push({
+            role: "assistant",
+            content: null,
+            tool_calls: [{ id: syntheticId, type: "function", function: { name, arguments: argsRaw } }]
+          })
+          messages.push({ tool_call_id: syntheticId, role: "tool", name, content: result })
+          const data2 = await callAI(messages)
+          finalReplyText = data2.choices[0].message.content
+        } catch (parseErr) {
+          console.warn("[raw tool-call fallback failed]", parseErr)
+          finalReplyText = "I'm sorry, I had trouble processing that request. Please try again."
+        }
+      }
     }
 
     if (user) {
