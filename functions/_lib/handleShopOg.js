@@ -15,6 +15,8 @@
  * built JS bundle that any visitor can download.
  */
 
+const FALLBACK_IMAGE = "https://www.ctmerchant.com.ng/ctm-logo.jpg"
+
 const BOT_UA =
   /WhatsApp|facebookexternalhit|Facebot|Twitterbot|TelegramBot|LinkedInBot|Slackbot-LinkExpanding|Googlebot|bingbot|DuckDuckBot|Applebot|vkShare|Pinterestbot/i
 
@@ -41,7 +43,7 @@ export async function handleShopOg(context) {
     const shopRes = await fetch(
       `${SUPABASE_URL}/rest/v1/shops` +
       `?id=eq.${encodeURIComponent(shopId)}` +
-      `&select=name,address` +
+      `&select=name,address,image_url` +
       `&limit=1`,
       { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
     )
@@ -57,9 +59,8 @@ export async function handleShopOg(context) {
       ? `📍 ${shop.address}`
       : `Visit ${shop.name} on CTMerchant`
 
-    // Edge function uses service-role key (bypasses RLS) so it can always
-    // resolve the best available product image, falling back to shop logo.
-    const image = `${SUPABASE_URL}/functions/v1/og-image?id=${encodeURIComponent(shopId)}`
+    // Use the shop's own logo/image directly — simple and always available
+    const image = shop.image_url || FALLBACK_IMAGE
     const pageUrl = request.url
 
     const html = buildHtml({ title, description, image, pageUrl, shopName: shop.name })

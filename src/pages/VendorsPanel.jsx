@@ -377,20 +377,34 @@ function VendorsPanel() {
     }
   }
 
-  async function handleShare(url, title) {
-    if (navigator.share) {
-      try {
-        await navigator.share({ title, url })
-      } catch {
-        // User cancelled or share failed — silently ignore
-      }
-    } else {
-      await handleCopy(url, "share-url")
-    }
-  }
+  async function shareShopWithImage() {
+    const title = `${activeShop.name} on CTMerchant`
+    const text = `Check out ${activeShop.name} on CTMerchant.${activeShop.address ? ` 📍 ${activeShop.address}.` : ""}`
+    const url = storefrontUrl
 
-  function handleWhatsAppShare() {
-    window.open(`https://wa.me/?text=${encodeURIComponent(storefrontUrl)}`, "_blank", "noopener,noreferrer")
+    try {
+      if (navigator.share) {
+        let file = null
+        if (activeShop.image_url) {
+          try {
+            const response = await fetch(activeShop.image_url)
+            const blob = await response.blob()
+            file = new File([blob], "shop.jpg", { type: blob.type })
+          } catch { /* ignore image fetch errors */ }
+        }
+
+        if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ title, text, url, files: [file] })
+        } else {
+          await navigator.share({ title, text, url })
+        }
+      } else {
+        await navigator.clipboard.writeText(`${text}\n${url}`)
+        notify({ type: "success", title: "Link copied", message: "Your shop link was copied to your clipboard." })
+      }
+    } catch {
+      // User cancelled or share failed — silently ignore
+    }
   }
 
   function beginRouteTransition(retryAction = null) {
@@ -1098,22 +1112,10 @@ function VendorsPanel() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleShare(storefrontUrl, `${activeShop.name} on CTMerchant`)}
+                  onClick={shareShopWithImage}
                   className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-pink-200 bg-pink-50 px-3 py-2 text-[0.78rem] font-bold text-pink-600 transition hover:bg-pink-100 hover:border-pink-300"
                 >
-                  {copiedKey === "share-url" ? (
-                    <><FaCheck className="text-green-600" /><span className="text-green-600">Copied!</span></>
-                  ) : (
-                    <><FaShareNodes /> Share</>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleWhatsAppShare}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-[0.78rem] font-bold text-green-700 transition hover:bg-green-100 hover:border-green-300"
-                  title="Share on WhatsApp"
-                >
-                  <FaWhatsapp className="text-[1rem]" /> WhatsApp
+                  <FaShareNodes /> Share
                 </button>
               </div>
             </div>
