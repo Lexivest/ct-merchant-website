@@ -38,34 +38,43 @@ export async function handleShopOg(context) {
   const SUPABASE_KEY = env.VITE_SUPABASE_ANON_KEY || FALLBACK_KEY
 
   try {
-    const apiUrl =
-      `${SUPABASE_URL}/rest/v1/shops` +
-      `?id=eq.${encodeURIComponent(shopId)}` +
-      `&select=name,description,image_url,address,category,is_verified` +
-      `&limit=1`
+    // Fetch shop info and first product image in parallel
+    const [shopRes, prodRes] = await Promise.all([
+      fetch(
+        `${SUPABASE_URL}/rest/v1/shops` +
+        `?id=eq.${encodeURIComponent(shopId)}` +
+        `&select=name,image_url,address,category,is_verified` +
+        `&limit=1`,
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
+      ),
+      fetch(
+        `${SUPABASE_URL}/rest/v1/products` +
+        `?shop_id=eq.${encodeURIComponent(shopId)}` +
+        `&is_available=eq.true&is_approved=eq.true` +
+        `&image_url=not.is.null` +
+        `&select=image_url` +
+        `&order=created_at.desc` +
+        `&limit=1`,
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
+      ),
+    ])
 
-    const res = await fetch(apiUrl, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-      },
-    })
+    if (!shopRes.ok) return next()
 
-    if (!res.ok) return next()
-
-    const shops = await res.json()
+    const shops = await shopRes.json()
     const shop = shops?.[0]
     if (!shop) return next()
 
-    const title = `${shop.name} | CTMerchant`
-    const description = shop.description
-      ? shop.description.slice(0, 200)
-      : `Visit ${shop.name} on CTMerchant — a ${shop.is_verified ? "verified " : ""}local ${shop.category || "shop"} in Nigeria.`
+    const products = prodRes.ok ? await prodRes.json() : []
 
-    // og:image points to the Supabase Edge Function that generates a product-grid PNG.
-    // apikey is included so any reverse-proxy or CDN can pass it through; the function
-    // itself uses its service-role key internally and has verify_jwt: false.
-    const image = `${SUPABASE_URL}/functions/v1/og-image?id=${encodeURIComponent(shopId)}&apikey=${encodeURIComponent(SUPABASE_KEY)}`
+    const title = `${shop.name} | CTMerchant`
+    const description = shop.address
+      ? `📍 ${shop.address}`
+      : `Visit ${shop.name} on CTMerchant`
+
+    // Use the first product image if available, otherwise fall back to shop logo
+    const image = products?.[0]?.image_url || shop.image_url ||
+      "https://www.ctmerchant.com.ng/ctm-logo.jpg"
     const pageUrl = request.url
 
     const html = buildHtml({ title, description, image, pageUrl, shopName: shop.name })
