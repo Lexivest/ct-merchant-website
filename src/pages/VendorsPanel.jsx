@@ -494,6 +494,23 @@ function VendorsPanel() {
                 img.src = qrDataUrl
               })
 
+              // Load shop logo for the header left side (best-effort; skipped if unavailable)
+              let logoImg = null
+              if (activeShop.image_url) {
+                try {
+                  const logoResp   = await fetch(activeShop.image_url)
+                  const logoBlob   = await logoResp.blob()
+                  const logoObjUrl = URL.createObjectURL(logoBlob)
+                  objectUrls.push(logoObjUrl)
+                  logoImg = await new Promise((resolve, reject) => {
+                    const img = new window.Image()
+                    img.onload = () => resolve(img)
+                    img.onerror = reject
+                    img.src = logoObjUrl
+                  })
+                } catch { logoImg = null }
+              }
+
               // Always produce exactly 8 peek thumbnails by cycling all loaded images
               const PEEK_COUNT = 8
               const allLoaded  = [...gridImages, ...peekImages]
@@ -541,9 +558,32 @@ function VendorsPanel() {
               const scanW = ctx.measureText("Scan to visit").width
               ctx.fillText("Scan to visit", qrX + (QR_SIZE - scanW) / 2, qrY + QR_SIZE + 28)
 
-              // Text — all centered within the left portion (before QR)
-              const textCenter = qrX / 2
-              const maxTextW   = qrX - QR_PAD * 2
+              // Shop logo — left side of header, same size as QR
+              const logoX = QR_PAD
+              const logoY = qrY
+              if (logoImg) {
+                // White rounded background mirrors the QR background
+                ctx.fillStyle = "#FFFFFF"
+                ctx.beginPath()
+                ctx.roundRect(logoX - 8, logoY - 8, QR_SIZE + 16, QR_SIZE + 16, 10)
+                ctx.fill()
+                // Cover-crop logo into the square
+                const la = logoImg.naturalWidth / logoImg.naturalHeight
+                let lsx, lsy, lsw, lsh
+                if (la >= 1) { lsh = logoImg.naturalHeight; lsw = lsh; lsx = (logoImg.naturalWidth - lsw) / 2; lsy = 0 }
+                else         { lsw = logoImg.naturalWidth;  lsh = lsw; lsy = (logoImg.naturalHeight - lsh) / 2; lsx = 0 }
+                ctx.save()
+                ctx.beginPath()
+                ctx.roundRect(logoX, logoY, QR_SIZE, QR_SIZE, 8)
+                ctx.clip()
+                ctx.drawImage(logoImg, lsx, lsy, lsw, lsh, logoX, logoY, QR_SIZE, QR_SIZE)
+                ctx.restore()
+              }
+
+              // Text — centered in the gap between logo (or edge) and QR
+              const textStart  = logoImg ? logoX + QR_SIZE + QR_PAD : 0
+              const textCenter = (textStart + qrX) / 2
+              const maxTextW   = qrX - textStart - QR_PAD
               ctx.textAlign = "center"
 
               // Shop name — white, bold, centered
