@@ -151,6 +151,18 @@ async function buildGrid(products: Product[], font: Uint8Array | null): Promise<
 // deno-lint-ignore no-explicit-any
 type Supa = ReturnType<typeof createClient<any>>
 
+/**
+ * Build the Image Transform CDN URL for a cached grid PNG. This is what we
+ * redirect WhatsApp to: Supabase's transform endpoint reads the source PNG
+ * (1+ MB) and serves a WebP/JPEG (50-200 KB) based on the bot's Accept
+ * header — well under WhatsApp's ~300 KB og:image size limit.
+ */
+function transformUrl(shopId: string): string {
+  const base = Deno.env.get("SUPABASE_URL")!
+  return `${base}/storage/v1/render/image/public/${CACHE_BUCKET}/shop-${shopId}.png` +
+    `?width=${OG_W}&height=${OG_H}&resize=cover&quality=75`
+}
+
 async function getCachedUrl(admin: Supa, shopId: string): Promise<string | null> {
   const fileName = `shop-${shopId}.png`
   const { data: files } = await admin.storage.from(CACHE_BUCKET).list("", {
@@ -161,7 +173,7 @@ async function getCachedUrl(admin: Supa, shopId: string): Promise<string | null>
   const updatedAt = file.updated_at ?? file.created_at
   if (!updatedAt) return null
   if (Date.now() - new Date(updatedAt).getTime() > CACHE_TTL_MS) return null
-  return admin.storage.from(CACHE_BUCKET).getPublicUrl(fileName).data.publicUrl
+  return transformUrl(shopId)
 }
 
 async function saveAndGetUrl(admin: Supa, shopId: string, png: Uint8Array): Promise<string> {
@@ -170,7 +182,7 @@ async function saveAndGetUrl(admin: Supa, shopId: string, png: Uint8Array): Prom
     contentType: "image/png",
     upsert: true,
   })
-  return admin.storage.from(CACHE_BUCKET).getPublicUrl(fileName).data.publicUrl
+  return transformUrl(shopId)
 }
 
 Deno.serve(async (req: Request) => {
