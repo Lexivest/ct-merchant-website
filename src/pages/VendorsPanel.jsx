@@ -43,6 +43,7 @@ import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
 import { fetchLatestPaymentProof, fetchVerificationAccessStatus } from "../lib/offlinePayments"
 import { prepareVendorRouteTransition } from "../lib/vendorRouteTransitions"
+import QRCode from "qrcode"
 
 const loadVendorRoutes = {
   "/merchant-add-product": () => import("./vendors/AddProduct"),
@@ -394,7 +395,7 @@ function VendorsPanel() {
         try {
           const gridFile = await Promise.race([
             (async () => {
-              // Fetch products + city name in parallel
+              // Fetch products (up to 12) + city name in parallel
               const [{ data: products }, { data: shopCity }] = await Promise.all([
                 supabase
                   .from("products")
@@ -404,7 +405,7 @@ function VendorsPanel() {
                   .eq("is_approved", true)
                   .not("image_url", "is", null)
                   .order("created_at", { ascending: false })
-                  .limit(4),
+                  .limit(12),
                 supabase
                   .from("shops")
                   .select("cities(name)")
@@ -416,26 +417,43 @@ function VendorsPanel() {
 
               const validProducts = (products || []).filter((p) => p.image_url)
               if (validProducts.length < 2) return null
-              const imageUrls = validProducts.map((p) => p.image_url)
 
-              // Fetch each image as a blob → object URL (avoids canvas CORS taint)
-              const settled = await Promise.allSettled(
-                imageUrls.map(async (imgUrl) => {
-                  const resp = await fetch(imgUrl)
+              // Split: first 4 for the main grid, rest for the peek strip
+              const gridProducts = validProducts.slice(0, 4)
+              const peekProducts = validProducts.slice(4, 12)
+
+              // Fetch grid images as blobs (avoids canvas CORS taint)
+              const gridSettled = await Promise.allSettled(
+                gridProducts.map(async (p, idx) => {
+                  const resp = await fetch(p.image_url)
                   const blob = await resp.blob()
                   const objUrl = URL.createObjectURL(blob)
                   objectUrls.push(objUrl)
-                  return { objUrl, product: validProducts[imageUrls.indexOf(imgUrl)] }
+                  return { objUrl, product: gridProducts[idx] }
                 })
               )
-              const validItems = settled
+              const gridItems = gridSettled
                 .filter((r) => r.status === "fulfilled")
                 .map((r) => r.value)
-              if (validItems.length < 2) return null
+              if (gridItems.length < 2) return null
 
-              // Load Image elements
-              const images = await Promise.all(
-                validItems.map(
+              // Fetch peek images (best-effort, failures silently skipped)
+              const peekSettled = await Promise.allSettled(
+                peekProducts.map(async (p) => {
+                  const resp = await fetch(p.image_url)
+                  const blob = await resp.blob()
+                  const objUrl = URL.createObjectURL(blob)
+                  objectUrls.push(objUrl)
+                  return objUrl
+                })
+              )
+              const peekObjUrls = peekSettled
+                .filter((r) => r.status === "fulfilled")
+                .map((r) => r.value)
+
+              // Load grid Image elements
+              const gridImages = await Promise.all(
+                gridItems.map(
                   ({ objUrl }) =>
                     new Promise((resolve, reject) => {
                       const img = new window.Image()
@@ -445,32 +463,61 @@ function VendorsPanel() {
                     })
                 )
               )
-              const itemProducts = validItems.map((it) => it.product)
 
-              // Build canvas — 1080 wide, product grid + branded footer
-              const SIZE    = 1080
-              const HALF    = SIZE / 2
-              const FOOTER_H = 140
-              const canvas = document.createElement("canvas")
-              canvas.width  = SIZE
-              canvas.height = SIZE + FOOTER_H
-              const ctx = canvas.getContext("2d")
+              // Load peek Image elements (silently skip failures)
+              const peekImages = (
+                await Promise.allSettled(
+                  peekObjUrls.map(
+                    (src) =>
+                      new Promise((resolve, reject) => {
+                        const img = new window.Image()
+                        img.onload = () => resolve(img)
+                        img.onerror = reject
+                        img.src = src
+                      })
+                  )
+                )
+              )
+                .filter((r) => r.status === "fulfilled")
+                .map((r) => r.value)
 
-              // Dark background (full canvas)
+              // Generate QR code data URL for the storefront URL
+              const qrDataUrl = await QRCode.toDataURL(storefrontUrl, {
+                width: 160,
+                margin: 1,
+                color: { dark: "#0f0f1a", light: "#f8f8ff" },
+              })
+              const qrImg = await new Promise((resolve, reject) => {
+                const img = new window.Image()
+                img.onload = () => resolve(img)
+                img.onerror = reject
+                img.src = qrDataUrl
+              })
+
+              // ── Canvas dimensions ──────────────────────────────────────
+              const SIZE     = 1080
+              const HALF     = SIZE / 2
+              const PEEK_H   = peekImages.length > 0 ? 90 : 0
+              const FOOTER_H = 200
+              const canvas   = document.createElement("canvas")
+              canvas.width   = SIZE
+              canvas.height  = SIZE + PEEK_H + FOOTER_H
+              const ctx      = canvas.getContext("2d")
+
+              // Base background
               ctx.fillStyle = "#1a1a2e"
-              ctx.fillRect(0, 0, SIZE, SIZE + FOOTER_H)
+              ctx.fillRect(0, 0, SIZE, canvas.height)
 
-              const count = Math.min(images.length, 4)
-              // [x, y, w, h] per cell
+              // ── Main 2×2 (or 2-col) product grid ──────────────────────
+              const count = Math.min(gridImages.length, 4)
               const cells =
                 count === 2
                   ? [[0, 0, HALF, SIZE], [HALF, 0, HALF, SIZE]]
                   : [[0, 0, HALF, HALF], [HALF, 0, HALF, HALF], [0, HALF, HALF, HALF], [HALF, HALF, HALF, HALF]]
 
-              // Draw product images with cover-crop per cell
               for (let i = 0; i < count; i++) {
                 const [cx, cy, cw, ch] = cells[i]
-                const img = images[i]
+                const img = gridImages[i]
                 const scale = Math.max(cw / img.width, ch / img.height)
                 const sw = img.width * scale
                 const sh = img.height * scale
@@ -484,7 +531,7 @@ function VendorsPanel() {
                 ctx.restore()
               }
 
-              // Thin dividers between cells
+              // Grid dividers
               ctx.fillStyle = "rgba(0,0,0,0.6)"
               if (count === 2) {
                 ctx.fillRect(HALF - 1, 0, 3, SIZE)
@@ -493,16 +540,15 @@ function VendorsPanel() {
                 ctx.fillRect(0, HALF - 1, SIZE, 3)
               }
 
-              // Overlay: name + price + discount badge per cell
+              // ── Name / price / badge overlays ──────────────────────────
               for (let i = 0; i < count; i++) {
                 const [cx, cy, cw, ch] = cells[i]
-                const product = itemProducts[i]
+                const product = gridItems[i].product
                 const hasDiscount =
                   product.discount_price &&
                   Number(product.discount_price) < Number(product.price)
 
-                // Font sizes scaled to canvas resolution (1080px displayed ~400px wide)
-                const isSmall = ch <= HALF  // 540px tall cells (2×2 grid)
+                const isSmall   = ch <= HALF
                 const stripH    = isSmall ? 130 : 160
                 const nameSize  = isSmall ? 26  : 32
                 const priceSize = isSmall ? 28  : 36
@@ -510,14 +556,12 @@ function VendorsPanel() {
                 const pad       = isSmall ? 16  : 20
                 const stripY    = cy + ch - stripH
 
-                // Solid dark strip (high opacity so text is always readable)
                 ctx.save()
                 ctx.globalAlpha = 0.82
                 ctx.fillStyle = "#0a0a14"
                 ctx.fillRect(cx, stripY, cw, stripH)
                 ctx.restore()
 
-                // Product name — white, bold, truncated to fit
                 const maxChars = isSmall ? 20 : 25
                 const shortName =
                   product.name.length > maxChars
@@ -527,25 +571,24 @@ function VendorsPanel() {
                 ctx.fillStyle = "#FFFFFF"
                 ctx.fillText(shortName, cx + pad, stripY + pad + nameSize)
 
-                // Price — gold, heavy weight
                 const displayPrice = hasDiscount
                   ? Number(product.discount_price)
                   : Number(product.price)
-                const priceText = "N" + Math.round(displayPrice).toLocaleString("en-NG")
                 ctx.font = `800 ${priceSize}px system-ui, Arial, sans-serif`
                 ctx.fillStyle = "#FFD700"
-                ctx.fillText(priceText, cx + pad, stripY + stripH - pad)
+                ctx.fillText(
+                  "N" + Math.round(displayPrice).toLocaleString("en-NG"),
+                  cx + pad, stripY + stripH - pad
+                )
 
-                // Discount badge — red pill, bottom-right corner
                 if (hasDiscount) {
                   const pct = Math.round(
                     (1 - Number(product.discount_price) / Number(product.price)) * 100
                   )
                   const badgeText = `-${pct}%`
                   ctx.font = `800 ${badgeSize}px system-ui, Arial, sans-serif`
-                  const textW  = ctx.measureText(badgeText).width
                   const bPad   = isSmall ? 12 : 16
-                  const badgeW = textW + bPad * 2
+                  const badgeW = ctx.measureText(badgeText).width + bPad * 2
                   const badgeH = badgeSize + bPad
                   const badgeX = cx + cw - badgeW - pad
                   const badgeY = stripY + stripH - badgeH - pad
@@ -558,31 +601,94 @@ function VendorsPanel() {
                 }
               }
 
-              // ── Branded footer ──────────────────────────────────────────
-              // Darker strip beneath the grid
+              // ── Peek strip (extra products, partially visible) ─────────
+              if (peekImages.length > 0) {
+                const peekY    = SIZE
+                const thumbW   = Math.floor(SIZE / peekImages.length)
+                const thumbH   = PEEK_H
+
+                for (let i = 0; i < peekImages.length; i++) {
+                  const px = i * thumbW
+                  const img = peekImages[i]
+                  const scale = Math.max(thumbW / img.width, thumbH / img.height)
+                  const sw = img.width * scale
+                  const sh = img.height * scale
+                  const dx = px + (thumbW - sw) / 2
+                  const dy = peekY + (thumbH - sh) / 2
+                  ctx.save()
+                  ctx.beginPath()
+                  ctx.rect(px, peekY, thumbW, thumbH)
+                  ctx.clip()
+                  ctx.drawImage(img, dx, dy, sw, sh)
+                  ctx.restore()
+                }
+
+                // Dim the peek strip to keep focus on the main grid
+                ctx.save()
+                ctx.globalAlpha = 0.45
+                ctx.fillStyle = "#000000"
+                ctx.fillRect(0, peekY, SIZE, PEEK_H)
+                ctx.restore()
+
+                // Gradient fade at the bottom of the peek strip into the footer
+                const fadeGrad = ctx.createLinearGradient(0, peekY, 0, peekY + PEEK_H)
+                fadeGrad.addColorStop(0, "rgba(0,0,0,0)")
+                fadeGrad.addColorStop(1, "rgba(7,7,15,0.95)")
+                ctx.fillStyle = fadeGrad
+                ctx.fillRect(0, peekY, SIZE, PEEK_H)
+
+                // Thin 1px vertical dividers between thumbnails
+                ctx.fillStyle = "rgba(0,0,0,0.4)"
+                for (let i = 1; i < peekImages.length; i++) {
+                  ctx.fillRect(i * thumbW, peekY, 1, PEEK_H)
+                }
+              }
+
+              // ── Branded footer ─────────────────────────────────────────
+              const footerY = SIZE + PEEK_H
               ctx.fillStyle = "#07070f"
-              ctx.fillRect(0, SIZE, SIZE, FOOTER_H)
+              ctx.fillRect(0, footerY, SIZE, FOOTER_H)
 
-              // "[City] Biz Hub" centered in white, bold
-              const bizHubText = cityName ? `${cityName} Biz Hub` : activeShop.name
-              const bizHubSize = 34
-              ctx.font = `800 ${bizHubSize}px system-ui, Arial, sans-serif`
+              // QR code — right side of footer
+              const QR_SIZE = 140
+              const QR_PAD  = 16
+              const qrX = SIZE - QR_SIZE - QR_PAD - 8
+              const qrY = footerY + (FOOTER_H - QR_SIZE) / 2
+
+              // White background for QR
               ctx.fillStyle = "#FFFFFF"
+              ctx.beginPath()
+              ctx.roundRect(qrX - 6, qrY - 6, QR_SIZE + 12, QR_SIZE + 12, 8)
+              ctx.fill()
+              ctx.drawImage(qrImg, qrX, qrY, QR_SIZE, QR_SIZE)
+
+              // "Scan to visit" label under QR
+              ctx.font = `500 18px system-ui, Arial, sans-serif`
+              ctx.fillStyle = "#64748B"
+              const scanText = "Scan to visit"
+              const scanW = ctx.measureText(scanText).width
+              ctx.fillText(scanText, qrX + (QR_SIZE - scanW) / 2, qrY + QR_SIZE + 26)
+
+              // Text block — left & center of footer
+              const textAreaW = qrX - QR_PAD * 2
+              const textX = QR_PAD * 2
+
+              // Biz Hub name
+              const bizHubText = cityName ? `${cityName} Biz Hub` : activeShop.name
+              ctx.font = `800 36px system-ui, Arial, sans-serif`
+              ctx.fillStyle = "#FFFFFF"
+              ctx.fillText(bizHubText, textX, footerY + 48)
+
+              // Pink underline
               const bizHubW = ctx.measureText(bizHubText).width
-              const bizHubX = Math.max(16, (SIZE - bizHubW) / 2)
-              const bizHubY = SIZE + 48
-              ctx.fillText(bizHubText, bizHubX, bizHubY)
-
-              // Pink underline beneath the Biz Hub text
               ctx.fillStyle = "#EC4899"
-              ctx.fillRect(bizHubX, bizHubY + 8, bizHubW, 4)
+              ctx.fillRect(textX, footerY + 55, Math.min(bizHubW, textAreaW), 4)
 
-              // Full address with 📍 pin icon, centered beneath
+              // Full address with 📍
               if (activeShop.address) {
-                const addrSize = 22
-                ctx.font = `500 ${addrSize}px system-ui, Arial, sans-serif`
-                // Truncate address to fit within canvas width
-                const maxAddrW = SIZE - 40
+                ctx.font = `500 22px system-ui, Arial, sans-serif`
+                ctx.fillStyle = "#94A3B8"
+                const maxAddrW = textAreaW - 8
                 let addrBody = activeShop.address
                 while (
                   ctx.measureText("📍 " + addrBody).width > maxAddrW &&
@@ -595,10 +701,18 @@ function VendorsPanel() {
                   (addrBody.length < activeShop.address.length
                     ? addrBody.trimEnd() + "…"
                     : addrBody)
-                ctx.fillStyle = "#94A3B8"
-                const addrW = ctx.measureText(addrStr).width
-                ctx.fillText(addrStr, Math.max(20, (SIZE - addrW) / 2), SIZE + 105)
+                ctx.fillText(addrStr, textX, footerY + 100)
               }
+
+              // Website
+              ctx.font = `600 22px system-ui, Arial, sans-serif`
+              ctx.fillStyle = "#EC4899"
+              ctx.fillText("www.ctmerchant.com.ng", textX, footerY + 142)
+
+              // Merchant ID
+              ctx.font = `500 20px system-ui, Arial, sans-serif`
+              ctx.fillStyle = "#475569"
+              ctx.fillText(`Merchant ID: ${activeShop.id}`, textX, footerY + 176)
               // ────────────────────────────────────────────────────────────
 
               // Export as JPEG
