@@ -382,29 +382,37 @@ function VendorsPanel() {
     if (isSharing) return
     setIsSharing(true)
 
-    const title = `${activeShop.name} on CTMerchant`
-    const text = `Check out ${activeShop.name} on CTMerchant.${activeShop.address ? ` 📍 ${activeShop.address}.` : ""}`
     const url = storefrontUrl
     const objectUrls = []
 
     try {
       if (navigator.share) {
         let file = null
+        let cityName = null
 
         // Try to build a product grid using the Canvas API (no server needed)
         try {
           const gridFile = await Promise.race([
             (async () => {
-              // Fetch up to 4 approved products with name and price info
-              const { data: products } = await supabase
-                .from("products")
-                .select("image_url, name, price, discount_price")
-                .eq("shop_id", activeShop.id)
-                .eq("is_available", true)
-                .eq("is_approved", true)
-                .not("image_url", "is", null)
-                .order("created_at", { ascending: false })
-                .limit(4)
+              // Fetch products + city name in parallel
+              const [{ data: products }, { data: shopCity }] = await Promise.all([
+                supabase
+                  .from("products")
+                  .select("image_url, name, price, discount_price")
+                  .eq("shop_id", activeShop.id)
+                  .eq("is_available", true)
+                  .eq("is_approved", true)
+                  .not("image_url", "is", null)
+                  .order("created_at", { ascending: false })
+                  .limit(4),
+                supabase
+                  .from("shops")
+                  .select("cities(name)")
+                  .eq("id", activeShop.id)
+                  .single(),
+              ])
+
+              cityName = shopCity?.cities?.name || null
 
               const validProducts = (products || []).filter((p) => p.image_url)
               if (validProducts.length < 2) return null
@@ -417,28 +425,29 @@ function VendorsPanel() {
                   const blob = await resp.blob()
                   const objUrl = URL.createObjectURL(blob)
                   objectUrls.push(objUrl)
-                  return objUrl
+                  return { objUrl, product: validProducts[imageUrls.indexOf(imgUrl)] }
                 })
               )
-              const validObjUrls = settled
+              const validItems = settled
                 .filter((r) => r.status === "fulfilled")
                 .map((r) => r.value)
-              if (validObjUrls.length < 2) return null
+              if (validItems.length < 2) return null
 
               // Load Image elements
               const images = await Promise.all(
-                validObjUrls.map(
-                  (src) =>
+                validItems.map(
+                  ({ objUrl }) =>
                     new Promise((resolve, reject) => {
                       const img = new window.Image()
                       img.onload = () => resolve(img)
                       img.onerror = reject
-                      img.src = src
+                      img.src = objUrl
                     })
                 )
               )
+              const itemProducts = validItems.map((it) => it.product)
 
-              // Build canvas
+              // Build canvas — 1080×1080
               const SIZE = 1080
               const HALF = SIZE / 2
               const canvas = document.createElement("canvas")
@@ -451,13 +460,13 @@ function VendorsPanel() {
               ctx.fillRect(0, 0, SIZE, SIZE)
 
               const count = Math.min(images.length, 4)
-              // [x, y, w, h] for each cell
+              // [x, y, w, h] per cell
               const cells =
                 count === 2
                   ? [[0, 0, HALF, SIZE], [HALF, 0, HALF, SIZE]]
                   : [[0, 0, HALF, HALF], [HALF, 0, HALF, HALF], [0, HALF, HALF, HALF], [HALF, HALF, HALF, HALF]]
 
-              // Draw product images with cover-crop clipping
+              // Draw product images with cover-crop per cell
               for (let i = 0; i < count; i++) {
                 const [cx, cy, cw, ch] = cells[i]
                 const img = images[i]
@@ -475,37 +484,40 @@ function VendorsPanel() {
               }
 
               // Thin dividers between cells
-              ctx.fillStyle = "rgba(0,0,0,0.55)"
+              ctx.fillStyle = "rgba(0,0,0,0.6)"
               if (count === 2) {
-                ctx.fillRect(HALF - 1, 0, 2, SIZE)
+                ctx.fillRect(HALF - 1, 0, 3, SIZE)
               } else {
-                ctx.fillRect(HALF - 1, 0, 2, SIZE)
-                ctx.fillRect(0, HALF - 1, SIZE, 2)
+                ctx.fillRect(HALF - 1, 0, 3, SIZE)
+                ctx.fillRect(0, HALF - 1, SIZE, 3)
               }
 
-              // Draw name + price + discount badge overlay on each cell
+              // Overlay: name + price + discount badge per cell
               for (let i = 0; i < count; i++) {
                 const [cx, cy, cw, ch] = cells[i]
-                const product = validProducts[i]
+                const product = itemProducts[i]
                 const hasDiscount =
                   product.discount_price &&
                   Number(product.discount_price) < Number(product.price)
-                const isSmall = ch <= HALF
-                const stripH = isSmall ? 76 : 96
-                const stripY = cy + ch - stripH
-                const pad = 10
-                const nameSize = isSmall ? 13 : 16
-                const priceSize = isSmall ? 13 : 15
 
-                // Semi-transparent dark strip
+                // Font sizes scaled to canvas resolution (1080px displayed ~400px wide)
+                const isSmall = ch <= HALF  // 540px tall cells (2×2 grid)
+                const stripH    = isSmall ? 130 : 160
+                const nameSize  = isSmall ? 26  : 32
+                const priceSize = isSmall ? 28  : 36
+                const badgeSize = isSmall ? 22  : 28
+                const pad       = isSmall ? 16  : 20
+                const stripY    = cy + ch - stripH
+
+                // Solid dark strip (high opacity so text is always readable)
                 ctx.save()
-                ctx.globalAlpha = 0.78
-                ctx.fillStyle = "#000000"
+                ctx.globalAlpha = 0.82
+                ctx.fillStyle = "#0a0a14"
                 ctx.fillRect(cx, stripY, cw, stripH)
                 ctx.restore()
 
-                // Product name (truncated)
-                const maxChars = isSmall ? 22 : 28
+                // Product name — white, bold, truncated to fit
+                const maxChars = isSmall ? 20 : 25
                 const shortName =
                   product.name.length > maxChars
                     ? product.name.slice(0, maxChars - 1) + "…"
@@ -514,41 +526,38 @@ function VendorsPanel() {
                 ctx.fillStyle = "#FFFFFF"
                 ctx.fillText(shortName, cx + pad, stripY + pad + nameSize)
 
-                // Price (gold — discount price if available)
+                // Price — gold, heavy weight
                 const displayPrice = hasDiscount
                   ? Number(product.discount_price)
                   : Number(product.price)
-                const priceText =
-                  "₦" + Math.round(displayPrice).toLocaleString("en-NG")
+                const priceText = "N" + Math.round(displayPrice).toLocaleString("en-NG")
                 ctx.font = `800 ${priceSize}px system-ui, Arial, sans-serif`
                 ctx.fillStyle = "#FFD700"
                 ctx.fillText(priceText, cx + pad, stripY + stripH - pad)
 
-                // Discount badge (red pill, bottom-right of strip)
+                // Discount badge — red pill, bottom-right corner
                 if (hasDiscount) {
                   const pct = Math.round(
                     (1 - Number(product.discount_price) / Number(product.price)) * 100
                   )
                   const badgeText = `-${pct}%`
-                  const badgeSize = isSmall ? 11 : 13
                   ctx.font = `800 ${badgeSize}px system-ui, Arial, sans-serif`
-                  const textW = ctx.measureText(badgeText).width
-                  const badgeW = textW + 14
-                  const badgeH = badgeSize + 10
+                  const textW  = ctx.measureText(badgeText).width
+                  const bPad   = isSmall ? 12 : 16
+                  const badgeW = textW + bPad * 2
+                  const badgeH = badgeSize + bPad
                   const badgeX = cx + cw - badgeW - pad
                   const badgeY = stripY + stripH - badgeH - pad
-                  // Red background
                   ctx.fillStyle = "#E53E3E"
                   ctx.beginPath()
-                  ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 4)
+                  ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 6)
                   ctx.fill()
-                  // Badge text
                   ctx.fillStyle = "#FFFFFF"
-                  ctx.fillText(badgeText, badgeX + 7, badgeY + badgeH - 4)
+                  ctx.fillText(badgeText, badgeX + bPad, badgeY + badgeH - bPad * 0.55)
                 }
               }
 
-              // Export as JPEG blob → File
+              // Export as JPEG
               const blob = await new Promise((resolve, reject) =>
                 canvas.toBlob(
                   (b) => (b ? resolve(b) : reject(new Error("toBlob failed"))),
@@ -574,19 +583,30 @@ function VendorsPanel() {
           } catch { /* ignore */ }
         }
 
+        // Build share text using city name ("Jos Biz Hub") if available
+        const bizHub = cityName ? `${cityName} Biz Hub` : "CTMerchant"
+        const title = `${activeShop.name} | ${bizHub}`
+        const text = [
+          `Check out ${activeShop.name} on ${bizHub}.`,
+          activeShop.address ? `📍 ${activeShop.address}` : null,
+        ]
+          .filter(Boolean)
+          .join("\n")
+
         if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({ title, text, url, files: [file] })
         } else {
           await navigator.share({ title, text, url })
         }
       } else {
-        await navigator.clipboard.writeText(`${text}\n${url}`)
+        // Desktop fallback — copy text to clipboard
+        const text = `Check out ${activeShop.name} on CTMerchant.${activeShop.address ? `\n📍 ${activeShop.address}` : ""}\n${url}`
+        await navigator.clipboard.writeText(text)
         notify({ type: "success", title: "Link copied", message: "Your shop link was copied to your clipboard." })
       }
     } catch {
       // User cancelled or share failed — silently ignore
     } finally {
-      // Clean up object URLs to free memory
       objectUrls.forEach((u) => URL.revokeObjectURL(u))
       setIsSharing(false)
     }
