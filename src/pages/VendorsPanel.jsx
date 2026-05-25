@@ -541,29 +541,34 @@ function VendorsPanel() {
               const scanW = ctx.measureText("Scan to visit").width
               ctx.fillText("Scan to visit", qrX + (QR_SIZE - scanW) / 2, qrY + QR_SIZE + 28)
 
-              // Text block — left side of header
-              const textX     = QR_PAD + 4
-              const textAreaW = qrX - QR_PAD * 2
+              // Text — all centered within the left portion (before QR)
+              const textCenter = qrX / 2
+              const maxTextW   = qrX - QR_PAD * 2
+              ctx.textAlign = "center"
 
-              // Biz Hub name (white, bold)
-              const bizHubText = cityName ? `${cityName} Biz Hub` : activeShop.name
-              ctx.font = `800 38px system-ui, Arial, sans-serif`
+              // Shop name — white, bold, centered
+              ctx.font = `800 34px system-ui, Arial, sans-serif`
               ctx.fillStyle = "#FFFFFF"
-              ctx.fillText(bizHubText, textX, 52)
+              // Truncate if too long for the text area
+              let shopNameDisplay = activeShop.name
+              while (ctx.measureText(shopNameDisplay).width > maxTextW && shopNameDisplay.length > 4) {
+                shopNameDisplay = shopNameDisplay.slice(0, -1)
+              }
+              if (shopNameDisplay.length < activeShop.name.length) shopNameDisplay = shopNameDisplay.trimEnd() + "…"
+              ctx.fillText(shopNameDisplay, textCenter, 48)
 
-              // Pink underline
-              const bizHubW = Math.min(ctx.measureText(bizHubText).width, textAreaW)
+              // Pink underline under shop name — centered
+              const nameW = Math.min(ctx.measureText(shopNameDisplay).width, maxTextW)
               ctx.fillStyle = "#EC4899"
-              ctx.fillRect(textX, 60, bizHubW, 4)
+              ctx.fillRect(textCenter - nameW / 2, 56, nameW, 4)
 
-              // Full address with 📍
+              // Address — centered, slightly larger, full text
               if (activeShop.address) {
-                ctx.font = `400 21px system-ui, Arial, sans-serif`
-                ctx.fillStyle = "rgba(255,255,255,0.85)"
-                const maxAddrW = textAreaW - 4
+                ctx.font = `400 22px system-ui, Arial, sans-serif`
+                ctx.fillStyle = "rgba(255,255,255,0.9)"
                 let addrBody = activeShop.address
                 while (
-                  ctx.measureText("📍 " + addrBody).width > maxAddrW &&
+                  ctx.measureText("📍 " + addrBody).width > maxTextW &&
                   addrBody.length > 8
                 ) {
                   addrBody = addrBody.slice(0, -1)
@@ -573,18 +578,21 @@ function VendorsPanel() {
                   (addrBody.length < activeShop.address.length
                     ? addrBody.trimEnd() + "…"
                     : addrBody)
-                ctx.fillText(addrStr, textX, 100)
+                ctx.fillText(addrStr, textCenter, 100)
               }
 
-              // Website (pink, tappable-looking)
+              // Website — pink, centered
               ctx.font = `700 22px system-ui, Arial, sans-serif`
               ctx.fillStyle = "#FCA5A5"
-              ctx.fillText("www.ctmerchant.com.ng", textX, 140)
+              ctx.fillText("www.ctmerchant.com.ng", textCenter, 144)
 
-              // Merchant ID
+              // CT ID (7-digit unique_id used in repo search) — centered
+              const ctId = activeShop.unique_id || activeShop.id
               ctx.font = `400 19px system-ui, Arial, sans-serif`
               ctx.fillStyle = "rgba(255,255,255,0.5)"
-              ctx.fillText(`Merchant ID: ${activeShop.id}`, textX, 174)
+              ctx.fillText(`CT ID: ${ctId}`, textCenter, 178)
+
+              ctx.textAlign = "left"  // reset for rest of canvas
               // ────────────────────────────────────────────────────────────
 
               // ── Main 2×2 (or 2-col) product grid ──────────────────────
@@ -744,7 +752,7 @@ function VendorsPanel() {
         // Build share text — short caption + tappable website link
         const bizHub = cityName ? `${cityName} Biz Hub` : "CTMerchant"
         const title  = `${activeShop.name} | ${bizHub}`
-        const text   = `Check out ${activeShop.name} on ${bizHub} 🛍️\nwww.ctmerchant.com.ng`
+        const text   = `Check out ${activeShop.name} on *${bizHub}* 🛍️\nwww.ctmerchant.com.ng`
 
         if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
           // No url — the QR code in the image is the link; passing url adds the
