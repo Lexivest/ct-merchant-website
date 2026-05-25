@@ -562,24 +562,10 @@ function VendorsPanel() {
               ctx.fillStyle = "#EC4899"
               ctx.fillRect(textCenter - nameW / 2, 56, nameW, 4)
 
-              // Address — centered, slightly larger, full text
-              if (activeShop.address) {
-                ctx.font = `400 22px system-ui, Arial, sans-serif`
-                ctx.fillStyle = "rgba(255,255,255,0.9)"
-                let addrBody = activeShop.address
-                while (
-                  ctx.measureText("📍 " + addrBody).width > maxTextW &&
-                  addrBody.length > 8
-                ) {
-                  addrBody = addrBody.slice(0, -1)
-                }
-                const addrStr =
-                  "📍 " +
-                  (addrBody.length < activeShop.address.length
-                    ? addrBody.trimEnd() + "…"
-                    : addrBody)
-                ctx.fillText(addrStr, textCenter, 100)
-              }
+              // Shop location label — simple, centered
+              ctx.font = `400 23px system-ui, Arial, sans-serif`
+              ctx.fillStyle = "rgba(255,255,255,0.88)"
+              ctx.fillText("📍 Shop Location", textCenter, 102)
 
               // Website — pink, centered
               ctx.font = `700 22px system-ui, Arial, sans-serif`
@@ -752,7 +738,10 @@ function VendorsPanel() {
         // Build share text — short caption + tappable website link
         const bizHub = cityName ? `${cityName} Biz Hub` : "CTMerchant"
         const title  = `${activeShop.name} | ${bizHub}`
-        const text   = `Check out ${activeShop.name} on *${bizHub}* 🛍️\nwww.ctmerchant.com.ng`
+        const text   = [
+          `Check out ${activeShop.name} on *${bizHub}* 🛍️ www.ctmerchant.com.ng`,
+          activeShop.address ? `📍 ${activeShop.address}` : null,
+        ].filter(Boolean).join("\n")
 
         if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
           // No url — the QR code in the image is the link; passing url adds the
