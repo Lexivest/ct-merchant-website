@@ -502,23 +502,103 @@ function VendorsPanel() {
               // ── Canvas dimensions ──────────────────────────────────────
               const SIZE     = 1080
               const HALF     = SIZE / 2
-              const PEEK_H   = 90          // always present
-              const FOOTER_H = 200
+              const HEADER_H = 190   // blue banner at top
+              const PEEK_H   = 100   // thumbnail strip at bottom
+              const GRID_Y   = HEADER_H  // grid starts below header
               const canvas   = document.createElement("canvas")
               canvas.width   = SIZE
-              canvas.height  = SIZE + PEEK_H + FOOTER_H
+              canvas.height  = HEADER_H + SIZE + PEEK_H
               const ctx      = canvas.getContext("2d")
 
-              // Base background
+              // Base dark background
               ctx.fillStyle = "#1a1a2e"
               ctx.fillRect(0, 0, SIZE, canvas.height)
 
+              // ── Blue header banner ─────────────────────────────────────
+              const hGrad = ctx.createLinearGradient(0, 0, SIZE, HEADER_H)
+              hGrad.addColorStop(0,   "#0D47A1")
+              hGrad.addColorStop(0.5, "#1565C0")
+              hGrad.addColorStop(1,   "#0A3880")
+              ctx.fillStyle = hGrad
+              ctx.fillRect(0, 0, SIZE, HEADER_H)
+
+              // QR code — right side of header
+              const QR_SIZE = 148
+              const QR_PAD  = 18
+              const qrX     = SIZE - QR_SIZE - QR_PAD
+              const qrY     = (HEADER_H - QR_SIZE) / 2
+
+              // White rounded background for QR
+              ctx.fillStyle = "#FFFFFF"
+              ctx.beginPath()
+              ctx.roundRect(qrX - 8, qrY - 8, QR_SIZE + 16, QR_SIZE + 16, 10)
+              ctx.fill()
+              ctx.drawImage(qrImg, qrX, qrY, QR_SIZE, QR_SIZE)
+
+              // "Scan to visit" under QR
+              ctx.font = `500 17px system-ui, Arial, sans-serif`
+              ctx.fillStyle = "rgba(255,255,255,0.7)"
+              const scanW = ctx.measureText("Scan to visit").width
+              ctx.fillText("Scan to visit", qrX + (QR_SIZE - scanW) / 2, qrY + QR_SIZE + 28)
+
+              // Text block — left side of header
+              const textX     = QR_PAD + 4
+              const textAreaW = qrX - QR_PAD * 2
+
+              // Biz Hub name (white, bold)
+              const bizHubText = cityName ? `${cityName} Biz Hub` : activeShop.name
+              ctx.font = `800 38px system-ui, Arial, sans-serif`
+              ctx.fillStyle = "#FFFFFF"
+              ctx.fillText(bizHubText, textX, 52)
+
+              // Pink underline
+              const bizHubW = Math.min(ctx.measureText(bizHubText).width, textAreaW)
+              ctx.fillStyle = "#EC4899"
+              ctx.fillRect(textX, 60, bizHubW, 4)
+
+              // Full address with 📍
+              if (activeShop.address) {
+                ctx.font = `400 21px system-ui, Arial, sans-serif`
+                ctx.fillStyle = "rgba(255,255,255,0.85)"
+                const maxAddrW = textAreaW - 4
+                let addrBody = activeShop.address
+                while (
+                  ctx.measureText("📍 " + addrBody).width > maxAddrW &&
+                  addrBody.length > 8
+                ) {
+                  addrBody = addrBody.slice(0, -1)
+                }
+                const addrStr =
+                  "📍 " +
+                  (addrBody.length < activeShop.address.length
+                    ? addrBody.trimEnd() + "…"
+                    : addrBody)
+                ctx.fillText(addrStr, textX, 100)
+              }
+
+              // Website (pink, tappable-looking)
+              ctx.font = `700 22px system-ui, Arial, sans-serif`
+              ctx.fillStyle = "#FCA5A5"
+              ctx.fillText("www.ctmerchant.com.ng", textX, 140)
+
+              // Merchant ID
+              ctx.font = `400 19px system-ui, Arial, sans-serif`
+              ctx.fillStyle = "rgba(255,255,255,0.5)"
+              ctx.fillText(`Merchant ID: ${activeShop.id}`, textX, 174)
+              // ────────────────────────────────────────────────────────────
+
               // ── Main 2×2 (or 2-col) product grid ──────────────────────
               const count = Math.min(gridImages.length, 4)
+              // All cells offset downward by HEADER_H
               const cells =
                 count === 2
-                  ? [[0, 0, HALF, SIZE], [HALF, 0, HALF, SIZE]]
-                  : [[0, 0, HALF, HALF], [HALF, 0, HALF, HALF], [0, HALF, HALF, HALF], [HALF, HALF, HALF, HALF]]
+                  ? [[0, GRID_Y, HALF, SIZE], [HALF, GRID_Y, HALF, SIZE]]
+                  : [
+                      [0,    GRID_Y,        HALF, HALF],
+                      [HALF, GRID_Y,        HALF, HALF],
+                      [0,    GRID_Y + HALF, HALF, HALF],
+                      [HALF, GRID_Y + HALF, HALF, HALF],
+                    ]
 
               for (let i = 0; i < count; i++) {
                 const [cx, cy, cw, ch] = cells[i]
@@ -539,10 +619,10 @@ function VendorsPanel() {
               // Grid dividers
               ctx.fillStyle = "rgba(0,0,0,0.6)"
               if (count === 2) {
-                ctx.fillRect(HALF - 1, 0, 3, SIZE)
+                ctx.fillRect(HALF - 1, GRID_Y, 3, SIZE)
               } else {
-                ctx.fillRect(HALF - 1, 0, 3, SIZE)
-                ctx.fillRect(0, HALF - 1, SIZE, 3)
+                ctx.fillRect(HALF - 1, GRID_Y, 3, SIZE)
+                ctx.fillRect(0, GRID_Y + HALF - 1, SIZE, 3)
               }
 
               // ── Name / price / badge overlays ──────────────────────────
@@ -606,9 +686,9 @@ function VendorsPanel() {
                 }
               }
 
-              // ── Peek strip — 8 thumbnails cycling all product images ──
+              // ── Peek strip — 8 visible thumbnails, no dimming ─────────
               {
-                const peekY  = SIZE
+                const peekY  = HEADER_H + SIZE
                 const thumbW = Math.floor(SIZE / PEEK_COUNT)
 
                 for (let i = 0; i < PEEK_COUNT; i++) {
@@ -627,96 +707,12 @@ function VendorsPanel() {
                   ctx.restore()
                 }
 
-                // Dim to keep focus on the main grid
-                ctx.save()
-                ctx.globalAlpha = 0.5
-                ctx.fillStyle = "#000000"
-                ctx.fillRect(0, peekY, SIZE, PEEK_H)
-                ctx.restore()
-
-                // Gradient fade into the footer
-                const fadeGrad = ctx.createLinearGradient(0, peekY, 0, peekY + PEEK_H)
-                fadeGrad.addColorStop(0, "rgba(0,0,0,0)")
-                fadeGrad.addColorStop(1, "rgba(7,7,15,1)")
-                ctx.fillStyle = fadeGrad
-                ctx.fillRect(0, peekY, SIZE, PEEK_H)
-
-                // Thin dividers
-                ctx.fillStyle = "rgba(0,0,0,0.4)"
+                // Thin dividers only — no fade, no dim
+                ctx.fillStyle = "rgba(0,0,0,0.35)"
                 for (let i = 1; i < PEEK_COUNT; i++) {
                   ctx.fillRect(i * thumbW, peekY, 1, PEEK_H)
                 }
               }
-
-              // ── Branded footer ─────────────────────────────────────────
-              const footerY = SIZE + PEEK_H
-              ctx.fillStyle = "#07070f"
-              ctx.fillRect(0, footerY, SIZE, FOOTER_H)
-
-              // QR code — right side of footer
-              const QR_SIZE = 140
-              const QR_PAD  = 16
-              const qrX = SIZE - QR_SIZE - QR_PAD - 8
-              const qrY = footerY + (FOOTER_H - QR_SIZE) / 2
-
-              // White background for QR
-              ctx.fillStyle = "#FFFFFF"
-              ctx.beginPath()
-              ctx.roundRect(qrX - 6, qrY - 6, QR_SIZE + 12, QR_SIZE + 12, 8)
-              ctx.fill()
-              ctx.drawImage(qrImg, qrX, qrY, QR_SIZE, QR_SIZE)
-
-              // "Scan to visit" label under QR
-              ctx.font = `500 18px system-ui, Arial, sans-serif`
-              ctx.fillStyle = "#64748B"
-              const scanText = "Scan to visit"
-              const scanW = ctx.measureText(scanText).width
-              ctx.fillText(scanText, qrX + (QR_SIZE - scanW) / 2, qrY + QR_SIZE + 26)
-
-              // Text block — left & center of footer
-              const textAreaW = qrX - QR_PAD * 2
-              const textX = QR_PAD * 2
-
-              // Biz Hub name
-              const bizHubText = cityName ? `${cityName} Biz Hub` : activeShop.name
-              ctx.font = `800 36px system-ui, Arial, sans-serif`
-              ctx.fillStyle = "#FFFFFF"
-              ctx.fillText(bizHubText, textX, footerY + 48)
-
-              // Pink underline
-              const bizHubW = ctx.measureText(bizHubText).width
-              ctx.fillStyle = "#EC4899"
-              ctx.fillRect(textX, footerY + 55, Math.min(bizHubW, textAreaW), 4)
-
-              // Full address with 📍
-              if (activeShop.address) {
-                ctx.font = `500 22px system-ui, Arial, sans-serif`
-                ctx.fillStyle = "#94A3B8"
-                const maxAddrW = textAreaW - 8
-                let addrBody = activeShop.address
-                while (
-                  ctx.measureText("📍 " + addrBody).width > maxAddrW &&
-                  addrBody.length > 8
-                ) {
-                  addrBody = addrBody.slice(0, -1)
-                }
-                const addrStr =
-                  "📍 " +
-                  (addrBody.length < activeShop.address.length
-                    ? addrBody.trimEnd() + "…"
-                    : addrBody)
-                ctx.fillText(addrStr, textX, footerY + 100)
-              }
-
-              // Website
-              ctx.font = `600 22px system-ui, Arial, sans-serif`
-              ctx.fillStyle = "#EC4899"
-              ctx.fillText("www.ctmerchant.com.ng", textX, footerY + 142)
-
-              // Merchant ID
-              ctx.font = `500 20px system-ui, Arial, sans-serif`
-              ctx.fillStyle = "#475569"
-              ctx.fillText(`Merchant ID: ${activeShop.id}`, textX, footerY + 176)
               // ────────────────────────────────────────────────────────────
 
               // Export as JPEG
@@ -745,10 +741,10 @@ function VendorsPanel() {
           } catch { /* ignore */ }
         }
 
-        // Build share text — short caption only; image carries the full detail
+        // Build share text — short caption + tappable website link
         const bizHub = cityName ? `${cityName} Biz Hub` : "CTMerchant"
         const title  = `${activeShop.name} | ${bizHub}`
-        const text   = `Check out ${activeShop.name} on ${bizHub} 🛍️`
+        const text   = `Check out ${activeShop.name} on ${bizHub} 🛍️\nwww.ctmerchant.com.ng`
 
         if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
           // No url — the QR code in the image is the link; passing url adds the
