@@ -342,10 +342,10 @@ function UserDashboard() {
   const baseCacheKey = buildDashboardBaseCacheKey(cityId)
   const dynamicCacheKey = buildDashboardDynamicCacheKey(user?.id, cityId)
 
-  const { 
-    data: baseData, 
-    loading: baseLoading, 
-    mutate: mutateBase 
+  const {
+    data: baseData,
+    loading: baseLoading,
+    mutate: mutateBase
   } = useCachedFetch(
     baseCacheKey,
     () => fetchDashboardBaseData(cityId),
@@ -354,7 +354,7 @@ function UserDashboard() {
       ttl: 1000 * 60 * 60 * 24, // 24 hours for stable data
       persist: "session",
       revalidateOnMount: true,
-      skip: !profileLoaded
+      skip: !profileLoaded || !profile?.city_id
     }
   )
 
@@ -372,7 +372,9 @@ function UserDashboard() {
       ttl: 1000 * 60 * 15, // 15 mins for dynamic data
       persist: "session",
       revalidateOnMount: true,
-      skip: !profileLoaded
+      // Also skip when city_id is absent — fetchDashboardDynamicData returns
+      // empty shops/products for a null city, which would wipe localData on merge
+      skip: !profileLoaded || !profile?.city_id
     }
   )
 
