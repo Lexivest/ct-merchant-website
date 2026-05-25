@@ -29,6 +29,21 @@ const CORS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
+const SUPABASE_STORAGE_RE =
+  /^(https:\/\/[^/]+\/storage\/v1\/object\/)(public\/.+)$/
+
+/**
+ * If the URL is a Supabase Storage object URL, rewrite it to use the
+ * Image Transform endpoint so Supabase CDN delivers a pre-resized thumbnail
+ * instead of the full-size original. This cuts network + decode time by 5-10×.
+ * Falls back to the original URL if the pattern doesn't match.
+ */
+function toThumbUrl(url: string, w: number, h: number): string {
+  const m = url.match(SUPABASE_STORAGE_RE)
+  if (!m) return url
+  return `${m[1].replace("/object/", "/render/image/")}${m[2]}?width=${w}&height=${h}&resize=cover&quality=80`
+}
+
 /** Fetch a remote image as raw bytes. Returns null on any failure. */
 async function fetchRaw(url: string): Promise<Uint8Array | null> {
   try {
@@ -64,8 +79,16 @@ function coverCrop(img: Image, targetW: number, targetH: number): Image {
 async function buildGrid(imageUrls: string[]): Promise<Uint8Array> {
   const urls = imageUrls.slice(0, 4)
 
+  // Request pre-resized thumbnails from Supabase CDN when possible —
+  // avoids downloading full-size originals and cuts decode time significantly.
+  const [cellW, cellH] = urls.length === 2
+    ? [CELL_W, OG_H]   // side-by-side: full height
+    : [CELL_W, CELL_H] // 2×2 grid: half height
+
+  const thumbUrls = urls.map(u => toThumbUrl(u, cellW, cellH))
+
   // Fetch all images in parallel
-  const rawBuffers = await Promise.all(urls.map(fetchRaw))
+  const rawBuffers = await Promise.all(thumbUrls.map(fetchRaw))
 
   // Decode each successfully fetched image
   const decoded: Image[] = []
