@@ -94,6 +94,7 @@ function VendorsPanel() {
   const [realtimeShop, setRealtimeShop] = useState(null)
   const [verificationAccessOverride, setVerificationAccessOverride] = useState(null)
   const [copiedKey, setCopiedKey] = useState(null)
+  const [isSharing, setIsSharing] = useState(false)
   const retryRouteTransitionRef = useRef(null)
   const [routeTransition, setRouteTransition] = useState({
     pending: false,
@@ -378,19 +379,133 @@ function VendorsPanel() {
   }
 
   async function shareShopWithImage() {
+    if (isSharing) return
+    setIsSharing(true)
+
     const title = `${activeShop.name} on CTMerchant`
     const text = `Check out ${activeShop.name} on CTMerchant.${activeShop.address ? ` 📍 ${activeShop.address}.` : ""}`
     const url = storefrontUrl
+    const objectUrls = []
 
     try {
       if (navigator.share) {
         let file = null
-        if (activeShop.image_url) {
+
+        // Try to build a product grid using the Canvas API (no server needed)
+        try {
+          const gridFile = await Promise.race([
+            (async () => {
+              // Fetch up to 4 approved product image URLs
+              const { data: products } = await supabase
+                .from("products")
+                .select("image_url")
+                .eq("shop_id", activeShop.id)
+                .eq("is_available", true)
+                .eq("is_approved", true)
+                .not("image_url", "is", null)
+                .order("created_at", { ascending: false })
+                .limit(4)
+
+              const imageUrls = (products || []).map((p) => p.image_url).filter(Boolean)
+              if (imageUrls.length < 2) return null
+
+              // Fetch each image as a blob → object URL (avoids canvas CORS taint)
+              const settled = await Promise.allSettled(
+                imageUrls.map(async (imgUrl) => {
+                  const resp = await fetch(imgUrl)
+                  const blob = await resp.blob()
+                  const objUrl = URL.createObjectURL(blob)
+                  objectUrls.push(objUrl)
+                  return objUrl
+                })
+              )
+              const validObjUrls = settled
+                .filter((r) => r.status === "fulfilled")
+                .map((r) => r.value)
+              if (validObjUrls.length < 2) return null
+
+              // Load Image elements
+              const images = await Promise.all(
+                validObjUrls.map(
+                  (src) =>
+                    new Promise((resolve, reject) => {
+                      const img = new window.Image()
+                      img.onload = () => resolve(img)
+                      img.onerror = reject
+                      img.src = src
+                    })
+                )
+              )
+
+              // Build canvas
+              const SIZE = 1080
+              const HALF = SIZE / 2
+              const canvas = document.createElement("canvas")
+              canvas.width = SIZE
+              canvas.height = SIZE
+              const ctx = canvas.getContext("2d")
+
+              // Dark background
+              ctx.fillStyle = "#1a1a2e"
+              ctx.fillRect(0, 0, SIZE, SIZE)
+
+              const count = Math.min(images.length, 4)
+              // [x, y, w, h] for each cell
+              const cells =
+                count === 2
+                  ? [[0, 0, HALF, SIZE], [HALF, 0, HALF, SIZE]]
+                  : [[0, 0, HALF, HALF], [HALF, 0, HALF, HALF], [0, HALF, HALF, HALF], [HALF, HALF, HALF, HALF]]
+
+              for (let i = 0; i < count; i++) {
+                const [cx, cy, cw, ch] = cells[i]
+                const img = images[i]
+                // Cover-scale the image to fill its cell
+                const scale = Math.max(cw / img.width, ch / img.height)
+                const sw = img.width * scale
+                const sh = img.height * scale
+                const dx = cx + (cw - sw) / 2
+                const dy = cy + (ch - sh) / 2
+                ctx.save()
+                ctx.beginPath()
+                ctx.rect(cx, cy, cw, ch)
+                ctx.clip()
+                ctx.drawImage(img, dx, dy, sw, sh)
+                ctx.restore()
+              }
+
+              // Thin dividers between cells
+              ctx.fillStyle = "rgba(0,0,0,0.55)"
+              if (count === 2) {
+                ctx.fillRect(HALF - 1, 0, 2, SIZE)
+              } else {
+                ctx.fillRect(HALF - 1, 0, 2, SIZE)
+                ctx.fillRect(0, HALF - 1, SIZE, 2)
+              }
+
+              // Export as JPEG blob → File
+              const blob = await new Promise((resolve, reject) =>
+                canvas.toBlob(
+                  (b) => (b ? resolve(b) : reject(new Error("toBlob failed"))),
+                  "image/jpeg",
+                  0.88
+                )
+              )
+              return new File([blob], "shop-products.jpg", { type: "image/jpeg" })
+            })(),
+            // Timeout — fall through to shop logo if grid takes too long
+            new Promise((resolve) => setTimeout(() => resolve(null), 8000)),
+          ])
+
+          if (gridFile) file = gridFile
+        } catch { /* canvas failed — fall through to shop logo */ }
+
+        // Fall back to shop logo if grid couldn't be built
+        if (!file && activeShop.image_url) {
           try {
-            const response = await fetch(activeShop.image_url)
-            const blob = await response.blob()
+            const resp = await fetch(activeShop.image_url)
+            const blob = await resp.blob()
             file = new File([blob], "shop.jpg", { type: blob.type })
-          } catch { /* ignore image fetch errors */ }
+          } catch { /* ignore */ }
         }
 
         if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -404,6 +519,10 @@ function VendorsPanel() {
       }
     } catch {
       // User cancelled or share failed — silently ignore
+    } finally {
+      // Clean up object URLs to free memory
+      objectUrls.forEach((u) => URL.revokeObjectURL(u))
+      setIsSharing(false)
     }
   }
 
@@ -1113,9 +1232,14 @@ function VendorsPanel() {
                 <button
                   type="button"
                   onClick={shareShopWithImage}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-pink-200 bg-pink-50 px-3 py-2 text-[0.78rem] font-bold text-pink-600 transition hover:bg-pink-100 hover:border-pink-300"
+                  disabled={isSharing}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-pink-200 bg-pink-50 px-3 py-2 text-[0.78rem] font-bold text-pink-600 transition hover:bg-pink-100 hover:border-pink-300 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <FaShareNodes /> Share
+                  {isSharing ? (
+                    <><span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-pink-300 border-t-pink-600" />Building…</>
+                  ) : (
+                    <><FaShareNodes /> Share</>
+                  )}
                 </button>
               </div>
             </div>
