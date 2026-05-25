@@ -395,10 +395,10 @@ function VendorsPanel() {
         try {
           const gridFile = await Promise.race([
             (async () => {
-              // Fetch up to 4 approved product image URLs
+              // Fetch up to 4 approved products with name and price info
               const { data: products } = await supabase
                 .from("products")
-                .select("image_url")
+                .select("image_url, name, price, discount_price")
                 .eq("shop_id", activeShop.id)
                 .eq("is_available", true)
                 .eq("is_approved", true)
@@ -406,8 +406,9 @@ function VendorsPanel() {
                 .order("created_at", { ascending: false })
                 .limit(4)
 
-              const imageUrls = (products || []).map((p) => p.image_url).filter(Boolean)
-              if (imageUrls.length < 2) return null
+              const validProducts = (products || []).filter((p) => p.image_url)
+              if (validProducts.length < 2) return null
+              const imageUrls = validProducts.map((p) => p.image_url)
 
               // Fetch each image as a blob → object URL (avoids canvas CORS taint)
               const settled = await Promise.allSettled(
@@ -456,10 +457,10 @@ function VendorsPanel() {
                   ? [[0, 0, HALF, SIZE], [HALF, 0, HALF, SIZE]]
                   : [[0, 0, HALF, HALF], [HALF, 0, HALF, HALF], [0, HALF, HALF, HALF], [HALF, HALF, HALF, HALF]]
 
+              // Draw product images with cover-crop clipping
               for (let i = 0; i < count; i++) {
                 const [cx, cy, cw, ch] = cells[i]
                 const img = images[i]
-                // Cover-scale the image to fill its cell
                 const scale = Math.max(cw / img.width, ch / img.height)
                 const sw = img.width * scale
                 const sh = img.height * scale
@@ -480,6 +481,71 @@ function VendorsPanel() {
               } else {
                 ctx.fillRect(HALF - 1, 0, 2, SIZE)
                 ctx.fillRect(0, HALF - 1, SIZE, 2)
+              }
+
+              // Draw name + price + discount badge overlay on each cell
+              for (let i = 0; i < count; i++) {
+                const [cx, cy, cw, ch] = cells[i]
+                const product = validProducts[i]
+                const hasDiscount =
+                  product.discount_price &&
+                  Number(product.discount_price) < Number(product.price)
+                const isSmall = ch <= HALF
+                const stripH = isSmall ? 76 : 96
+                const stripY = cy + ch - stripH
+                const pad = 10
+                const nameSize = isSmall ? 13 : 16
+                const priceSize = isSmall ? 13 : 15
+
+                // Semi-transparent dark strip
+                ctx.save()
+                ctx.globalAlpha = 0.78
+                ctx.fillStyle = "#000000"
+                ctx.fillRect(cx, stripY, cw, stripH)
+                ctx.restore()
+
+                // Product name (truncated)
+                const maxChars = isSmall ? 22 : 28
+                const shortName =
+                  product.name.length > maxChars
+                    ? product.name.slice(0, maxChars - 1) + "…"
+                    : product.name
+                ctx.font = `700 ${nameSize}px system-ui, Arial, sans-serif`
+                ctx.fillStyle = "#FFFFFF"
+                ctx.fillText(shortName, cx + pad, stripY + pad + nameSize)
+
+                // Price (gold — discount price if available)
+                const displayPrice = hasDiscount
+                  ? Number(product.discount_price)
+                  : Number(product.price)
+                const priceText =
+                  "₦" + Math.round(displayPrice).toLocaleString("en-NG")
+                ctx.font = `800 ${priceSize}px system-ui, Arial, sans-serif`
+                ctx.fillStyle = "#FFD700"
+                ctx.fillText(priceText, cx + pad, stripY + stripH - pad)
+
+                // Discount badge (red pill, bottom-right of strip)
+                if (hasDiscount) {
+                  const pct = Math.round(
+                    (1 - Number(product.discount_price) / Number(product.price)) * 100
+                  )
+                  const badgeText = `-${pct}%`
+                  const badgeSize = isSmall ? 11 : 13
+                  ctx.font = `800 ${badgeSize}px system-ui, Arial, sans-serif`
+                  const textW = ctx.measureText(badgeText).width
+                  const badgeW = textW + 14
+                  const badgeH = badgeSize + 10
+                  const badgeX = cx + cw - badgeW - pad
+                  const badgeY = stripY + stripH - badgeH - pad
+                  // Red background
+                  ctx.fillStyle = "#E53E3E"
+                  ctx.beginPath()
+                  ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 4)
+                  ctx.fill()
+                  // Badge text
+                  ctx.fillStyle = "#FFFFFF"
+                  ctx.fillText(badgeText, badgeX + 7, badgeY + badgeH - 4)
+                }
               }
 
               // Export as JPEG blob → File
