@@ -447,17 +447,18 @@ function VendorsPanel() {
               )
               const itemProducts = validItems.map((it) => it.product)
 
-              // Build canvas — 1080×1080
-              const SIZE = 1080
-              const HALF = SIZE / 2
+              // Build canvas — 1080 wide, product grid + branded footer
+              const SIZE    = 1080
+              const HALF    = SIZE / 2
+              const FOOTER_H = 140
               const canvas = document.createElement("canvas")
-              canvas.width = SIZE
-              canvas.height = SIZE
+              canvas.width  = SIZE
+              canvas.height = SIZE + FOOTER_H
               const ctx = canvas.getContext("2d")
 
-              // Dark background
+              // Dark background (full canvas)
               ctx.fillStyle = "#1a1a2e"
-              ctx.fillRect(0, 0, SIZE, SIZE)
+              ctx.fillRect(0, 0, SIZE, SIZE + FOOTER_H)
 
               const count = Math.min(images.length, 4)
               // [x, y, w, h] per cell
@@ -556,6 +557,49 @@ function VendorsPanel() {
                   ctx.fillText(badgeText, badgeX + bPad, badgeY + badgeH - bPad * 0.55)
                 }
               }
+
+              // ── Branded footer ──────────────────────────────────────────
+              // Darker strip beneath the grid
+              ctx.fillStyle = "#07070f"
+              ctx.fillRect(0, SIZE, SIZE, FOOTER_H)
+
+              // "[City] Biz Hub" centered in white, bold
+              const bizHubText = cityName ? `${cityName} Biz Hub` : activeShop.name
+              const bizHubSize = 34
+              ctx.font = `800 ${bizHubSize}px system-ui, Arial, sans-serif`
+              ctx.fillStyle = "#FFFFFF"
+              const bizHubW = ctx.measureText(bizHubText).width
+              const bizHubX = Math.max(16, (SIZE - bizHubW) / 2)
+              const bizHubY = SIZE + 48
+              ctx.fillText(bizHubText, bizHubX, bizHubY)
+
+              // Pink underline beneath the Biz Hub text
+              ctx.fillStyle = "#EC4899"
+              ctx.fillRect(bizHubX, bizHubY + 8, bizHubW, 4)
+
+              // Full address with 📍 pin icon, centered beneath
+              if (activeShop.address) {
+                const addrSize = 22
+                ctx.font = `500 ${addrSize}px system-ui, Arial, sans-serif`
+                // Truncate address to fit within canvas width
+                const maxAddrW = SIZE - 40
+                let addrBody = activeShop.address
+                while (
+                  ctx.measureText("📍 " + addrBody).width > maxAddrW &&
+                  addrBody.length > 8
+                ) {
+                  addrBody = addrBody.slice(0, -1)
+                }
+                const addrStr =
+                  "📍 " +
+                  (addrBody.length < activeShop.address.length
+                    ? addrBody.trimEnd() + "…"
+                    : addrBody)
+                ctx.fillStyle = "#94A3B8"
+                const addrW = ctx.measureText(addrStr).width
+                ctx.fillText(addrStr, Math.max(20, (SIZE - addrW) / 2), SIZE + 105)
+              }
+              // ────────────────────────────────────────────────────────────
 
               // Export as JPEG
               const blob = await new Promise((resolve, reject) =>
