@@ -10,6 +10,18 @@ import { clearStaffSessionState } from "./staffSession"
 // via the native `storage` event and clear their own auth state.
 export const LOGOUT_SIGNAL_KEY = "ctmerchant_logout_signal"
 
+// Distinguishes an intentional auth.signOut() call from a network-induced
+// SIGNED_OUT event (e.g. JWT refresh failure on a poor connection).
+// Set just before supabase.auth.signOut(); consumed once by useAuthSession's
+// onAuthStateChange handler so it can skip the debounce grace period.
+let _intentionalSignOut = false
+export function flagIntentionalSignOut() { _intentionalSignOut = true }
+export function consumeIntentionalSignOut() {
+  const was = _intentionalSignOut
+  _intentionalSignOut = false
+  return was
+}
+
 const LOCATION_QUERY_TIMEOUT_MS = 8000
 
 function withTimeout(promise, message, timeoutMs = LOCATION_QUERY_TIMEOUT_MS) {
@@ -89,6 +101,10 @@ export async function stampProfileFootprint(userId, { silent = true } = {}) {
 
 // Current-window logout and cache cleaner.
 export async function signOutUser() {
+  // Mark as intentional so useAuthSession's onAuthStateChange handler skips
+  // the debounce grace period and clears state immediately.
+  flagIntentionalSignOut()
+
   let signOutError = null
 
   try {

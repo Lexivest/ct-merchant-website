@@ -10,6 +10,7 @@ import {
   getSession,
   isProfileSuspended,
   stampProfileFootprint,
+  consumeIntentionalSignOut,
   LOGOUT_SIGNAL_KEY,
 } from "../lib/auth"
 import { clearCachedFetchStore } from "./useCachedFetch"
@@ -281,6 +282,9 @@ const SUSPENSION_RECHECK_INTERVAL_MS = 5 * 60 * 1000 // 5 minutes
 
 function useAuthSession() {
   const lastNetworkFetchAt = useRef(0)
+  // Holds the timer ID for the debounced SIGNED_OUT grace period.
+  // Cleared immediately whenever a real authenticated session event arrives.
+  const pendingSignOutTimerRef = useRef(null)
   const [state, setState] = useState(() => {
     // 2. SYNCHRONOUS MEMORY READ
     // If the memory is warm (user is navigating back), return it instantly to bypass all loaders.
@@ -396,12 +400,26 @@ function useAuthSession() {
         if (!mounted) return
 
         if (!user) {
-          // Only blast the full fetch cache when a previously-authenticated session
-          // has expired or been revoked. If the user was never authenticated in this
-          // session (e.g. unauthenticated public repo visitor), the cache holds
-          // public page data — clearing it forces needless re-fetches and causes
-          // the skeleton to re-appear on every back-navigation.
+          // getSession() returned null. Two possible causes:
+          //   (a) The session genuinely expired / was revoked.
+          //   (b) Our 6 s safety timeout fired first on a slow/flaky connection.
+          //
+          // For case (b) we must NOT clear auth state immediately — doing so
+          // triggers the dashboard → home → login redirect loop the user sees on
+          // a poor network. Instead, preserve the cached session and rely on
+          // onAuthStateChange to deliver the authoritative SIGNED_OUT event if
+          // the session is truly gone. Only clear when we are provably offline
+          // (getSession() would always fail) or when there was no cached session
+          // to begin with (user was never logged in this browser).
           const hadPreviousSession = Boolean(globalAuthMemory.user?.id)
+
+          if (hadPreviousSession && !isOfflineNow) {
+            // Likely a timeout on a poor network — keep current cached state.
+            // onAuthStateChange will fire SIGNED_OUT when the session is truly gone.
+            return
+          }
+
+          // No prior session, or we know we're offline — safe to clear.
           clearCachedProfile()
           clearAuthSnapshot()
           if (hadPreviousSession) {
@@ -539,31 +557,26 @@ function useAuthSession() {
     // Always fetch in the background to ensure session hasn't expired
     load()
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return
-
-      if (event === "SIGNED_OUT" || !session?.user) {
-        // Only wipe the fetch cache if the user is actively signing out or if
-        // a previously-authenticated session has expired (INITIAL_SESSION / other
-        // event with session=null while we still had a remembered user).
-        // An INITIAL_SESSION with no user for an always-unauthenticated visitor
-        // should not discard their public-page cache (shop detail, repo search, etc.).
-        const hadSession = Boolean(globalAuthMemory.user?.id)
-        clearCachedProfile()
-        clearAuthSnapshot()
-        if (event === "SIGNED_OUT" || hadSession) {
-          clearCachedFetchStore()
-        }
-        globalAuthMemory = {
-          isResolved: true,
-          session: null,
-          user: null,
-          profile: null,
-          suspended: false,
-          profileLoaded: false,
-        }
+    // Applies a clean sign-out: wipes caches, resets global memory, and pushes
+    // null state to React. Called either immediately (intentional logout) or
+    // after the debounce grace period (network-induced SIGNED_OUT confirmed).
+    function applySignOut(hadSession, isBySignedOutEvent) {
+      clearCachedProfile()
+      clearAuthSnapshot()
+      // Only wipe the public-page fetch cache when the user was previously
+      // authenticated or the event was an explicit SIGNED_OUT.
+      if (isBySignedOutEvent || hadSession) {
+        clearCachedFetchStore()
+      }
+      globalAuthMemory = {
+        isResolved: true,
+        session: null,
+        user: null,
+        profile: null,
+        suspended: false,
+        profileLoaded: false,
+      }
+      if (mounted) {
         syncState({
           loading: false,
           session: null,
@@ -573,6 +586,73 @@ function useAuthSession() {
           profileLoaded: false,
           error: "",
         })
+      }
+    }
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return
+
+      // Any real authenticated event cancels a pending debounced sign-out.
+      if (session?.user && pendingSignOutTimerRef.current) {
+        clearTimeout(pendingSignOutTimerRef.current)
+        pendingSignOutTimerRef.current = null
+      }
+
+      if (event === "SIGNED_OUT" || !session?.user) {
+        const isIntentional = consumeIntentionalSignOut()
+        const hadSession = Boolean(globalAuthMemory.user?.id)
+        const isBySignedOutEvent = event === "SIGNED_OUT"
+
+        // Network-induced SIGNED_OUT (e.g. JWT refresh failure on a poor
+        // connection): instead of immediately clearing auth and bouncing the
+        // user back to the home screen, wait 4 s then re-check the session.
+        //
+        // If the token refresh succeeded within that window the debounce timer
+        // gets cancelled above (by the TOKEN_REFRESHED / SIGNED_IN event that
+        // arrives with a real user). If after 4 s the session is still gone, we
+        // apply the sign-out for real.
+        //
+        // Skip the grace period for intentional logouts (signOutUser() sets the
+        // flag), for the offline case (no point waiting — there's no network),
+        // and for visitors who were never logged in.
+        if (!isIntentional && hadSession && !getIsOffline()) {
+          if (pendingSignOutTimerRef.current) clearTimeout(pendingSignOutTimerRef.current)
+          pendingSignOutTimerRef.current = setTimeout(() => {
+            if (!mounted) return
+            pendingSignOutTimerRef.current = null
+
+            Promise.race([
+              getSession(),
+              new Promise((resolve) => setTimeout(() => resolve(null), 4000)),
+            ]).then((verifiedSession) => {
+              if (!mounted) return
+              if (verifiedSession?.user) {
+                // Session recovered — SIGNED_OUT was a transient network glitch.
+                const cachedProfile = readCachedProfile(verifiedSession.user.id)
+                syncState({
+                  loading: false,
+                  session: verifiedSession,
+                  user: verifiedSession.user,
+                  profile: cachedProfile || globalAuthMemory.profile || null,
+                  suspended: isProfileSuspended(cachedProfile || globalAuthMemory.profile),
+                  profileLoaded: Boolean(cachedProfile || globalAuthMemory.profile),
+                  error: "",
+                })
+                return
+              }
+              // Session is still gone after grace period — apply sign-out for real.
+              applySignOut(hadSession, isBySignedOutEvent)
+            }).catch(() => {
+              if (mounted) applySignOut(hadSession, isBySignedOutEvent)
+            })
+          }, 4000)
+          return
+        }
+
+        // Intentional logout, offline, or no previous session — clear immediately.
+        applySignOut(hadSession, isBySignedOutEvent)
         return
       }
 
@@ -620,6 +700,12 @@ function useAuthSession() {
       if (event.key !== LOGOUT_SIGNAL_KEY || !event.newValue) return
       if (!mounted) return
 
+      // A cross-tab explicit logout overrides any pending debounced sign-out.
+      if (pendingSignOutTimerRef.current) {
+        clearTimeout(pendingSignOutTimerRef.current)
+        pendingSignOutTimerRef.current = null
+      }
+
       clearCachedProfile()
       clearCachedFetchStore()
       clearAuthSnapshot()
@@ -649,6 +735,10 @@ function useAuthSession() {
     return () => {
       mounted = false
       subscription.unsubscribe()
+      if (pendingSignOutTimerRef.current) {
+        clearTimeout(pendingSignOutTimerRef.current)
+        pendingSignOutTimerRef.current = null
+      }
       unsubscribeNetworkStatus()
       window.removeEventListener("storage", handleStorageLogout)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
