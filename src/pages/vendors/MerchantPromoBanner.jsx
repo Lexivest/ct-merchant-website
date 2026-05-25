@@ -217,9 +217,15 @@ async function generatePromoBannerCanvasBlob({
   const footerHeight = 88;
   const footerY = height - footerHeight;
 
-  // Split products: first 4 for the 2×2 grid, up to 7 more for the image strip
+  // Split products: first 4 for the 2×2 grid
   const gridProducts4 = Array.from({ length: 4 }, (_, index) => products?.[index] || {});
-  const stripItems = (products || []).slice(4, 11).filter((p) => p?.image_url);
+
+  // Strip: always 8 thumbnails, cycling all available product images (same as share-image peek strip)
+  const allWithImages = (products || []).filter((p) => p?.image_url)
+  const STRIP_COUNT = 8
+  const stripItems = allWithImages.length > 0
+    ? Array.from({ length: STRIP_COUNT }, (_, i) => allWithImages[i % allWithImages.length])
+    : []
 
   // Reserve 72px above the footer for the strip (only when there are strip images)
   const stripHeight = stripItems.length > 0 ? 72 : 0;
