@@ -420,7 +420,7 @@ function VendorsPanel() {
 
               // Split: first 4 for the main grid, rest for the peek strip
               const gridProducts = validProducts.slice(0, 4)
-              const peekProducts = validProducts.slice(4, 12)
+              const peekProducts = validProducts.slice(4)   // may be empty
 
               // Fetch grid images as blobs (avoids canvas CORS taint)
               const gridSettled = await Promise.allSettled(
@@ -494,10 +494,15 @@ function VendorsPanel() {
                 img.src = qrDataUrl
               })
 
+              // Always produce exactly 8 peek thumbnails by cycling all loaded images
+              const PEEK_COUNT = 8
+              const allLoaded  = [...gridImages, ...peekImages]
+              const peekFill   = Array.from({ length: PEEK_COUNT }, (_, i) => allLoaded[i % allLoaded.length])
+
               // ── Canvas dimensions ──────────────────────────────────────
               const SIZE     = 1080
               const HALF     = SIZE / 2
-              const PEEK_H   = peekImages.length > 0 ? 90 : 0
+              const PEEK_H   = 90          // always present
               const FOOTER_H = 200
               const canvas   = document.createElement("canvas")
               canvas.width   = SIZE
@@ -601,45 +606,44 @@ function VendorsPanel() {
                 }
               }
 
-              // ── Peek strip (extra products, partially visible) ─────────
-              if (peekImages.length > 0) {
-                const peekY    = SIZE
-                const thumbW   = Math.floor(SIZE / peekImages.length)
-                const thumbH   = PEEK_H
+              // ── Peek strip — 8 thumbnails cycling all product images ──
+              {
+                const peekY  = SIZE
+                const thumbW = Math.floor(SIZE / PEEK_COUNT)
 
-                for (let i = 0; i < peekImages.length; i++) {
-                  const px = i * thumbW
-                  const img = peekImages[i]
-                  const scale = Math.max(thumbW / img.width, thumbH / img.height)
+                for (let i = 0; i < PEEK_COUNT; i++) {
+                  const px  = i * thumbW
+                  const img = peekFill[i]
+                  const scale = Math.max(thumbW / img.width, PEEK_H / img.height)
                   const sw = img.width * scale
                   const sh = img.height * scale
                   const dx = px + (thumbW - sw) / 2
-                  const dy = peekY + (thumbH - sh) / 2
+                  const dy = peekY + (PEEK_H - sh) / 2
                   ctx.save()
                   ctx.beginPath()
-                  ctx.rect(px, peekY, thumbW, thumbH)
+                  ctx.rect(px, peekY, thumbW, PEEK_H)
                   ctx.clip()
                   ctx.drawImage(img, dx, dy, sw, sh)
                   ctx.restore()
                 }
 
-                // Dim the peek strip to keep focus on the main grid
+                // Dim to keep focus on the main grid
                 ctx.save()
-                ctx.globalAlpha = 0.45
+                ctx.globalAlpha = 0.5
                 ctx.fillStyle = "#000000"
                 ctx.fillRect(0, peekY, SIZE, PEEK_H)
                 ctx.restore()
 
-                // Gradient fade at the bottom of the peek strip into the footer
+                // Gradient fade into the footer
                 const fadeGrad = ctx.createLinearGradient(0, peekY, 0, peekY + PEEK_H)
                 fadeGrad.addColorStop(0, "rgba(0,0,0,0)")
-                fadeGrad.addColorStop(1, "rgba(7,7,15,0.95)")
+                fadeGrad.addColorStop(1, "rgba(7,7,15,1)")
                 ctx.fillStyle = fadeGrad
                 ctx.fillRect(0, peekY, SIZE, PEEK_H)
 
-                // Thin 1px vertical dividers between thumbnails
+                // Thin dividers
                 ctx.fillStyle = "rgba(0,0,0,0.4)"
-                for (let i = 1; i < peekImages.length; i++) {
+                for (let i = 1; i < PEEK_COUNT; i++) {
                   ctx.fillRect(i * thumbW, peekY, 1, PEEK_H)
                 }
               }
@@ -741,19 +745,17 @@ function VendorsPanel() {
           } catch { /* ignore */ }
         }
 
-        // Build share text using city name ("Jos Biz Hub") if available
+        // Build share text — short caption only; image carries the full detail
         const bizHub = cityName ? `${cityName} Biz Hub` : "CTMerchant"
-        const title = `${activeShop.name} | ${bizHub}`
-        const text = [
-          `Check out ${activeShop.name} on ${bizHub}.`,
-          activeShop.address ? `📍 ${activeShop.address}` : null,
-        ]
-          .filter(Boolean)
-          .join("\n")
+        const title  = `${activeShop.name} | ${bizHub}`
+        const text   = `Check out ${activeShop.name} on ${bizHub} 🛍️`
 
         if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({ title, text, url, files: [file] })
+          // No url — the QR code in the image is the link; passing url adds the
+          // ugly ?id= link to the WhatsApp message body
+          await navigator.share({ title, text, files: [file] })
         } else {
+          // No image — include the url so the recipient can still navigate
           await navigator.share({ title, text, url })
         }
       } else {
