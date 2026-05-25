@@ -9,7 +9,9 @@
  *   - 1200×590 product grid (2×2 cells of 600×295, or wide variants)
  *   - 1200×40  shop-name bar at the bottom
  *
- * Cache TTL: 2 hours. Falls back to first-product-image redirect on any error.
+ * Cache TTL: 2 hours. Cache key includes CACHE_VERSION so bumping the suffix
+ * forces all shops to regenerate on next request without deleting old files.
+ * Falls back to first-product-image redirect on any error.
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
@@ -77,17 +79,10 @@ async function addOverlay(
   const pad        = 10
   const stripY     = cH - stripH
 
-  // Gradient overlay: 3 strips fading from transparent to opaque
-  const s1H = Math.floor(stripH * 0.30)
-  const s2H = Math.floor(stripH * 0.35)
-  const s3H = stripH - s1H - s2H
-
-  const strip1 = new Image(cW, s1H); strip1.fill(0x00000033)
-  const strip2 = new Image(cW, s2H); strip2.fill(0x00000088)
-  const strip3 = new Image(cW, s3H); strip3.fill(0x000000CC)
-  cell.composite(strip1, 0, stripY)
-  cell.composite(strip2, 0, stripY + s1H)
-  cell.composite(strip3, 0, stripY + s1H + s2H)
+  // Dark semi-transparent overlay strip (single solid strip — reliable across all runtimes)
+  const strip = new Image(cW, stripH)
+  strip.fill(0x000000CC)
+  cell.composite(strip, 0, stripY)
 
   const shortName = name.length > (isSmall ? 22 : 26)
     ? name.slice(0, isSmall ? 20 : 24) + "…" : name
@@ -167,18 +162,33 @@ async function buildGrid(
   shopBar.fill(0x0D0D1AFF)
   canvas.composite(shopBar, 0, GRID_H)
 
+  // Shop name + brand tag — wrapped defensively: text rendering failures
+  // (unsupported characters, zero-size glyphs, etc.) must not abort the PNG.
   if (shopName && font) {
-    const maxLen = 44
-    const displayName = shopName.length > maxLen ? shopName.slice(0, maxLen - 1) + "…" : shopName
-    const nameImg = await Image.renderText(font, 14, displayName, 0xFFFFFFFF)
-    const nameX = Math.max(16, Math.floor((OG_W - nameImg.width) / 2))
-    const nameY = GRID_H + Math.floor((SHOP_BAR_H - nameImg.height) / 2)
-    canvas.composite(nameImg, nameX, nameY)
+    try {
+      // Strip non-Latin characters that Roboto Bold may not support to avoid
+      // renderText throwing or producing a zero-dimension image.
+      const safe = shopName
+        .replace(/[^\x20-\x7EÀ-ɏ]/g, "")
+        .trim()
+        .slice(0, 44)
+      if (safe) {
+        const nameImg = await Image.renderText(font, 14, safe, 0xFFFFFFFF)
+        if (nameImg.width > 0 && nameImg.height > 0) {
+          const nameX = Math.max(16, Math.floor((OG_W - nameImg.width) / 2))
+          const nameY = GRID_H + Math.max(0, Math.floor((SHOP_BAR_H - nameImg.height) / 2))
+          canvas.composite(nameImg, nameX, nameY)
+        }
+      }
+    } catch { /* non-fatal — shop bar still shows without text */ }
 
-    // Brand tag right-aligned
-    const ctmImg = await Image.renderText(font, 11, "CTMerchant", 0xFF9944FF)
-    const ctmY = GRID_H + Math.floor((SHOP_BAR_H - ctmImg.height) / 2)
-    canvas.composite(ctmImg, OG_W - ctmImg.width - 16, ctmY)
+    try {
+      const ctmImg = await Image.renderText(font, 11, "CTMerchant", 0xFF9944FF)
+      if (ctmImg.width > 0 && ctmImg.height > 0) {
+        const ctmY = GRID_H + Math.max(0, Math.floor((SHOP_BAR_H - ctmImg.height) / 2))
+        canvas.composite(ctmImg, OG_W - ctmImg.width - 16, ctmY)
+      }
+    } catch { /* non-fatal */ }
   }
 
   return await canvas.encode(1)
@@ -187,14 +197,22 @@ async function buildGrid(
 // deno-lint-ignore no-explicit-any
 type Supa = ReturnType<typeof createClient<any>>
 
+// Bump this suffix whenever a breaking visual change is deployed so existing
+// cached files are bypassed and shops regenerate on next request.
+const CACHE_VERSION = "v2"
+
+function cacheFileName(shopId: string): string {
+  return `shop-${shopId}-${CACHE_VERSION}.png`
+}
+
 function transformUrl(shopId: string): string {
   const base = Deno.env.get("SUPABASE_URL")!
-  return `${base}/storage/v1/render/image/public/${CACHE_BUCKET}/shop-${shopId}.png` +
+  return `${base}/storage/v1/render/image/public/${CACHE_BUCKET}/${cacheFileName(shopId)}` +
     `?width=${OG_W}&height=${OG_H}&resize=cover&quality=75`
 }
 
 async function getCachedUrl(admin: Supa, shopId: string): Promise<string | null> {
-  const fileName = `shop-${shopId}.png`
+  const fileName = cacheFileName(shopId)
   const { data: files } = await admin.storage.from(CACHE_BUCKET).list("", {
     search: fileName, limit: 1,
   })
@@ -207,7 +225,7 @@ async function getCachedUrl(admin: Supa, shopId: string): Promise<string | null>
 }
 
 async function saveAndGetUrl(admin: Supa, shopId: string, png: Uint8Array): Promise<string> {
-  const fileName = `shop-${shopId}.png`
+  const fileName = cacheFileName(shopId)
   await admin.storage.from(CACHE_BUCKET).upload(fileName, png, {
     contentType: "image/png",
     upsert: true,
