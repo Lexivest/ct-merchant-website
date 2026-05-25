@@ -5,28 +5,27 @@
  * (og-cache bucket). Returns a 302 redirect to the storage CDN URL — the same
  * pattern WhatsApp uses for single product images, which is known to work.
  *
- * Cache TTL: 2 hours. On cache hit the response is ~200ms. On cache miss the
- * PNG is generated (~1–2 s), saved, and the bot is redirected to the CDN URL.
+ * Layout:
+ *   - 1200×590 product grid (2×2 cells of 600×295, or wide variants)
+ *   - 1200×40  shop-name bar at the bottom
  *
- * Discounted products (non-null discount_price) are sorted first.
- * Each cell shows the product name + price; discounted cells also show a
- * red -X% badge. Font (Roboto Bold) is fetched in parallel with images.
- *
- * Falls back to first-product-image redirect on any error or timeout.
+ * Cache TTL: 2 hours. Falls back to first-product-image redirect on any error.
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts"
 
-const CTM_LOGO    = "https://www.ctmerchant.com.ng/ctm-logo.jpg"
-const FONT_URL    = "https://fonts.gstatic.com/s/roboto/v32/KFOlCnqEu92Fr1MmWUlfBBc4.ttf"
+const CTM_LOGO     = "https://www.ctmerchant.com.ng/ctm-logo.jpg"
+const FONT_URL     = "https://fonts.gstatic.com/s/roboto/v32/KFOlCnqEu92Fr1MmWUlfBBc4.ttf"
 const CACHE_BUCKET = "og-cache"
-const CACHE_TTL_MS = 2 * 60 * 60 * 1000  // 2 hours
+const CACHE_TTL_MS = 2 * 60 * 60 * 1000
 
-const OG_W  = 1200
-const OG_H  = 630
-const CELL_W = OG_W / 2  // 600
-const CELL_H = OG_H / 2  // 315
+const OG_W       = 1200
+const OG_H       = 630
+const SHOP_BAR_H = 40
+const GRID_H     = OG_H - SHOP_BAR_H  // 590
+const CELL_W     = OG_W / 2           // 600
+const CELL_H     = GRID_H / 2         // 295
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -71,16 +70,24 @@ async function addOverlay(
   cW: number, cH: number, font: Uint8Array | null,
 ): Promise<void> {
   if (!font) return
-  const isSmall   = cH <= CELL_H
-  const stripH    = isSmall ? 56 : 72
-  const nameScale = isSmall ? 12 : 15
-  const priceScale = isSmall ? 11 : 13
-  const pad   = 8
-  const stripY = cH - stripH
+  const isSmall    = cH <= CELL_H
+  const stripH     = isSmall ? 64 : 80
+  const nameScale  = isSmall ? 12 : 15
+  const priceScale = isSmall ? 12 : 14
+  const pad        = 10
+  const stripY     = cH - stripH
 
-  const strip = new Image(cW, stripH)
-  strip.fill(0x000000CC)
-  cell.composite(strip, 0, stripY)
+  // Gradient overlay: 3 strips fading from transparent to opaque
+  const s1H = Math.floor(stripH * 0.30)
+  const s2H = Math.floor(stripH * 0.35)
+  const s3H = stripH - s1H - s2H
+
+  const strip1 = new Image(cW, s1H); strip1.fill(0x00000033)
+  const strip2 = new Image(cW, s2H); strip2.fill(0x00000088)
+  const strip3 = new Image(cW, s3H); strip3.fill(0x000000CC)
+  cell.composite(strip1, 0, stripY)
+  cell.composite(strip2, 0, stripY + s1H)
+  cell.composite(strip3, 0, stripY + s1H + s2H)
 
   const shortName = name.length > (isSmall ? 22 : 26)
     ? name.slice(0, isSmall ? 20 : 24) + "…" : name
@@ -93,11 +100,11 @@ async function addOverlay(
     const priceImg = await Image.renderText(font, priceScale, fmtPrice(discountPrice), 0xFFD700FF)
     cell.composite(priceImg, pad, stripY + stripH - priceImg.height - pad)
     const badgeImg = await Image.renderText(font, priceScale - 1, `-${pct}%`, 0xFFFFFFFF)
-    const bgW = badgeImg.width + 10
-    const bgH = badgeImg.height + 6
+    const bgW = badgeImg.width + 12
+    const bgH = badgeImg.height + 8
     const badge = new Image(bgW, bgH)
     badge.fill(0xE53E3EFF)
-    badge.composite(badgeImg, 5, 3)
+    badge.composite(badgeImg, 6, 4)
     cell.composite(badge, cW - bgW - pad, stripY + stripH - bgH - pad)
   } else {
     const priceImg = await Image.renderText(font, priceScale, fmtPrice(price), 0xFFD700FF)
@@ -109,9 +116,11 @@ interface Product {
   name: string; image_url: string; price: number; discount_price: number | null
 }
 
-async function buildGrid(products: Product[], font: Uint8Array | null): Promise<Uint8Array> {
+async function buildGrid(
+  products: Product[], shopName: string | undefined, font: Uint8Array | null,
+): Promise<Uint8Array> {
   const items = products.slice(0, 4)
-  const [cellW, cellH] = items.length === 2 ? [CELL_W, OG_H] : [CELL_W, CELL_H]
+  const [cellW, cellH] = items.length === 2 ? [CELL_W, GRID_H] : [CELL_W, CELL_H]
 
   const rawBuffers = await Promise.all(items.map(p => fetchRaw(toThumbUrl(p.image_url, cellW, cellH))))
 
@@ -127,22 +136,49 @@ async function buildGrid(products: Product[], font: Uint8Array | null): Promise<
   canvas.fill(0x1a1a2eff)
 
   if (cells.length === 1) {
-    const cell = coverCrop(cells[0].img, OG_W, OG_H)
-    await addOverlay(cell, cells[0].product.name, cells[0].product.price, cells[0].product.discount_price, OG_W, OG_H, font)
+    const cell = coverCrop(cells[0].img, OG_W, GRID_H)
+    await addOverlay(cell, cells[0].product.name, cells[0].product.price, cells[0].product.discount_price, OG_W, GRID_H, font)
     canvas.composite(cell, 0, 0)
   } else if (cells.length === 2) {
     for (let i = 0; i < 2; i++) {
-      const cell = coverCrop(cells[i].img, CELL_W, OG_H)
-      await addOverlay(cell, cells[i].product.name, cells[i].product.price, cells[i].product.discount_price, CELL_W, OG_H, font)
+      const cell = coverCrop(cells[i].img, CELL_W, GRID_H)
+      await addOverlay(cell, cells[i].product.name, cells[i].product.price, cells[i].product.discount_price, CELL_W, GRID_H, font)
       canvas.composite(cell, i * CELL_W, 0)
     }
+    // vertical divider
+    const vDiv = new Image(2, GRID_H); vDiv.fill(0x00000099)
+    canvas.composite(vDiv, CELL_W - 1, 0)
   } else {
-    const positions: [number, number][] = [[0,0],[CELL_W,0],[0,CELL_H],[CELL_W,CELL_H]]
+    const positions: [number, number][] = [[0, 0], [CELL_W, 0], [0, CELL_H], [CELL_W, CELL_H]]
     for (let i = 0; i < Math.min(cells.length, 4); i++) {
       const cell = coverCrop(cells[i].img, CELL_W, CELL_H)
       await addOverlay(cell, cells[i].product.name, cells[i].product.price, cells[i].product.discount_price, CELL_W, CELL_H, font)
       canvas.composite(cell, positions[i][0], positions[i][1])
     }
+    // cell dividers
+    const vDiv = new Image(2, GRID_H); vDiv.fill(0x00000099)
+    canvas.composite(vDiv, CELL_W - 1, 0)
+    const hDiv = new Image(OG_W, 2); hDiv.fill(0x00000099)
+    canvas.composite(hDiv, 0, CELL_H - 1)
+  }
+
+  // Shop name bar across the full bottom
+  const shopBar = new Image(OG_W, SHOP_BAR_H)
+  shopBar.fill(0x0D0D1AFF)
+  canvas.composite(shopBar, 0, GRID_H)
+
+  if (shopName && font) {
+    const maxLen = 44
+    const displayName = shopName.length > maxLen ? shopName.slice(0, maxLen - 1) + "…" : shopName
+    const nameImg = await Image.renderText(font, 14, displayName, 0xFFFFFFFF)
+    const nameX = Math.max(16, Math.floor((OG_W - nameImg.width) / 2))
+    const nameY = GRID_H + Math.floor((SHOP_BAR_H - nameImg.height) / 2)
+    canvas.composite(nameImg, nameX, nameY)
+
+    // Brand tag right-aligned
+    const ctmImg = await Image.renderText(font, 11, "CTMerchant", 0xFF9944FF)
+    const ctmY = GRID_H + Math.floor((SHOP_BAR_H - ctmImg.height) / 2)
+    canvas.composite(ctmImg, OG_W - ctmImg.width - 16, ctmY)
   }
 
   return await canvas.encode(1)
@@ -151,12 +187,6 @@ async function buildGrid(products: Product[], font: Uint8Array | null): Promise<
 // deno-lint-ignore no-explicit-any
 type Supa = ReturnType<typeof createClient<any>>
 
-/**
- * Build the Image Transform CDN URL for a cached grid PNG. This is what we
- * redirect WhatsApp to: Supabase's transform endpoint reads the source PNG
- * (1+ MB) and serves a WebP/JPEG (50-200 KB) based on the bot's Accept
- * header — well under WhatsApp's ~300 KB og:image size limit.
- */
 function transformUrl(shopId: string): string {
   const base = Deno.env.get("SUPABASE_URL")!
   return `${base}/storage/v1/render/image/public/${CACHE_BUCKET}/shop-${shopId}.png` +
@@ -200,10 +230,9 @@ Deno.serve(async (req: Request) => {
   let fallbackUrl = CTM_LOGO
 
   try {
-    // Run cache check and data fetch in parallel to minimise latency on cache miss
     const [cachedUrl, shopRes, prodRes, font] = await Promise.all([
       getCachedUrl(admin, shopId),
-      admin.from("shops").select("image_url").eq("id", shopId).single(),
+      admin.from("shops").select("image_url, name").eq("id", shopId).single(),
       admin.from("products")
         .select("name, image_url, price, discount_price")
         .eq("shop_id", shopId)
@@ -218,18 +247,15 @@ Deno.serve(async (req: Request) => {
 
     const products    = (prodRes.data ?? []) as Product[]
     const shopLogoUrl = shopRes.data?.image_url as string | undefined
+    const shopName    = shopRes.data?.name as string | undefined
 
     fallbackUrl = products[0]?.image_url ?? shopLogoUrl ?? CTM_LOGO
 
-    // Fast path: serve cached grid image
     if (cachedUrl) return Response.redirect(cachedUrl, 302)
-
-    // Only one (or zero) products — just redirect, no grid needed
     if (products.length < 2) return Response.redirect(fallbackUrl, 302)
 
-    // Generate grid, save to storage, redirect to CDN URL
     const png = await Promise.race([
-      buildGrid(products, font),
+      buildGrid(products, shopName, font),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("grid timeout")), 9000)
       ),
