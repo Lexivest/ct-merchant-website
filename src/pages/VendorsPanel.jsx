@@ -562,19 +562,25 @@ function VendorsPanel() {
               ctx.fillStyle = "#EC4899"
               ctx.fillRect(textCenter - nameW / 2, 56, nameW, 4)
 
-              // Shop location label — simple, centered
-              ctx.font = `400 23px system-ui, Arial, sans-serif`
-              ctx.fillStyle = "rgba(255,255,255,0.88)"
-              ctx.fillText("📍 Shop Location", textCenter, 102)
+              // Shop category — centered, truncated if too long
+              ctx.font = `500 27px system-ui, Arial, sans-serif`
+              ctx.fillStyle = "rgba(255,255,255,0.9)"
+              const rawCategory = activeShop.category || "General"
+              let categoryDisplay = rawCategory
+              while (ctx.measureText(categoryDisplay).width > maxTextW && categoryDisplay.length > 4) {
+                categoryDisplay = categoryDisplay.slice(0, -1)
+              }
+              if (categoryDisplay.length < rawCategory.length) categoryDisplay = categoryDisplay.trimEnd() + "…"
+              ctx.fillText(categoryDisplay, textCenter, 100)
 
               // Website — pink, centered
-              ctx.font = `700 22px system-ui, Arial, sans-serif`
+              ctx.font = `700 27px system-ui, Arial, sans-serif`
               ctx.fillStyle = "#FCA5A5"
-              ctx.fillText("www.ctmerchant.com.ng", textCenter, 144)
+              ctx.fillText("www.ctmerchant.com.ng", textCenter, 143)
 
               // CT ID (7-digit unique_id used in repo search) — centered
               const ctId = activeShop.unique_id || activeShop.id
-              ctx.font = `400 19px system-ui, Arial, sans-serif`
+              ctx.font = `400 22px system-ui, Arial, sans-serif`
               ctx.fillStyle = "rgba(255,255,255,0.5)"
               ctx.fillText(`CT ID: ${ctId}`, textCenter, 178)
 
