@@ -1,130 +1,23 @@
 /**
  * Supabase Edge Function — /functions/v1/og-image?id=SHOP_ID
  *
- * Generates a 1200×630 PNG product-grid preview image for WhatsApp/social
- * link previews. Fetches up to 4 approved product images and stitches them
- * into a 2×2 grid using imagescript (pure Deno, no WASM).
+ * Resolves the best preview image for a shop and 302-redirects to it.
+ * Uses the service-role key so RLS is bypassed — same as what anon users
+ * can see in the marketplace (approved products from verified, active shops).
  *
- * Falls back to:
- *   1+ product  → single product image (302 redirect)
- *   0 products  → shop logo (302 redirect)
- *   no logo     → CTM default logo (302 redirect)
- *
- * Grid generation errors also fall back gracefully to a redirect.
+ * Resolution order:
+ *   1. First approved + available product image (newest first)
+ *   2. Shop logo
+ *   3. CTM default logo
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts"
 
 const CTM_LOGO = "https://www.ctmerchant.com.ng/ctm-logo.jpg"
-
-// 1200×630 — standard OG image dimensions (1.91:1 ratio, optimal for WhatsApp)
-const OG_W = 1200
-const OG_H = 630
-const CELL_W = OG_W / 2  // 600 px per column
-const CELL_H = OG_H / 2  // 315 px per row
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-}
-
-const SUPABASE_STORAGE_RE =
-  /^(https:\/\/[^/]+\/storage\/v1\/object\/)(public\/.+)$/
-
-/**
- * If the URL is a Supabase Storage object URL, rewrite it to use the
- * Image Transform endpoint so Supabase CDN delivers a pre-resized thumbnail
- * instead of the full-size original. This cuts network + decode time by 5-10×.
- * Falls back to the original URL if the pattern doesn't match.
- */
-function toThumbUrl(url: string, w: number, h: number): string {
-  const m = url.match(SUPABASE_STORAGE_RE)
-  if (!m) return url
-  return `${m[1].replace("/object/", "/render/image/")}${m[2]}?width=${w}&height=${h}&resize=cover&quality=80`
-}
-
-/** Fetch a remote image as raw bytes. Returns null on any failure. */
-async function fetchRaw(url: string): Promise<Uint8Array | null> {
-  try {
-    const resp = await fetch(url, { signal: AbortSignal.timeout(5000) })
-    if (!resp.ok) return null
-    return new Uint8Array(await resp.arrayBuffer())
-  } catch {
-    return null
-  }
-}
-
-/**
- * Resize + center-crop an image to exactly (targetW × targetH) — CSS "cover" behaviour.
- * Ensures the cell is always fully filled regardless of the source aspect ratio.
- */
-function coverCrop(img: Image, targetW: number, targetH: number): Image {
-  const scale = Math.max(targetW / img.width, targetH / img.height)
-  const sw = Math.max(1, Math.round(img.width * scale))
-  const sh = Math.max(1, Math.round(img.height * scale))
-  const resized = img.resize(sw, sh)
-  const dx = Math.max(0, Math.floor((sw - targetW) / 2))
-  const dy = Math.max(0, Math.floor((sh - targetH) / 2))
-  return resized.crop(dx, dy, targetW, targetH)
-}
-
-/**
- * Build a 1200×630 PNG grid from up to 4 product image URLs.
- * Layout:
- *   2 images → side by side (600×630 each)
- *   3 images → 2 top + 1 bottom-left (bottom-right is dark fill)
- *   4 images → 2×2 grid (600×315 each)
- */
-async function buildGrid(imageUrls: string[]): Promise<Uint8Array> {
-  const urls = imageUrls.slice(0, 4)
-
-  // Request pre-resized thumbnails from Supabase CDN when possible —
-  // avoids downloading full-size originals and cuts decode time significantly.
-  const [cellW, cellH] = urls.length === 2
-    ? [CELL_W, OG_H]   // side-by-side: full height
-    : [CELL_W, CELL_H] // 2×2 grid: half height
-
-  const thumbUrls = urls.map(u => toThumbUrl(u, cellW, cellH))
-
-  // Fetch all images in parallel
-  const rawBuffers = await Promise.all(thumbUrls.map(fetchRaw))
-
-  // Decode each successfully fetched image
-  const decoded: Image[] = []
-  for (const buf of rawBuffers) {
-    if (!buf) continue
-    try {
-      decoded.push(await Image.decode(buf))
-    } catch { /* skip corrupt images */ }
-  }
-
-  if (decoded.length === 0) throw new Error("no decodable images")
-
-  const canvas = new Image(OG_W, OG_H)
-  // Dark charcoal background — shows between cells and behind any partial fills
-  canvas.fill(0x1a1a2eff)
-
-  if (decoded.length === 1) {
-    // Single image: fill the whole canvas
-    canvas.composite(coverCrop(decoded[0], OG_W, OG_H), 0, 0)
-  } else if (decoded.length === 2) {
-    // Two images: side by side, full height
-    canvas.composite(coverCrop(decoded[0], CELL_W, OG_H), 0, 0)
-    canvas.composite(coverCrop(decoded[1], CELL_W, OG_H), CELL_W, 0)
-  } else {
-    // 3–4 images: 2×2 grid (3rd and optional 4th fill bottom row)
-    const positions: [number, number][] = [
-      [0, 0],      [CELL_W, 0],
-      [0, CELL_H], [CELL_W, CELL_H],
-    ]
-    for (let i = 0; i < Math.min(decoded.length, 4); i++) {
-      canvas.composite(coverCrop(decoded[i], CELL_W, CELL_H), positions[i][0], positions[i][1])
-    }
-  }
-
-  // Encode as PNG with light compression (faster than max, still much smaller than raw)
-  return await canvas.encode(1)
 }
 
 Deno.serve(async (req: Request) => {
@@ -139,11 +32,8 @@ Deno.serve(async (req: Request) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   )
 
-  // Establish a fallback early so the catch block always has something to redirect to
-  let fallbackImageUrl = CTM_LOGO
-
   try {
-    const [shopRes, prodsRes] = await Promise.all([
+    const [shopRes, prodRes] = await Promise.all([
       admin.from("shops").select("image_url").eq("id", shopId).single(),
       admin
         .from("products")
@@ -153,43 +43,17 @@ Deno.serve(async (req: Request) => {
         .eq("is_approved", true)
         .not("image_url", "is", null)
         .order("created_at", { ascending: false })
-        .limit(4),
+        .limit(1),
     ])
 
-    const productUrls = (prodsRes.data ?? [])
-      .map((p: { image_url: string }) => p.image_url)
-      .filter(Boolean) as string[]
-
+    const productImageUrl = (prodRes.data ?? [])[0]?.image_url as string | undefined
     const shopLogoUrl = shopRes.data?.image_url as string | undefined
 
-    // Update fallback now that we have real URLs
-    fallbackImageUrl = productUrls[0] ?? shopLogoUrl ?? CTM_LOGO
+    const imageUrl = productImageUrl ?? shopLogoUrl ?? CTM_LOGO
 
-    // Need at least 2 product images to justify the PNG generation cost;
-    // a single image is served more efficiently as a direct redirect.
-    if (productUrls.length < 2) {
-      return Response.redirect(fallbackImageUrl, 302)
-    }
-
-    // Race grid generation against an 8-second wall-clock timeout.
-    // If it loses, the catch block redirects to the fallback.
-    const png = await Promise.race([
-      buildGrid(productUrls),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("grid timeout")), 8000)
-      ),
-    ])
-
-    return new Response(png, {
-      headers: {
-        ...CORS,
-        "Content-Type": "image/png",
-        // Cache for 1 hour — product inventory changes slowly
-        "Cache-Control": "public, max-age=3600, s-maxage=3600",
-      },
-    })
+    return Response.redirect(imageUrl, 302)
   } catch (err) {
-    console.error("[og-image] falling back to redirect:", (err as Error).message)
-    return Response.redirect(fallbackImageUrl, 302)
+    console.error("[og-image] error:", (err as Error).message)
+    return Response.redirect(CTM_LOGO, 302)
   }
 })

@@ -38,26 +38,13 @@ export async function handleShopOg(context) {
   const SUPABASE_KEY = env.VITE_SUPABASE_ANON_KEY || FALLBACK_KEY
 
   try {
-    // Fetch shop info and first product image in parallel
-    const [shopRes, prodRes] = await Promise.all([
-      fetch(
-        `${SUPABASE_URL}/rest/v1/shops` +
-        `?id=eq.${encodeURIComponent(shopId)}` +
-        `&select=name,image_url,address,category,is_verified` +
-        `&limit=1`,
-        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
-      ),
-      fetch(
-        `${SUPABASE_URL}/rest/v1/products` +
-        `?shop_id=eq.${encodeURIComponent(shopId)}` +
-        `&is_available=eq.true&is_approved=eq.true` +
-        `&image_url=not.is.null` +
-        `&select=image_url` +
-        `&order=created_at.desc` +
-        `&limit=1`,
-        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
-      ),
-    ])
+    const shopRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/shops` +
+      `?id=eq.${encodeURIComponent(shopId)}` +
+      `&select=name,address` +
+      `&limit=1`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
+    )
 
     if (!shopRes.ok) return next()
 
@@ -65,16 +52,14 @@ export async function handleShopOg(context) {
     const shop = shops?.[0]
     if (!shop) return next()
 
-    const products = prodRes.ok ? await prodRes.json() : []
-
     const title = `${shop.name} | CTMerchant`
     const description = shop.address
       ? `📍 ${shop.address}`
       : `Visit ${shop.name} on CTMerchant`
 
-    // Use the first product image if available, otherwise fall back to shop logo
-    const image = products?.[0]?.image_url || shop.image_url ||
-      "https://www.ctmerchant.com.ng/ctm-logo.jpg"
+    // Edge function uses service-role key (bypasses RLS) so it can always
+    // resolve the best available product image, falling back to shop logo.
+    const image = `${SUPABASE_URL}/functions/v1/og-image?id=${encodeURIComponent(shopId)}`
     const pageUrl = request.url
 
     const html = buildHtml({ title, description, image, pageUrl, shopName: shop.name })

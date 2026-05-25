@@ -390,8 +390,7 @@ function VendorsPanel() {
   }
 
   function handleWhatsAppShare() {
-    const text = `${activeShop.address ? "📍 " + activeShop.address + "\n" : ""}Visit our store on CTMerchant:\n${storefrontUrl}`
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer")
+    window.open(`https://wa.me/?text=${encodeURIComponent(storefrontUrl)}`, "_blank", "noopener,noreferrer")
   }
 
   function beginRouteTransition(retryAction = null) {
