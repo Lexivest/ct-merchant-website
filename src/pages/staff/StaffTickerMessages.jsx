@@ -50,6 +50,7 @@ export default function StaffTickerMessages() {
   const [form, setForm] = useState({
     city_id:    isSuperAdmin ? "" : (staffCityId ? String(staffCityId) : ""),
     message:    "",
+    image_url:  "",
     is_active:  true,
     sort_order: 0,
   })
@@ -115,6 +116,7 @@ export default function StaffTickerMessages() {
     try {
       const payload = {
         message:    trimmed,
+        image_url:  form.image_url.trim() || null,
         is_active:  form.is_active,
         sort_order: Number(form.sort_order) || 0,
         ...(form.city_id ? { city_id: parseInt(form.city_id, 10) } : {}),
@@ -132,6 +134,7 @@ export default function StaffTickerMessages() {
       setForm({
         city_id:    isSuperAdmin ? "" : (staffCityId ? String(staffCityId) : ""),
         message:    "",
+        image_url:  "",
         is_active:  true,
         sort_order: 0,
       })
@@ -332,6 +335,33 @@ export default function StaffTickerMessages() {
                 </p>
               </div>
 
+              {/* Optional image */}
+              <div>
+                <label className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-400">
+                  Image URL <span className="font-semibold normal-case tracking-normal text-slate-400">(optional)</span>
+                </label>
+                <div className="flex items-center gap-3">
+                  {form.image_url.trim() && (
+                    <img
+                      src={form.image_url.trim()}
+                      alt="preview"
+                      className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 object-cover"
+                      onError={(e) => { e.currentTarget.style.display = "none" }}
+                    />
+                  )}
+                  <input
+                    type="url"
+                    value={form.image_url}
+                    onChange={(e) => setForm((prev) => ({ ...prev, image_url: e.target.value }))}
+                    placeholder="https://… (product image, shop logo, etc.)"
+                    className="flex-1 rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-pink-500 focus:bg-white"
+                  />
+                </div>
+                <p className="mt-1 text-[10px] text-slate-400">
+                  Shows as a 26 px thumbnail to the left of the text.
+                </p>
+              </div>
+
               {/* Sort order (super-admin only) */}
               {isSuperAdmin && (
                 <div>
@@ -397,9 +427,24 @@ export default function StaffTickerMessages() {
                 Live Preview
               </p>
               <div
-                className="flex items-center gap-3 overflow-hidden rounded-xl px-4"
+                className="flex items-center gap-2 overflow-hidden rounded-xl px-4"
                 style={{ height: 36, background: "#131921" }}
               >
+                {form.image_url.trim() && (
+                  <img
+                    src={form.image_url.trim()}
+                    alt=""
+                    style={{
+                      flexShrink: 0,
+                      width: 26,
+                      height: 26,
+                      borderRadius: 6,
+                      objectFit: "cover",
+                      background: "#1e293b",
+                    }}
+                    onError={(e) => { e.currentTarget.style.display = "none" }}
+                  />
+                )}
                 <p
                   style={{
                     flex: 1,
@@ -457,10 +502,19 @@ export default function StaffTickerMessages() {
                         {item.city_name}
                       </div>
 
-                      {/* Message */}
-                      <p className="text-sm font-bold leading-relaxed text-slate-900 break-words">
-                        {item.message}
-                      </p>
+                      {/* Message + optional thumbnail */}
+                      <div className="flex items-center gap-2">
+                        {item.image_url && (
+                          <img
+                            src={item.image_url}
+                            alt=""
+                            className="h-8 w-8 shrink-0 rounded-lg border border-slate-200 object-cover"
+                          />
+                        )}
+                        <p className="text-sm font-bold leading-relaxed text-slate-900 break-words">
+                          {item.message}
+                        </p>
+                      </div>
 
                       {/* Sort order badge + editable for super-admin */}
                       {isSuperAdmin && (

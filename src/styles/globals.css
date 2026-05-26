@@ -535,8 +535,7 @@ img {
 .market-ticker-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  overflow: hidden;
+  overflow: hidden;    /* clips slide animation at bar edges */
   height: 36px;
   background: #131921;
   padding: 0 16px;
