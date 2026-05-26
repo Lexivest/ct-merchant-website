@@ -678,9 +678,6 @@ const ServiceMarketCard = memo(function ServiceMarketCard({ provider, onOpenServ
         onPointerDown={prefetchServiceProviderPage}
       >
         <div className="shop-card-title">
-          <span className="mr-2 rounded-full bg-pink-100 px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-wide text-pink-700">
-            Service
-          </span>
           {shop.name}
         </div>
         <div className="shop-image-grid">{cells}</div>
@@ -855,9 +852,20 @@ function MarketSection({
     return grouped
   }, [dashboardData?.products, dashboardData?.shops])
 
+  const activeCategoryNames = useMemo(() => {
+    const names = new Set()
+    ;(dashboardData?.shops || []).forEach((shop) => {
+      if (shop.category) names.add(shop.category)
+    })
+    return names
+  }, [dashboardData?.shops])
+
   const sortedCategories = useMemo(() => {
     return [...(dashboardData?.categories || [])]
-      .filter((category) => !isServiceCategory(category?.name))
+      .filter((category) =>
+        !isServiceCategory(category?.name) &&
+        activeCategoryNames.has(category?.name)
+      )
       .sort((a, b) => {
       const aHasCategoryImage = Boolean(getCategoryImageUrl(a))
       const bHasCategoryImage = Boolean(getCategoryImageUrl(b))
@@ -868,7 +876,7 @@ function MarketSection({
 
       return String(a?.name || "").localeCompare(String(b?.name || ""))
     })
-  }, [dashboardData?.categories])
+  }, [dashboardData?.categories, activeCategoryNames])
 
 
   // 1. PROFESSIONAL ERROR STATE (Only shows if no cache is available)
@@ -1000,11 +1008,8 @@ function MarketSection({
 
       {groupedShopsByArea.map(({ area, shops, entries }, index) => {
         const areaEntries = entries || shops.map((shop) => ({ type: "shop", shop }))
-        const hasOnlyServices =
-          areaEntries.length > 0 && areaEntries.every((entry) => entry.type === "service")
-        const areaTitle = hasOnlyServices
-          ? `Services in ${area.name}`
-          : area.id && area.id === dashboardData.profile?.area_id
+        const areaTitle =
+          area.id && area.id === dashboardData.profile?.area_id
             ? `Top stores in ${area.name}`
             : area.name
 

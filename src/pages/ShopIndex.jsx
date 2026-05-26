@@ -2,7 +2,6 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   FaArrowLeft,
-  FaBriefcase,
   FaChevronRight,
   FaCircleCheck,
   FaLocationDot,
@@ -435,14 +434,11 @@ function ShopIndex() {
                   </div>
 
                   <div className="mb-1.5 flex items-center gap-2">
-                    <span className={`inline-flex items-center gap-1 rounded px-2 py-1 text-[0.68rem] font-black ${
-                      isService
-                        ? "bg-indigo-50 text-indigo-700"
-                        : "bg-emerald-50 text-emerald-700"
-                    }`}>
-                      {isService ? <FaBriefcase /> : null}
-                      {isService ? "Service" : "Shop"}
-                    </span>
+                    {!isService && (
+                      <span className="inline-flex items-center gap-1 rounded px-2 py-1 text-[0.68rem] font-black bg-emerald-50 text-emerald-700">
+                        Shop
+                      </span>
+                    )}
 
                     {shop.is_verified ? (
                       <span className="text-[0.72rem] font-semibold text-slate-400">
