@@ -400,24 +400,6 @@ export default function StaffTickerMessages() {
                 className="flex items-center gap-3 overflow-hidden rounded-xl px-4"
                 style={{ height: 36, background: "#131921" }}
               >
-                <span
-                  style={{
-                    flexShrink: 0,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    padding: "2px 10px",
-                    borderRadius: 99,
-                    background: "#db2777",
-                    color: "#fff",
-                    fontSize: "0.62rem",
-                    fontWeight: 900,
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  CTMerchant
-                </span>
                 <p
                   style={{
                     flex: 1,

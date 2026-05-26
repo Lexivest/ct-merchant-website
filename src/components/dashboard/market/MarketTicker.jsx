@@ -62,11 +62,6 @@ export default function MarketTicker({ cityId }) {
       aria-live="polite"
       aria-atomic="true"
     >
-      {/* Left accent pill */}
-      <span className="market-ticker-pill">
-        CTMerchant
-      </span>
-
       {/* Animated message */}
       <p
         className="market-ticker-message"
