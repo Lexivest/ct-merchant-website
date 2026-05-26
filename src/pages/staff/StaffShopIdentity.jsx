@@ -284,25 +284,7 @@ export default function StaffShopIdentity() {
 
       if (error) throw error
 
-      // Clean up storage files returned by the RPC (fire-and-forget — don't block on storage errors)
-      if (data?.storage) {
-        const BUCKET_MAP = {
-          brand_assets:     "brand-assets",
-          storefronts:      "storefronts",
-          products:         "products",
-          shop_banners:     "shops-banner-storage",
-          cac_documents:    "cac-documents",
-          id_documents:     "id-documents",
-          kyc_videos:       "kyc_videos",
-          payment_receipts: "payment-receipts",
-        }
-        await Promise.allSettled(
-          Object.entries(BUCKET_MAP)
-            .filter(([key]) => data.storage[key]?.length > 0)
-            .map(([key, bucket]) => supabase.storage.from(bucket).remove(data.storage[key]))
-        )
-      }
-
+      // Storage cleanup is handled server-side inside the RPC via set_config bypass.
       // Remove from list and clear selection
       setShops((previous) => previous.filter((shop) => shop.id !== selectedShop.id))
       setSelectedShop(null)
