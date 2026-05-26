@@ -26,6 +26,7 @@ import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
 import GlobalErrorScreen from "../../components/common/GlobalErrorScreen";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
+import { countWords } from "../../lib/textLimits";
 
 // --- SHIMMER COMPONENT ---
 function SettingsShimmer() {
@@ -35,6 +36,20 @@ function SettingsShimmer() {
       message="Please wait while we prepare your settings."
     />
   );
+}
+
+const DESC_MIN_WORDS = 30
+const DESC_MAX_WORDS = 150
+const ADDR_MIN_WORDS = 5
+const ADDR_MAX_WORDS = 50
+
+function WordCounter({ count, min, max }) {
+  const valid = count >= min && count <= max
+  return (
+    <div className={`mt-1.5 text-right text-[0.72rem] font-extrabold uppercase tracking-widest ${valid ? "text-emerald-600" : "text-rose-500"}`}>
+      {count} / {max} words
+    </div>
+  )
 }
 
 export default function MerchantSettings() {
@@ -149,6 +164,9 @@ export default function MerchantSettings() {
     setForm((prev) => ({ ...prev, [id]: value }));
   };
 
+  const descWords = countWords(form.desc)
+  const addressWords = countWords(form.address)
+
   const entityName = isServiceMode ? "service" : "shop";
   const entityTitle = isServiceMode ? "Service" : "Shop";
   const profileLabel = isServiceMode ? "Service" : "Business";
@@ -160,6 +178,16 @@ export default function MerchantSettings() {
     e.preventDefault();
     if (isOffline) {
       notify({ type: "error", title: "Network unavailable", message: "You must be online to save changes." });
+      return;
+    }
+
+    if (descWords < DESC_MIN_WORDS || descWords > DESC_MAX_WORDS) {
+      notify({ type: "error", title: "Description out of range", message: `${entityTitle} description must be between ${DESC_MIN_WORDS} and ${DESC_MAX_WORDS} words (currently ${descWords}).` });
+      return;
+    }
+
+    if (addressWords < ADDR_MIN_WORDS || addressWords > ADDR_MAX_WORDS) {
+      notify({ type: "error", title: "Address out of range", message: `${addressLabel} must be between ${ADDR_MIN_WORDS} and ${ADDR_MAX_WORDS} words (currently ${addressWords}).` });
       return;
     }
 
@@ -274,6 +302,7 @@ export default function MerchantSettings() {
               <FaAlignLeft className="mr-2 text-[#db2777]" /> Description
             </label>
             <textarea id="desc" value={form.desc} onChange={handleInputChange} required placeholder={`Tell customers what your ${entityName} is all about...`} className="min-h-[120px] w-full resize-y rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
+            <WordCounter count={descWords} min={DESC_MIN_WORDS} max={DESC_MAX_WORDS} />
           </div>
 
           <div className="mb-8">
@@ -281,6 +310,7 @@ export default function MerchantSettings() {
               <FaLocationDot className="mr-2 text-[#db2777]" /> {addressLabel}
             </label>
             <input type="text" id="address" value={form.address} onChange={handleInputChange} required className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
+            <WordCounter count={addressWords} min={ADDR_MIN_WORDS} max={ADDR_MAX_WORDS} />
           </div>
 
           <hr className="my-8 border-none bg-[#D5D9D9] h-px" />
