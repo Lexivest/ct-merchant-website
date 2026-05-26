@@ -217,6 +217,8 @@ function ShopDetail() {
       ttl: 1000 * 60 * 5,
       persist: "session",
       skip: !shopId,
+      revalidateOnMount: true,
+      revalidateOnFocus: true,
     }
   )
 

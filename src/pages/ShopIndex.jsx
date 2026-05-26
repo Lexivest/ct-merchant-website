@@ -122,7 +122,13 @@ function ShopIndex() {
   const { data: directoryData, loading: dataLoading, error: dataError, mutate } = useCachedFetch(
     cacheKey,
     fetchDirectory,
-    { dependencies: [profile?.city_id, debouncedSearch], ttl: 1000 * 60 * 15, persist: "session" }
+    {
+      dependencies: [profile?.city_id, debouncedSearch],
+      ttl: 1000 * 60 * 3,
+      persist: "session",
+      revalidateOnMount: true,
+      revalidateOnFocus: true,
+    }
   )
 
   const headerTitle = profile?.cities?.name

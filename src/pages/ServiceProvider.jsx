@@ -200,6 +200,8 @@ export default function ServiceProvider() {
       ttl: 1000 * 60 * 5,
       persist: "session",
       skip: !shopId || (!isRepoSearchEntry && !user?.id),
+      revalidateOnMount: true,
+      revalidateOnFocus: true,
     },
   )
 
@@ -266,6 +268,36 @@ export default function ServiceProvider() {
       },
     })
   }, [currentShop?.id, currentShop?.owner_id, isRepoSearchEntry, repoRef, serviceCategory, user?.id])
+
+  // Realtime: invalidate cache and re-fetch when the service shop or its
+  // products change while the user is on this page.
+  useEffect(() => {
+    if (!shopId || isRepoSearchEntry) return undefined
+
+    let refreshTimerId = null
+
+    const scheduleRefresh = () => {
+      if (refreshTimerId) window.clearTimeout(refreshTimerId)
+      refreshTimerId = window.setTimeout(() => {
+        refreshTimerId = null
+        mutate()
+      }, 500)
+    }
+
+    const channel = supabase
+      .channel(`service-provider-live-${shopId}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "shops",        filter: `id=eq.${shopId}` }, scheduleRefresh)
+      .on("postgres_changes", { event: "*",      schema: "public", table: "products",     filter: `shop_id=eq.${shopId}` }, scheduleRefresh)
+      .on("postgres_changes", { event: "*",      schema: "public", table: "shop_banners_news", filter: `shop_id=eq.${shopId}` }, scheduleRefresh)
+      .subscribe((status) => {
+        if (status === "TIMED_OUT" || status === "CHANNEL_ERROR") scheduleRefresh()
+      })
+
+    return () => {
+      if (refreshTimerId) window.clearTimeout(refreshTimerId)
+      supabase.removeChannel(channel)
+    }
+  }, [isRepoSearchEntry, mutate, shopId])
 
   function goBackSafe() {
     if (window.history.length > 1) {
