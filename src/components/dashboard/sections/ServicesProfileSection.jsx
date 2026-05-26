@@ -88,9 +88,6 @@ function ServicesProfileSection({
   setServiceView,
   user,
   currentProfile,
-  profileEditOpen,
-  openProfileEdit,
-  cancelProfileEdit,
   handleLogout,
   handleShopClick,
   shopCardMeta,
@@ -276,51 +273,141 @@ function ServicesProfileSection({
   return (
     <>
       <div className="screen active">
-        {!profileEditOpen ? (
-          <div className="mx-auto my-5 max-w-[600px] rounded-lg border border-[#D5D9D9] bg-white p-10 text-center">
-            <img
-              src={
-                currentProfile?.avatar_url ||
-                profileFallbackAvatar
-              }
-              alt="Avatar"
-              className="mx-auto mb-4 h-[120px] w-[120px] rounded-full border-2 border-[#D5D9D9] object-cover"
-              onError={(event) => {
-                event.currentTarget.onerror = null
-                event.currentTarget.src = profileFallbackAvatar
-              }}
-            />
-            <h2 className="mb-2 text-[1.8rem] font-extrabold text-[#0F1111]">
-              {currentProfile?.full_name || "Loading..."}
-            </h2>
-            <p className="mb-1 font-medium text-[#565959]">
-              {currentProfile?.phone || "No phone number added"}
-            </p>
-            <p className="mb-6 text-[0.95rem] text-[#565959]">{user?.email}</p>
+        <div className="mx-auto my-5 max-w-[600px] space-y-4 px-4 pb-10">
 
-            <div className="flex justify-center gap-3">
-              <button className="btn-brand" onClick={openProfileEdit}>
-                Edit Profile
+          {/* ── Avatar + identity ── */}
+          <div className="rounded-xl border border-[#D5D9D9] bg-white p-6 text-center">
+            <div
+              className="avatar-edit-box relative mx-auto h-[110px] w-[110px] cursor-pointer overflow-hidden rounded-full border-2 border-[#D5D9D9]"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <img
+                src={avatarPreview || currentProfile?.avatar_url || profileFallbackAvatar}
+                alt="Avatar"
+                className="h-full w-full object-cover"
+                onError={(event) => {
+                  event.currentTarget.onerror = null
+                  event.currentTarget.src = profileFallbackAvatar
+                }}
+              />
+              <div className="avatar-overlay absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 transition hover:opacity-100">
+                <FaCamera className="text-2xl" />
+              </div>
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              hidden
+              accept={AVATAR_ACCEPT}
+              onChange={onAvatarSelect}
+            />
+
+            <p className="mt-2 text-[0.8rem] font-semibold text-[#565959]">
+              {`Tap photo to update (${AVATAR_RULE_LABEL})`}
+            </p>
+            <p className="mt-1 text-[0.88rem] text-[#565959]">{user?.email}</p>
+          </div>
+
+          {/* ── Edit form ── */}
+          <div className="rounded-xl border border-[#D5D9D9] bg-white p-6">
+            <h3 className="mb-5 text-[1.2rem] font-extrabold text-[#0F1111]">Edit Profile</h3>
+
+            <div className="form-group mb-4 text-left">
+              <label className="form-label mb-[6px] block text-[0.9rem] font-bold text-[#0F1111]">
+                Full Name
+              </label>
+              <input
+                className="form-input w-full rounded border border-[#888C8C] px-[14px] py-[10px] text-base shadow-[inset_0_1px_2px_rgba(15,17,17,.15)]"
+                value={profileEditForm.full_name}
+                onChange={(e) =>
+                  setProfileEditForm((prev) => ({ ...prev, full_name: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="form-group mb-4 text-left">
+              <label className="form-label mb-[6px] block text-[0.9rem] font-bold text-[#0F1111]">
+                Phone Number
+              </label>
+              <input
+                className="form-input w-full rounded border border-[#888C8C] px-[14px] py-[10px] text-base shadow-[inset_0_1px_2px_rgba(15,17,17,.15)]"
+                value={profileEditForm.phone}
+                onChange={(e) =>
+                  setProfileEditForm((prev) => ({ ...prev, phone: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="form-group mb-4 text-left">
+              <label className="form-label mb-[6px] block text-[0.9rem] font-bold text-[#0F1111]">
+                City
+              </label>
+              <select
+                disabled
+                className="form-input w-full rounded border border-[#888C8C] bg-slate-100 px-[14px] py-[10px] text-base shadow-[inset_0_1px_2px_rgba(15,17,17,.15)] cursor-not-allowed text-slate-400"
+                value={profileEditForm.city_id}
+                onChange={(e) => handleProfileCityChange(e.target.value)}
+              >
+                <option value="">Select City</option>
+                {profileEditCities.map((city) => (
+                  <option key={city.id} value={city.id}>{city.name}</option>
+                ))}
+              </select>
+              <p className="mt-1.5 text-[0.78rem] font-semibold text-amber-600">
+                City change is unavailable now.
+              </p>
+            </div>
+
+            <div className="form-group mb-6 text-left">
+              <label className="form-label mb-[6px] block text-[0.9rem] font-bold text-[#0F1111]">
+                Area
+              </label>
+              <select
+                className="form-input w-full rounded border border-[#888C8C] bg-white px-[14px] py-[10px] text-base shadow-[inset_0_1px_2px_rgba(15,17,17,.15)]"
+                value={profileEditForm.area_id}
+                onChange={(e) =>
+                  setProfileEditForm((prev) => ({ ...prev, area_id: e.target.value }))
+                }
+              >
+                <option value="">Select Area</option>
+                {profileEditAreas.map((area) => (
+                  <option key={area.id} value={area.id}>{area.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {profileEditError ? (
+              <p className="mb-4 text-[0.9rem] text-[#C40000]">{profileEditError}</p>
+            ) : null}
+
+            <div className="flex gap-3">
+              <button
+                className="btn-brand flex-1"
+                onClick={saveProfile}
+                disabled={profileSaving}
+              >
+                {profileSaving ? "Saving..." : "Save Changes"}
               </button>
-              <button className="btn-brand-alt" onClick={handleLogout}>
+              <button className="btn-brand-alt flex-1" onClick={handleLogout}>
                 Sign Out
               </button>
             </div>
+          </div>
 
-            {/* ── Delete Account Zone ── */}
+          {/* ── Delete Account Zone ── */}
+          <div className="rounded-xl border border-[#D5D9D9] bg-white px-6 py-5 text-center">
             {!deleteZoneOpen ? (
-              <div className="mt-6 border-t border-[#E5E7EB] pt-5">
-                <button
-                  type="button"
-                  onClick={openDeleteZone}
-                  className="mx-auto flex items-center gap-1.5 text-[0.82rem] font-semibold text-[#9CA3AF] transition hover:text-[#C40000]"
-                >
-                  <FaTrash className="text-[0.7rem]" />
-                  Delete my account
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={openDeleteZone}
+                className="mx-auto flex items-center gap-1.5 text-[0.82rem] font-semibold text-[#9CA3AF] transition hover:text-[#C40000]"
+              >
+                <FaTrash className="text-[0.7rem]" />
+                Delete my account
+              </button>
             ) : (
-              <div className="mt-6 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-5 text-left">
+              <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-5 text-left">
                 <h4 className="mb-2 flex items-center gap-2 text-[0.95rem] font-extrabold text-[#991B1B]">
                   <FaTriangleExclamation /> Permanently Delete Account
                 </h4>
@@ -340,9 +427,7 @@ function ServicesProfileSection({
                   className="mb-4 w-full rounded-lg border border-[#FECACA] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F1111] placeholder:font-normal placeholder:text-[#9CA3AF] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/20"
                 />
                 {deleteError && (
-                  <p className="mb-3 text-[0.82rem] font-semibold text-[#C40000]">
-                    {deleteError}
-                  </p>
+                  <p className="mb-3 text-[0.82rem] font-semibold text-[#C40000]">{deleteError}</p>
                 )}
                 <div className="flex gap-3">
                   <button
@@ -366,141 +451,9 @@ function ServicesProfileSection({
                 </div>
               </div>
             )}
-
           </div>
-        ) : (
-          <div className="mx-auto my-5 max-w-[600px] rounded-lg border border-[#D5D9D9] bg-white p-[30px]">
-            <h3 className="mb-6 text-[1.4rem] font-extrabold">Edit Profile</h3>
 
-            <div className="mb-6 text-center">
-              <div
-                className="avatar-edit-box relative mx-auto h-[110px] w-[110px] cursor-pointer overflow-hidden rounded-full border-2 border-[#D5D9D9]"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <img
-                  src={avatarPreview}
-                  alt="Avatar Preview"
-                  className="h-full w-full object-cover"
-                />
-                <div className="avatar-overlay absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 transition hover:opacity-100">
-                  <FaCamera className="text-2xl" />
-                </div>
-              </div>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                hidden
-                accept={AVATAR_ACCEPT}
-                onChange={onAvatarSelect}
-              />
-
-              <p className="mt-2 text-[0.8rem] font-semibold text-[#565959]">
-                {`Tap photo to update (${AVATAR_RULE_LABEL})`}
-              </p>
-            </div>
-
-            <div className="form-group mb-4 text-left">
-              <label className="form-label mb-[6px] block text-[0.9rem] font-bold text-[#0F1111]">
-                Full Name
-              </label>
-              <input
-                className="form-input w-full rounded border border-[#888C8C] px-[14px] py-[10px] text-base shadow-[inset_0_1px_2px_rgba(15,17,17,.15)]"
-                value={profileEditForm.full_name}
-                onChange={(e) =>
-                  setProfileEditForm((prev) => ({
-                    ...prev,
-                    full_name: e.target.value,
-                  }))
-                }
-              />
-            </div>
-
-            <div className="form-group mb-4 text-left">
-              <label className="form-label mb-[6px] block text-[0.9rem] font-bold text-[#0F1111]">
-                Phone Number
-              </label>
-              <input
-                className="form-input w-full rounded border border-[#888C8C] px-[14px] py-[10px] text-base shadow-[inset_0_1px_2px_rgba(15,17,17,.15)]"
-                value={profileEditForm.phone}
-                onChange={(e) =>
-                  setProfileEditForm((prev) => ({
-                    ...prev,
-                    phone: e.target.value,
-                  }))
-                }
-              />
-            </div>
-
-            <div className="form-group mb-4 text-left">
-              <label className="form-label mb-[6px] block text-[0.9rem] font-bold text-[#0F1111]">
-                City
-              </label>
-              <select
-                disabled
-                className="form-input w-full rounded border border-[#888C8C] bg-slate-100 px-[14px] py-[10px] text-base shadow-[inset_0_1px_2px_rgba(15,17,17,.15)] cursor-not-allowed text-slate-400"
-                value={profileEditForm.city_id}
-                onChange={(e) => handleProfileCityChange(e.target.value)}
-              >
-                <option value="">Select City</option>
-                {profileEditCities.map((city) => (
-                  <option key={city.id} value={city.id}>
-                    {city.name}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1.5 text-[0.78rem] font-semibold text-amber-600">
-                City change is unavailable now.
-              </p>
-            </div>
-
-            <div className="form-group mb-6 text-left">
-              <label className="form-label mb-[6px] block text-[0.9rem] font-bold text-[#0F1111]">
-                Area
-              </label>
-              <select
-                className="form-input w-full rounded border border-[#888C8C] bg-white px-[14px] py-[10px] text-base shadow-[inset_0_1px_2px_rgba(15,17,17,.15)]"
-                value={profileEditForm.area_id}
-                onChange={(e) =>
-                  setProfileEditForm((prev) => ({
-                    ...prev,
-                    area_id: e.target.value,
-                  }))
-                }
-              >
-                <option value="">Select Area</option>
-                {profileEditAreas.map((area) => (
-                  <option key={area.id} value={area.id}>
-                    {area.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {profileEditError ? (
-              <p className="mb-4 text-[0.9rem] text-[#C40000]">
-                {profileEditError}
-              </p>
-            ) : null}
-
-            <div className="flex gap-3">
-              <button
-                className="btn-brand flex-1"
-                onClick={saveProfile}
-                disabled={profileSaving}
-              >
-                {profileSaving ? "Saving..." : "Save Changes"}
-              </button>
-              <button
-                className="btn-brand-alt flex-1"
-                onClick={cancelProfileEdit}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
+        </div>
       </div>
 
       {cropModalOpen ? (

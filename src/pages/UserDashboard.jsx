@@ -446,7 +446,6 @@ function UserDashboard() {
   const [searchSuggestionsDesktop, setSearchSuggestionsDesktop] = useState([])
   const [searchSuggestionsMobile, setSearchSuggestionsMobile] = useState([])
 
-  const [profileEditOpen, setProfileEditOpen] = useState(false)
   const [profileEditForm, setProfileEditForm] = useState({
     full_name: "",
     phone: "",
@@ -644,6 +643,17 @@ function UserDashboard() {
       void markNotificationsRead()
     }
   }, [activeTab, markNotificationsRead])
+
+  // Auto-populate the profile form whenever the user opens the profile tab
+  // (covers both tab-click via switchScreen and direct URL loads).
+  useEffect(() => {
+    if (activeTab === "profile" && profileLoaded) {
+      void openProfileEdit()
+    }
+    // openProfileEdit reads localData.profile at call time; profileLoaded
+    // as a dep ensures we re-run once the profile data is ready.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, profileLoaded])
 
   function updateDashboardLocation({ tab, view }, { replace = false } = {}) {
     setSearchParams(
@@ -1766,7 +1776,6 @@ function UserDashboard() {
     )
 
     setProfileEditError("")
-    setProfileEditOpen(true)
 
     const citiesRes = await supabase
       .from("cities")
@@ -1787,13 +1796,6 @@ function UserDashboard() {
     if (!areasRes.error) {
       setProfileEditAreas(areasRes.data || [])
     }
-  }
-
-  function cancelProfileEdit() {
-    clearGeneratedAvatarPreview()
-    setProfileEditOpen(false)
-    setProfileEditError("")
-    setAvatarBlob(null)
   }
 
   async function handleProfileCityChange(cityId) {
@@ -2279,7 +2281,6 @@ function UserDashboard() {
         title: "Profile updated",
         message: "Your changes have been saved successfully.",
       })
-      setProfileEditOpen(false)
       clearGeneratedAvatarPreview()
       setAvatarBlob(null)
       
@@ -2428,9 +2429,6 @@ function UserDashboard() {
               setServiceView={handleServiceViewChange}
               user={user}
               currentProfile={currentProfile}
-              profileEditOpen={profileEditOpen}
-              openProfileEdit={openProfileEdit}
-              cancelProfileEdit={cancelProfileEdit}
               handleLogout={handleLogout}
               handleShopClick={handleShopClick}
               shopCardMeta={shopMeta} /* PASSED THE ISOLATED META HERE */
@@ -2465,9 +2463,6 @@ function UserDashboard() {
               setServiceView={handleServiceViewChange}
               user={user}
               currentProfile={currentProfile}
-              profileEditOpen={profileEditOpen}
-              openProfileEdit={openProfileEdit}
-              cancelProfileEdit={cancelProfileEdit}
               handleLogout={handleLogout}
               handleShopClick={handleShopClick}
               shopCardMeta={shopMeta} /* PASSED THE ISOLATED META HERE */
