@@ -497,7 +497,7 @@ function getRouteMeta(pathname) {
     },
     "/staff-shop-identity": {
       title: "Shop Management | CTMerchant",
-      description: "Super-admin controls for shop suspension, open/close status, and locked identity field updates.",
+      description: "Super-admin controls for shop open/close status and locked identity field updates.",
       noindex: true,
     },
     "/staff-announcements": {

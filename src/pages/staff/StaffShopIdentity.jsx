@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useLocation } from "react-router-dom"
 import {
   FaAddressBook,
-  FaBan,
-  FaCircleCheck,
   FaCircleNotch,
   FaLock,
   FaMagnifyingGlass,
@@ -35,7 +33,6 @@ const SHOP_SELECT = `
   status,
   is_verified,
   is_open,
-  is_suspended,
   phone,
   whatsapp,
   address,
@@ -89,7 +86,6 @@ export default function StaffShopIdentity() {
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(() => !prefetchedData && !fetchingStaff)
   const [saving, setSaving] = useState(false)
-  const [suspendToggling, setSuspendToggling] = useState(false)
   const [openToggling, setOpenToggling] = useState(false)
 
   const loadShops = useCallback(async (queryText = "") => {
@@ -198,57 +194,6 @@ export default function StaffShopIdentity() {
   function selectShop(shop) {
     setSelectedShop(shop)
     setForm(buildShopPatchForm(shop))
-  }
-
-  async function handleToggleSuspend() {
-    if (!selectedShop || suspendToggling) return
-    const willSuspend = !selectedShop.is_suspended
-
-    const confirmed = await confirm({
-      type: willSuspend ? "error" : "warning",
-      title: willSuspend
-        ? `Suspend "${selectedShop.name}"?`
-        : `Reinstate "${selectedShop.name}"?`,
-      message: willSuspend
-        ? `This will immediately hide "${selectedShop.name}" from all public listings. The shop will not appear in any search results until it is reinstated.`
-        : `This will restore full public visibility for "${selectedShop.name}". The shop will appear in listings again if all other conditions (approved, verified, open, active subscription) are met.`,
-      confirmText: willSuspend ? "Suspend shop" : "Reinstate shop",
-      cancelText: "Cancel",
-    })
-
-    if (!confirmed) return
-    setSuspendToggling(true)
-
-    try {
-      const { error } = await supabase
-        .from("shops")
-        .update({ is_suspended: willSuspend })
-        .eq("id", selectedShop.id)
-
-      if (error) throw error
-
-      const updatedShop = { ...selectedShop, is_suspended: willSuspend }
-      setSelectedShop(updatedShop)
-      setShops((previous) =>
-        previous.map((shop) => (shop.id === updatedShop.id ? updatedShop : shop))
-      )
-
-      notify({
-        kind: "toast",
-        type: "success",
-        message: willSuspend
-          ? `"${selectedShop.name}" has been suspended.`
-          : `"${selectedShop.name}" has been reinstated.`,
-      })
-    } catch (error) {
-      notify({
-        type: "error",
-        title: "Action failed",
-        message: getFriendlyErrorMessage(error, "Could not update shop suspension status."),
-      })
-    } finally {
-      setSuspendToggling(false)
-    }
   }
 
   async function handleToggleOpen() {
@@ -372,7 +317,7 @@ export default function StaffShopIdentity() {
       <StaffPortalShell
         activeKey="shop-identity"
         title="Shop Management"
-        description="Super-admin-only controls for shop suspension, open/close status, and locked identity fields."
+        description="Super-admin-only controls for shop open/close status and locked identity fields."
       >
         <div className="rounded-[28px] border border-amber-200 bg-amber-50 p-8 text-center shadow-sm">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl text-amber-600 shadow-sm">
@@ -391,7 +336,7 @@ export default function StaffShopIdentity() {
     <StaffPortalShell
       activeKey="shop-identity"
       title="Shop Management"
-      description="Manage shop suspension, open/close status, and locked identity fields for verified merchant support requests."
+      description="Manage shop open/close status and locked identity fields for verified merchant support requests."
       headerActions={[
         <QuickActionButton
           key="refresh"
@@ -405,7 +350,7 @@ export default function StaffShopIdentity() {
       <SectionHeading
         eyebrow="Super admin"
         title="Shop management"
-        description="Control shop visibility, suspension status, and locked identity fields. Every locked-field change is written through a super-admin-only RPC and recorded in the audit table."
+        description="Control shop open/close status and locked identity fields. Every locked-field change is written through a super-admin-only RPC and recorded in the audit table."
       />
 
       {/* Search */}
@@ -482,11 +427,6 @@ export default function StaffShopIdentity() {
 
                   {/* Status badges row */}
                   <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                    {shop.is_suspended && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-black text-rose-700">
-                        <FaBan className="text-[8px]" /> Suspended
-                      </span>
-                    )}
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${shop.is_open ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
                       {shop.is_open ? "Open" : "Closed"}
                     </span>
@@ -537,62 +477,33 @@ export default function StaffShopIdentity() {
               </div>
 
               {/* ── Shop Controls ── */}
+              {/* ── Open / Close control ── */}
               <div>
                 <p className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-slate-400">
                   Shop Controls
                 </p>
-                <div className="grid gap-3 sm:grid-cols-2">
-
-                  {/* Open / Close */}
-                  <div className={`rounded-2xl border p-4 transition-colors ${selectedShop.is_open ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
-                    <div className="mb-1 flex items-center justify-between gap-2">
-                      <span className="text-xs font-black uppercase tracking-wide text-slate-500">Store Status</span>
-                      <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black ring-1 ${selectedShop.is_open ? "bg-emerald-100 text-emerald-700 ring-emerald-200" : "bg-amber-100 text-amber-700 ring-amber-200"}`}>
-                        {selectedShop.is_open ? <FaToggleOn /> : <FaToggleOff />}
-                        {selectedShop.is_open ? "Open" : "Closed"}
-                      </span>
-                    </div>
-                    <p className="mb-3 text-xs text-slate-500">
-                      {selectedShop.is_open
-                        ? "Store is currently accepting customers."
-                        : "Store is currently closed to customers."}
-                    </p>
-                    <button
-                      type="button"
-                      disabled={openToggling}
-                      onClick={() => void handleToggleOpen()}
-                      className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-black transition disabled:opacity-60 ${selectedShop.is_open ? "bg-amber-500 text-white hover:bg-amber-600" : "bg-emerald-600 text-white hover:bg-emerald-700"}`}
-                    >
-                      {openToggling ? <FaCircleNotch className="animate-spin" /> : <FaStore />}
-                      {selectedShop.is_open ? "Close store" : "Open store"}
-                    </button>
+                <div className={`rounded-2xl border p-4 transition-colors ${selectedShop.is_open ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="text-xs font-black uppercase tracking-wide text-slate-500">Store Status</span>
+                    <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black ring-1 ${selectedShop.is_open ? "bg-emerald-100 text-emerald-700 ring-emerald-200" : "bg-amber-100 text-amber-700 ring-amber-200"}`}>
+                      {selectedShop.is_open ? <FaToggleOn /> : <FaToggleOff />}
+                      {selectedShop.is_open ? "Open" : "Closed"}
+                    </span>
                   </div>
-
-                  {/* Suspend / Reinstate */}
-                  <div className={`rounded-2xl border p-4 transition-colors ${selectedShop.is_suspended ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-slate-50"}`}>
-                    <div className="mb-1 flex items-center justify-between gap-2">
-                      <span className="text-xs font-black uppercase tracking-wide text-slate-500">Suspension</span>
-                      <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black ring-1 ${selectedShop.is_suspended ? "bg-rose-100 text-rose-700 ring-rose-200" : "bg-emerald-100 text-emerald-700 ring-emerald-200"}`}>
-                        {selectedShop.is_suspended ? <FaBan /> : <FaCircleCheck />}
-                        {selectedShop.is_suspended ? "Suspended" : "Active"}
-                      </span>
-                    </div>
-                    <p className="mb-3 text-xs text-slate-500">
-                      {selectedShop.is_suspended
-                        ? "Shop is hidden from all public listings."
-                        : "Shop is visible in public listings."}
-                    </p>
-                    <button
-                      type="button"
-                      disabled={suspendToggling}
-                      onClick={() => void handleToggleSuspend()}
-                      className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-black transition disabled:opacity-60 ${selectedShop.is_suspended ? "bg-emerald-600 text-white hover:bg-emerald-700" : "bg-rose-600 text-white hover:bg-rose-700"}`}
-                    >
-                      {suspendToggling ? <FaCircleNotch className="animate-spin" /> : <FaBan />}
-                      {selectedShop.is_suspended ? "Reinstate shop" : "Suspend shop"}
-                    </button>
-                  </div>
-
+                  <p className="mb-3 text-xs text-slate-500">
+                    {selectedShop.is_open
+                      ? "Store is currently accepting customers."
+                      : "Store is currently closed to customers."}
+                  </p>
+                  <button
+                    type="button"
+                    disabled={openToggling}
+                    onClick={() => void handleToggleOpen()}
+                    className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-black transition disabled:opacity-60 ${selectedShop.is_open ? "bg-amber-500 text-white hover:bg-amber-600" : "bg-emerald-600 text-white hover:bg-emerald-700"}`}
+                  >
+                    {openToggling ? <FaCircleNotch className="animate-spin" /> : <FaStore />}
+                    {selectedShop.is_open ? "Close store" : "Open store"}
+                  </button>
                 </div>
               </div>
 

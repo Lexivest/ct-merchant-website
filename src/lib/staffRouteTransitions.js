@@ -551,7 +551,6 @@ async function prepareStaffShopIdentityData() {
       status,
       is_verified,
       is_open,
-      is_suspended,
       phone,
       whatsapp,
       address,
