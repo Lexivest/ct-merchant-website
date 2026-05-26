@@ -372,6 +372,14 @@ export default function StaffDashboard() {
         lockedMessage: "Shop management controls are reserved for super admins.",
       },
       {
+        title: "Flash Sales",
+        icon: <FaBolt />,
+        badge: "Comms",
+        tone: "rose",
+        path: "/staff-flash-sales",
+        locked: adminLocked,
+      },
+      {
         title: "Market Ticker",
         icon: <FaTowerBroadcast />,
         badge: "Comms",

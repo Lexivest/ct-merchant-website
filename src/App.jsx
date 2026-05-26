@@ -228,6 +228,7 @@ const StaffSecurityRadar = createPreloadableStaffRoute("/staff-security-radar")
 const StaffProducts = createPreloadableStaffRoute("/staff-products")
 const StaffShopContent = createPreloadableStaffRoute("/staff-shop-content")
 const StaffShopIdentity = createPreloadableStaffRoute("/staff-shop-identity")
+const StaffFlashSales     = createPreloadableStaffRoute("/staff-flash-sales")
 const StaffTickerMessages = createPreloadableStaffRoute("/staff-ticker")
 const StaffAnnouncements  = createPreloadableStaffRoute("/staff-announcements")
 const StaffNotifications = createPreloadableStaffRoute("/staff-notifications")
@@ -499,6 +500,11 @@ function getRouteMeta(pathname) {
     "/staff-shop-identity": {
       title: "Shop Management | CTMerchant",
       description: "Super-admin controls for shop open/close status and locked identity field updates.",
+      noindex: true,
+    },
+    "/staff-flash-sales": {
+      title: "Flash Sales | CTMerchant",
+      description: "Schedule and manage timed sale events with live countdown bars in the market dashboard.",
       noindex: true,
     },
     "/staff-ticker": {
@@ -918,6 +924,7 @@ function AppShell() {
         <Route path="/staff-products" element={<ProtectedStaffRoute adminOnly><StaffProducts /></ProtectedStaffRoute>} />
         <Route path="/staff-shop-content" element={<ProtectedStaffRoute adminOnly><StaffShopContent /></ProtectedStaffRoute>} />
         <Route path="/staff-shop-identity" element={<ProtectedStaffRoute superOnly><StaffShopIdentity /></ProtectedStaffRoute>} />
+        <Route path="/staff-flash-sales" element={<ProtectedStaffRoute adminOnly><StaffFlashSales /></ProtectedStaffRoute>} />
         <Route path="/staff-ticker" element={<ProtectedStaffRoute adminOnly><StaffTickerMessages /></ProtectedStaffRoute>} />
         <Route path="/staff-announcements" element={<ProtectedStaffRoute adminOnly><StaffAnnouncements /></ProtectedStaffRoute>} />
         <Route path="/staff-notifications" element={<ProtectedStaffRoute adminOnly><StaffNotifications /></ProtectedStaffRoute>} />

@@ -541,6 +541,136 @@ img {
   padding: 0 16px;
 }
 
+/* ── FLASH SALE COUNTDOWN BAR ──────────────────────────────────────────── */
+.flash-sale-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 56px;
+  padding: 0 16px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #991b1b 0%, #7c2d12 100%);
+}
+
+/* Digit blocks pulse red when < 10 min remain */
+@keyframes flash-digit-pulse {
+  0%, 100% { background: rgba(0, 0, 0, 0.30); }
+  50%       { background: rgba(220, 38, 38, 0.55); }
+}
+
+/* Left media (icon circle or thumbnail) */
+.flash-sale-media { flex-shrink: 0; }
+
+.flash-sale-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.flash-sale-icon {
+  color: #fbbf24;   /* amber — hot spark colour */
+  font-size: 1rem;
+}
+
+.flash-sale-img {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+/* Centre text block */
+.flash-sale-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+}
+
+.flash-sale-title {
+  font-size: 0.82rem;
+  font-weight: 900;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.flash-sale-subtitle {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Discount badge pill */
+.flash-sale-badge {
+  flex-shrink: 0;
+  background: #fbbf24;       /* amber */
+  color: #7c2d12;            /* dark brown — high contrast */
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+/* Timer: row of digit blocks */
+.flash-sale-timer {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.flash-digit-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.flash-digit-block {
+  display: inline-block;
+  min-width: 28px;
+  padding: 3px 5px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.30);
+  color: #ffffff;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 900;
+  font-size: 0.92rem;
+  text-align: center;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+}
+
+.flash-digit-urgent {
+  animation: flash-digit-pulse 0.7s infinite ease-in-out;
+}
+
+.flash-digit-label {
+  font-size: 0.48rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .market-ticker-message {
   flex: 1;
   min-width: 0;

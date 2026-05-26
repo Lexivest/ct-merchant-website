@@ -1,0 +1,150 @@
+import { useEffect, useRef, useState } from "react"
+import { FaBolt } from "react-icons/fa6"
+import { supabase } from "../../../lib/supabase"
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function calcRemaining(endsAt) {
+  const diff = new Date(endsAt).getTime() - Date.now()
+  if (diff <= 0) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0, totalSeconds: 0, expired: true }
+  }
+  const totalSeconds = Math.floor(diff / 1000)
+  return {
+    days:         Math.floor(totalSeconds / 86400),
+    hours:        Math.floor(totalSeconds / 3600) % 24,
+    minutes:      Math.floor(totalSeconds / 60) % 60,
+    seconds:      totalSeconds % 60,
+    totalSeconds,
+    expired:      false,
+  }
+}
+
+// ── Sub-component: a single digit block ───────────────────────────────────
+
+function DigitBlock({ value, label, urgent }) {
+  const display = String(value).padStart(2, "0")
+  return (
+    <div className="flash-digit-wrap">
+      <span className={`flash-digit-block${urgent ? " flash-digit-urgent" : ""}`}>
+        {display}
+      </span>
+      <span className="flash-digit-label">{label}</span>
+    </div>
+  )
+}
+
+// ── Main component ─────────────────────────────────────────────────────────
+
+export default function FlashSaleBar({ cityId }) {
+  const [sales,      setSales]      = useState([])
+  const [saleIndex,  setSaleIndex]  = useState(0)
+  const [countdown,  setCountdown]  = useState(null)
+  const tickRef = useRef(null)
+
+  // ── Fetch active, non-expired sales ──────────────────────────────────
+  useEffect(() => {
+    if (!cityId) return
+
+    const nowIso = new Date().toISOString()
+
+    supabase
+      .from("flash_sales")
+      .select("id, title, subtitle, discount_label, image_url, ends_at")
+      .or(`city_id.eq.${cityId},city_id.is.null`)
+      .eq("is_active", true)
+      .lte("starts_at", nowIso)
+      .gt("ends_at",   nowIso)
+      .order("ends_at", { ascending: true })   // soonest-ending first (most urgent)
+      .limit(10)
+      .then(({ data }) => {
+        if (data?.length) {
+          setSales(data)
+          setSaleIndex(0)
+          setCountdown(calcRemaining(data[0].ends_at))
+        }
+      })
+  }, [cityId])
+
+  // ── 1-second countdown tick ───────────────────────────────────────────
+  useEffect(() => {
+    if (!sales.length) return
+
+    clearInterval(tickRef.current)
+
+    tickRef.current = setInterval(() => {
+      setSaleIndex((currentIndex) => {
+        const current = sales[currentIndex]
+        if (!current) return currentIndex
+
+        const next = calcRemaining(current.ends_at)
+        setCountdown(next)
+
+        // Current sale just expired — try to advance to the next one
+        if (next.expired) {
+          const nextIndex = currentIndex + 1
+          if (nextIndex < sales.length) {
+            setCountdown(calcRemaining(sales[nextIndex].ends_at))
+            return nextIndex
+          }
+          // All sales expired — leave index as-is; render returns null below
+        }
+
+        return currentIndex
+      })
+    }, 1000)
+
+    return () => clearInterval(tickRef.current)
+  }, [sales])
+
+  // Nothing to show
+  if (!sales.length || !countdown) return null
+
+  const current = sales[saleIndex]
+  if (!current || countdown.expired) return null
+
+  const isUrgent = countdown.days === 0 && countdown.hours === 0 && countdown.minutes < 10
+  const showDays = countdown.days > 0
+
+  return (
+    <div className={`flash-sale-bar${isUrgent ? " flash-sale-bar--urgent" : ""}`}>
+
+      {/* ── Left: icon or product thumbnail ──────────────────────────── */}
+      <div className="flash-sale-media">
+        {current.image_url ? (
+          <img
+            src={current.image_url}
+            alt=""
+            aria-hidden="true"
+            className="flash-sale-img"
+          />
+        ) : (
+          <div className="flash-sale-icon-wrap">
+            <FaBolt className="flash-sale-icon" />
+          </div>
+        )}
+      </div>
+
+      {/* ── Centre: title + subtitle ─────────────────────────────────── */}
+      <div className="flash-sale-text">
+        <span className="flash-sale-title">{current.title}</span>
+        {current.subtitle ? (
+          <span className="flash-sale-subtitle">{current.subtitle}</span>
+        ) : null}
+      </div>
+
+      {/* ── Discount badge ────────────────────────────────────────────── */}
+      {current.discount_label ? (
+        <span className="flash-sale-badge">{current.discount_label}</span>
+      ) : null}
+
+      {/* ── Countdown timer ───────────────────────────────────────────── */}
+      <div className="flash-sale-timer" aria-label="Time remaining">
+        {showDays ? <DigitBlock value={countdown.days}    label="d" urgent={isUrgent} /> : null}
+        <DigitBlock               value={countdown.hours}   label="h" urgent={isUrgent} />
+        <DigitBlock               value={countdown.minutes} label="m" urgent={isUrgent} />
+        <DigitBlock               value={countdown.seconds} label="s" urgent={isUrgent} />
+      </div>
+    </div>
+  )
+}

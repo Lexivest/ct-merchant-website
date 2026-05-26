@@ -570,6 +570,33 @@ async function prepareStaffShopIdentityData() {
   }
 }
 
+async function prepareStaffFlashSalesData(staffContext = {}) {
+  const { isSuperAdmin, staffCityId } = getStaffRouteScope(staffContext)
+
+  let salesQuery = supabase
+    .from("flash_sales")
+    .select("*")
+    .order("ends_at", { ascending: true })
+
+  if (!isSuperAdmin && staffCityId) {
+    salesQuery = salesQuery.eq("city_id", staffCityId)
+  }
+
+  const [citiesRes, salesRes] = await Promise.all([
+    supabase.from("cities").select("id, name, state").order("name"),
+    salesQuery,
+  ])
+
+  if (citiesRes.error) throw citiesRes.error
+  if (salesRes.error)  throw salesRes.error
+
+  return {
+    kind:   "staff-flash-sales",
+    cities: citiesRes.data || [],
+    sales:  salesRes.data  || [],
+  }
+}
+
 async function prepareStaffTickerData(staffContext = {}) {
   const { isSuperAdmin, staffCityId } = getStaffRouteScope(staffContext)
 
@@ -661,6 +688,7 @@ const staffPreparers = {
   "/staff-shop-content": prepareStaffShopContentData,
   "/staff-shop-identity": prepareStaffShopIdentityData,
   "/staff-commissions": prepareStaffCommissionsData,
+  "/staff-flash-sales":   prepareStaffFlashSalesData,
   "/staff-ticker":        prepareStaffTickerData,
   "/staff-announcements": prepareStaffAnnouncementsData,
   "/staff-notifications": prepareStaffNotificationsData,

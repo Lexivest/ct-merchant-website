@@ -20,7 +20,8 @@ import {
   isServiceCategory,
 } from "../../../lib/serviceCategories"
 
-const MarketTicker = lazy(() => import("../market/MarketTicker"))
+const MarketTicker   = lazy(() => import("../market/MarketTicker"))
+const FlashSaleBar   = lazy(() => import("../market/FlashSaleBar"))
 
 function SponsoredProductCard({ sponsored, onOpenProduct, onOpenServiceProvider }) {
   const product = useMemo(() => {
@@ -913,6 +914,11 @@ function MarketSection({
           onOpenShop={openShop}
         />
       ) : null}
+
+      {/* Flash sale countdown — shown immediately after hero for max visibility */}
+      <Suspense fallback={null}>
+        <FlashSaleBar cityId={dashboardData.profile?.city_id} />
+      </Suspense>
 
       {(dashboardData.areas || []).length > 0 && (() => {
         const sortedAreas = [...(dashboardData.areas || [])].sort((a, b) => {
