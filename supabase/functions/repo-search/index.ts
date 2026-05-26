@@ -110,6 +110,7 @@ async function fetchFirstShop(supabase: ReturnType<typeof createClient>, normali
     .eq("unique_id", normalizedTerm)
     .eq("status", "approved")
     .eq("is_open", true)
+    .eq("is_suspended", false)
     .gt("subscription_end_date", nowIso)
     .limit(1)
     .maybeSingle()
