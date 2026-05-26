@@ -21,7 +21,8 @@ CREATE TABLE public.ticker_messages (
   sort_order  int         NOT NULL DEFAULT 0,
   created_at  timestamptz NOT NULL DEFAULT timezone('utc', now()),
   updated_at  timestamptz NOT NULL DEFAULT timezone('utc', now()),
-  created_by  uuid        REFERENCES auth.users(id) ON DELETE SET NULL
+  created_by  uuid        REFERENCES auth.users(id) ON DELETE SET NULL,
+  image_url   text
 );
 
 COMMENT ON TABLE  public.ticker_messages                IS 'Short broadcast messages shown in the market dashboard ticker bar.';
