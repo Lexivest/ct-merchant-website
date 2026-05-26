@@ -26,6 +26,17 @@ import {
 
 const MAX_CHARS = 120
 
+const TICKER_COLORS = [
+  { label: "Dark Blue",   value: "#1e3a8a" },
+  { label: "Navy",        value: "#1e40af" },
+  { label: "Indigo",      value: "#3730a3" },
+  { label: "Purple",      value: "#581c87" },
+  { label: "Dark Green",  value: "#065f46" },
+  { label: "Teal",        value: "#134e4a" },
+  { label: "Crimson",     value: "#9f1239" },
+  { label: "Dark Slate",  value: "#1e293b" },
+]
+
 export default function StaffTickerMessages() {
   const location = useLocation()
   const { isSuperAdmin, isCityAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
@@ -51,6 +62,7 @@ export default function StaffTickerMessages() {
     city_id:    isSuperAdmin ? "" : (staffCityId ? String(staffCityId) : ""),
     message:    "",
     image_url:  "",
+    bg_color:   "#1e3a8a",
     is_active:  true,
     sort_order: 0,
   })
@@ -117,6 +129,7 @@ export default function StaffTickerMessages() {
       const payload = {
         message:    trimmed,
         image_url:  form.image_url.trim() || null,
+        bg_color:   form.bg_color || "#1e3a8a",
         is_active:  form.is_active,
         sort_order: Number(form.sort_order) || 0,
         ...(form.city_id ? { city_id: parseInt(form.city_id, 10) } : {}),
@@ -135,6 +148,7 @@ export default function StaffTickerMessages() {
         city_id:    isSuperAdmin ? "" : (staffCityId ? String(staffCityId) : ""),
         message:    "",
         image_url:  "",
+        bg_color:   "#1e3a8a",
         is_active:  true,
         sort_order: 0,
       })
@@ -362,6 +376,29 @@ export default function StaffTickerMessages() {
                 </p>
               </div>
 
+              {/* Background colour picker */}
+              <div>
+                <label className="mb-3 block text-xs font-black uppercase tracking-widest text-slate-400">
+                  Bar Colour
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {TICKER_COLORS.map((c) => (
+                    <button
+                      key={c.value}
+                      type="button"
+                      title={c.label}
+                      onClick={() => setForm((prev) => ({ ...prev, bg_color: c.value }))}
+                      style={{ backgroundColor: c.value }}
+                      className={`h-9 w-9 rounded-full border-4 transition-all duration-150 ${
+                        form.bg_color === c.value
+                          ? "scale-110 border-white shadow-lg ring-2 ring-slate-400"
+                          : "border-transparent hover:scale-105"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+
               {/* Sort order (super-admin only) */}
               {isSuperAdmin && (
                 <div>
@@ -427,8 +464,8 @@ export default function StaffTickerMessages() {
                 Live Preview
               </p>
               <div
-                className="flex items-center gap-2 overflow-hidden rounded-xl px-4"
-                style={{ height: 36, background: "#131921" }}
+                className="flex items-center gap-2 overflow-hidden rounded-xl px-4 transition-colors duration-300"
+                style={{ height: 48, background: form.bg_color || "#1e3a8a" }}
               >
                 {form.image_url.trim() && (
                   <img
@@ -452,9 +489,10 @@ export default function StaffTickerMessages() {
                     overflow: "hidden",
                     whiteSpace: "nowrap",
                     textOverflow: "ellipsis",
-                    fontSize: "0.78rem",
-                    fontWeight: 600,
-                    color: "#e2e8f0",
+                    fontSize: "0.92rem",
+                    fontWeight: 700,
+                    color: "#f1f5f9",
+                    letterSpacing: "0.018em",
                     margin: 0,
                   }}
                 >
@@ -496,10 +534,17 @@ export default function StaffTickerMessages() {
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="min-w-0 flex-1 space-y-1">
-                      {/* City label */}
+                      {/* City label + colour swatch */}
                       <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-pink-600">
                         {item.city_id ? <FaLocationDot /> : <FaGlobe />}
                         {item.city_name}
+                        {item.bg_color && (
+                          <span
+                            title={item.bg_color}
+                            style={{ background: item.bg_color }}
+                            className="ml-1 inline-block h-3.5 w-3.5 rounded-full border border-slate-300 shrink-0"
+                          />
+                        )}
                       </div>
 
                       {/* Message + optional thumbnail */}

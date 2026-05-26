@@ -536,9 +536,9 @@ img {
   display: flex;
   align-items: center;
   overflow: hidden;    /* clips slide animation at bar edges */
-  height: 36px;
-  background: #131921;
+  height: 48px;
   padding: 0 16px;
+  /* background + transition applied inline by the component for per-message colour */
 }
 
 /* ── FLASH SALE COUNTDOWN BAR ──────────────────────────────────────────── */
@@ -677,12 +677,12 @@ img {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #e2e8f0;
-  letter-spacing: 0.015em;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: 0.018em;
   margin: 0;
-  /* transition is applied inline by the component */
+  /* opacity/transform transition applied inline by the component */
 }
 
 

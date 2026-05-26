@@ -1,24 +1,22 @@
 import { useEffect, useRef, useState } from "react"
 import { supabase } from "../../../lib/supabase"
 
+const DEFAULT_COLOR = "#1e3a8a" // dark blue fallback
+
 /**
  * MarketTicker
  *
- * A thin broadcast strip in the market dashboard. Fetches active messages
- * for the user's city + global ones, then cycles through them with a
- * directional slide animation (exits left, enters from right).
- *
- * Each message may carry an optional image_url shown as a 26 px thumbnail.
- * Renders nothing when there are no active messages.
+ * A 48 px broadcast strip in the market dashboard. Fetches active messages
+ * for the user's city + global ones, cycles through them with a directional
+ * slide animation, and smoothly cross-fades the bar background colour
+ * between each message's chosen colour.
  */
 export default function MarketTicker({ cityId }) {
   const [messages,  setMessages]  = useState([])
   const [index,     setIndex]     = useState(0)
   const [phase,     setPhase]     = useState("visible")
-  // "visible" | "exit" | "enter"
-  // exit  → slides left + fades out
-  // enter → teleport to right, no transition (instant reposition)
-  // visible → slides left into place + fades in
+  const [barColor,  setBarColor]  = useState(DEFAULT_COLOR)
+  // phase: "visible" | "exit" | "enter"
 
   const intervalRef = useRef(null)
 
@@ -27,18 +25,21 @@ export default function MarketTicker({ cityId }) {
     if (!cityId) return
     supabase
       .from("ticker_messages")
-      .select("id, message, image_url")
+      .select("id, message, image_url, bg_color")
       .or(`city_id.eq.${cityId},city_id.is.null`)
       .eq("is_active", true)
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false })
       .limit(20)
       .then(({ data }) => {
-        if (data?.length) setMessages(data)
+        if (data?.length) {
+          setMessages(data)
+          setBarColor(data[0]?.bg_color || DEFAULT_COLOR)
+        }
       })
   }, [cityId])
 
-  // ── Cycle with 3-phase directional slide ──────────────────────────────
+  // ── Cycle with 3-phase directional slide + background colour fade ──────
   useEffect(() => {
     if (messages.length < 2) return
 
@@ -46,19 +47,20 @@ export default function MarketTicker({ cityId }) {
       // Phase 1: slide current content out to the left
       setPhase("exit")
 
-      // Phase 2: after exit transition completes, swap content and
-      // teleport the new content to the right (transition: none)
+      // Phase 2: swap content + teleport new content to right (no transition)
       const swapTimer = setTimeout(() => {
-        setIndex((prev) => (prev + 1) % messages.length)
+        setIndex((prev) => {
+          const next = (prev + 1) % messages.length
+          // Update bar colour at the same moment the content swaps
+          setBarColor(messages[next]?.bg_color || DEFAULT_COLOR)
+          return next
+        })
         setPhase("enter")
 
-        // Phase 3: one animation frame later, transition into view
-        const enterTimer = setTimeout(() => {
-          setPhase("visible")
-        }, 32) // ~2 frames — enough for the browser to paint the "enter" position
-
+        // Phase 3: slide into view
+        const enterTimer = setTimeout(() => setPhase("visible"), 32)
         return () => clearTimeout(enterTimer)
-      }, 320) // matches the exit CSS transition duration
+      }, 320)
 
       return () => clearTimeout(swapTimer)
     }, 4500)
@@ -75,17 +77,17 @@ export default function MarketTicker({ cityId }) {
     transform:
       phase === "visible" ? "translateX(0)"
       : phase === "exit"  ? "translateX(-14px)"
-      :                     "translateX(14px)",   // "enter" — off to the right
+      :                     "translateX(14px)",
     transition:
       phase === "enter"
-        ? "none"                                   // instant reposition, no animation
+        ? "none"
         : "opacity 0.3s ease, transform 0.3s ease",
-    display: "flex",
+    display:    "flex",
     alignItems: "center",
-    gap: 8,
-    minWidth: 0,
-    flex: 1,
-    overflow: "hidden",
+    gap:        10,
+    minWidth:   0,
+    flex:       1,
+    overflow:   "hidden",
   }
 
   return (
@@ -94,6 +96,10 @@ export default function MarketTicker({ cityId }) {
       role="marquee"
       aria-live="polite"
       aria-atomic="true"
+      style={{
+        background:  barColor,
+        transition:  "background-color 0.6s ease",
+      }}
     >
       <div style={contentStyle}>
         {/* Optional thumbnail */}
@@ -103,12 +109,12 @@ export default function MarketTicker({ cityId }) {
             alt=""
             aria-hidden="true"
             style={{
-              flexShrink: 0,
-              width: 26,
-              height: 26,
-              borderRadius: 6,
-              objectFit: "cover",
-              background: "#1e293b",
+              flexShrink:   0,
+              width:        30,
+              height:       30,
+              borderRadius: 7,
+              objectFit:    "cover",
+              background:   "rgba(0,0,0,0.2)",
             }}
           />
         ) : null}
