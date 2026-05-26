@@ -372,6 +372,14 @@ export default function StaffDashboard() {
         lockedMessage: "Shop management controls are reserved for super admins.",
       },
       {
+        title: "Market Ticker",
+        icon: <FaTowerBroadcast />,
+        badge: "Comms",
+        tone: "amber",
+        path: "/staff-ticker",
+        locked: adminLocked,
+      },
+      {
         title: "Announcements",
         icon: <FaBullhorn />,
         badge: "Comms",

@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { memo, useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from "react"
 import {
   FaBolt,
   FaBriefcase,
@@ -19,6 +19,8 @@ import {
   getServiceProviderImage,
   isServiceCategory,
 } from "../../../lib/serviceCategories"
+
+const MarketTicker = lazy(() => import("../market/MarketTicker"))
 
 function SponsoredProductCard({ sponsored, onOpenProduct, onOpenServiceProvider }) {
   const product = useMemo(() => {
@@ -1064,6 +1066,12 @@ function MarketSection({
             </div>
           </div>
           <div className="h-[2px] bg-gradient-to-r from-white via-pink-400 to-white" />
+
+          {index === 0 && (
+            <Suspense fallback={null}>
+              <MarketTicker cityId={dashboardData.profile?.city_id} />
+            </Suspense>
+          )}
 
           {index === 2 && dashboardData.staffDiscoveries?.length > 0 && (
             <div className="discoveries-section-wrap bg-white pb-2 pt-1 mb-1">

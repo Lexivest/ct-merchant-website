@@ -531,6 +531,47 @@ img {
 .animate-market-glow { animation: market-glow 2s infinite ease-in-out; }
 .animate-alert-flash { animation: alert-flash 1s infinite ease-in-out; }
 
+/* ── MARKET TICKER BAR ──────────────────────────────────────────────────── */
+.market-ticker-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+  height: 36px;
+  background: #131921;
+  padding: 0 16px;
+}
+
+.market-ticker-pill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 99px;
+  background: #db2777;
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.market-ticker-message {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  letter-spacing: 0.015em;
+  margin: 0;
+  /* transition is applied inline by the component */
+}
+
 
 @keyframes shimmer {
   0% {

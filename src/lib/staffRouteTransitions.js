@@ -570,6 +570,34 @@ async function prepareStaffShopIdentityData() {
   }
 }
 
+async function prepareStaffTickerData(staffContext = {}) {
+  const { isSuperAdmin, staffCityId } = getStaffRouteScope(staffContext)
+
+  let msgQuery = supabase
+    .from("ticker_messages")
+    .select("*")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false })
+
+  if (!isSuperAdmin && staffCityId) {
+    msgQuery = msgQuery.eq("city_id", staffCityId)
+  }
+
+  const [citiesRes, msgRes] = await Promise.all([
+    supabase.from("cities").select("id, name, state").order("name"),
+    msgQuery,
+  ])
+
+  if (citiesRes.error) throw citiesRes.error
+  if (msgRes.error)    throw msgRes.error
+
+  return {
+    kind:     "staff-ticker",
+    cities:   citiesRes.data || [],
+    messages: msgRes.data    || [],
+  }
+}
+
 async function prepareStaffAnnouncementsData(staffContext = {}) {
   const { isSuperAdmin, staffCityId } = getStaffRouteScope(staffContext)
   let announcementsQuery = supabase.from("announcements").select("*").order("created_at", { ascending: false })
@@ -633,6 +661,7 @@ const staffPreparers = {
   "/staff-shop-content": prepareStaffShopContentData,
   "/staff-shop-identity": prepareStaffShopIdentityData,
   "/staff-commissions": prepareStaffCommissionsData,
+  "/staff-ticker":        prepareStaffTickerData,
   "/staff-announcements": prepareStaffAnnouncementsData,
   "/staff-notifications": prepareStaffNotificationsData,
   "/staff-payments": prepareStaffPaymentsData,

@@ -228,7 +228,8 @@ const StaffSecurityRadar = createPreloadableStaffRoute("/staff-security-radar")
 const StaffProducts = createPreloadableStaffRoute("/staff-products")
 const StaffShopContent = createPreloadableStaffRoute("/staff-shop-content")
 const StaffShopIdentity = createPreloadableStaffRoute("/staff-shop-identity")
-const StaffAnnouncements = createPreloadableStaffRoute("/staff-announcements")
+const StaffTickerMessages = createPreloadableStaffRoute("/staff-ticker")
+const StaffAnnouncements  = createPreloadableStaffRoute("/staff-announcements")
 const StaffNotifications = createPreloadableStaffRoute("/staff-notifications")
 const StaffAgentApplications = createPreloadableStaffRoute("/staff-agent-applications")
 const StaffAgentIDCard = createPreloadableStaffRoute("/staff-agent-id-card")
@@ -498,6 +499,11 @@ function getRouteMeta(pathname) {
     "/staff-shop-identity": {
       title: "Shop Management | CTMerchant",
       description: "Super-admin controls for shop open/close status and locked identity field updates.",
+      noindex: true,
+    },
+    "/staff-ticker": {
+      title: "Market Ticker | CTMerchant",
+      description: "Post and manage short broadcast messages shown in the market dashboard ticker bar.",
       noindex: true,
     },
     "/staff-announcements": {
@@ -912,6 +918,7 @@ function AppShell() {
         <Route path="/staff-products" element={<ProtectedStaffRoute adminOnly><StaffProducts /></ProtectedStaffRoute>} />
         <Route path="/staff-shop-content" element={<ProtectedStaffRoute adminOnly><StaffShopContent /></ProtectedStaffRoute>} />
         <Route path="/staff-shop-identity" element={<ProtectedStaffRoute superOnly><StaffShopIdentity /></ProtectedStaffRoute>} />
+        <Route path="/staff-ticker" element={<ProtectedStaffRoute adminOnly><StaffTickerMessages /></ProtectedStaffRoute>} />
         <Route path="/staff-announcements" element={<ProtectedStaffRoute adminOnly><StaffAnnouncements /></ProtectedStaffRoute>} />
         <Route path="/staff-notifications" element={<ProtectedStaffRoute adminOnly><StaffNotifications /></ProtectedStaffRoute>} />
         <Route path="/staff-agent-applications" element={<ProtectedStaffRoute superOnly><StaffAgentApplications /></ProtectedStaffRoute>} />
