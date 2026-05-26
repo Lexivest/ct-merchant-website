@@ -11,6 +11,7 @@ import {
   FaStore,
   FaToggleOff,
   FaToggleOn,
+  FaTrash,
 } from "react-icons/fa6"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
@@ -87,6 +88,7 @@ export default function StaffShopIdentity() {
   const [loading, setLoading] = useState(() => !prefetchedData && !fetchingStaff)
   const [saving, setSaving] = useState(false)
   const [openToggling, setOpenToggling] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const loadShops = useCallback(async (queryText = "") => {
     if (!isSuperAdmin) {
@@ -244,6 +246,62 @@ export default function StaffShopIdentity() {
       })
     } finally {
       setOpenToggling(false)
+    }
+  }
+
+  async function handleDeleteShop() {
+    if (!selectedShop || deleting) return
+
+    // First confirmation — intent
+    const confirmed = await confirm({
+      type: "error",
+      title: `Permanently delete "${selectedShop.name}"?`,
+      message:
+        `This will irreversibly delete the shop, all its products, analytics, banners, comments, likes, and every other associated record.\n\n` +
+        `The merchant's profile and account will NOT be affected.\n\n` +
+        `This action cannot be undone.`,
+      confirmText: "Yes, delete permanently",
+      cancelText: "Cancel",
+    })
+    if (!confirmed) return
+
+    // Second confirmation — extra friction for a destructive permanent action
+    const doubleConfirmed = await confirm({
+      type: "error",
+      title: "Are you absolutely sure?",
+      message: `You are about to permanently delete "${selectedShop.name}" (${selectedShop.unique_id || `#${selectedShop.id}`}). There is no recovery.`,
+      confirmText: "Delete shop forever",
+      cancelText: "Go back",
+    })
+    if (!doubleConfirmed) return
+
+    setDeleting(true)
+
+    try {
+      const { data, error } = await supabase.rpc("ctm_delete_shop", {
+        p_shop_id: selectedShop.id,
+      })
+
+      if (error) throw error
+
+      // Remove from list and clear selection
+      setShops((previous) => previous.filter((shop) => shop.id !== selectedShop.id))
+      setSelectedShop(null)
+      setForm(buildShopPatchForm(null))
+
+      notify({
+        kind: "toast",
+        type: "success",
+        message: `"${data?.deleted_shop_name || selectedShop.name}" has been permanently deleted.`,
+      })
+    } catch (error) {
+      notify({
+        type: "error",
+        title: "Delete failed",
+        message: getFriendlyErrorMessage(error, "Could not delete the shop. Please try again."),
+      })
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -580,6 +638,26 @@ export default function StaffShopIdentity() {
                   {saving ? "Updating locked details..." : "Update locked details"}
                 </button>
               </form>
+
+              {/* ── Danger Zone ── */}
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                <p className="mb-1 text-xs font-black uppercase tracking-[0.14em] text-rose-500">
+                  Danger Zone
+                </p>
+                <p className="mb-4 text-xs leading-5 text-rose-700">
+                  Permanently deletes this shop, all products, analytics, banners, comments, and every associated record.
+                  The merchant's profile and account are not affected. <strong>This cannot be undone.</strong>
+                </p>
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={() => void handleDeleteShop()}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 py-2.5 text-xs font-black text-white transition hover:bg-rose-700 disabled:opacity-60"
+                >
+                  {deleting ? <FaCircleNotch className="animate-spin" /> : <FaTrash />}
+                  {deleting ? "Deleting shop..." : "Delete shop permanently"}
+                </button>
+              </div>
 
             </div>
           ) : (
