@@ -1,9 +1,10 @@
-﻿import { useEffect } from "react"
+﻿import { useEffect, useState } from "react"
 import {
   FaBriefcase,
   FaBuilding,
   FaCamera,
   FaCircleExclamation,
+  FaCircleNotch,
   FaCircleQuestion,
   FaCropSimple,
   FaHeadset,
@@ -12,9 +13,12 @@ import {
   FaLayerGroup,
   FaLock,
   FaStore,
+  FaTrash,
   FaTriangleExclamation,
 } from "react-icons/fa6"
 import { Suspense, lazy } from "react"
+import { supabase } from "../../../lib/supabase"
+import { getFriendlyErrorMessage } from "../../../lib/friendlyErrors"
 import { UPLOAD_RULES, getAcceptValue, getRuleLabel } from "../../../lib/uploadRules";
 import { renderBrandedText } from "../../common/BrandText"
 import AboutDashboardView from "../views/AboutDashboardView"
@@ -113,6 +117,39 @@ function ServicesProfileSection({
   const profileFallbackAvatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
     currentProfile?.full_name || "User"
   )}`
+
+  const [deleteZoneOpen, setDeleteZoneOpen]     = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState("")
+  const [deleting, setDeleting]                 = useState(false)
+  const [deleteError, setDeleteError]           = useState("")
+
+  function openDeleteZone() {
+    setDeleteZoneOpen(true)
+    setDeleteConfirmText("")
+    setDeleteError("")
+  }
+
+  function closeDeleteZone() {
+    setDeleteZoneOpen(false)
+    setDeleteConfirmText("")
+    setDeleteError("")
+  }
+
+  async function handleDeleteAccount() {
+    if (deleteConfirmText !== "CTMerchant" || deleting) return
+    setDeleting(true)
+    setDeleteError("")
+
+    try {
+      const { error } = await supabase.rpc("ctm_delete_user_account")
+      if (error) throw error
+      // Auth session is now invalidated — sign out and redirect
+      await handleLogout()
+    } catch (err) {
+      setDeleteError(getFriendlyErrorMessage(err, "Account deletion failed. Please try again."))
+      setDeleting(false)
+    }
+  }
 
   useEffect(() => {
     if (mode !== "services") return
@@ -269,6 +306,67 @@ function ServicesProfileSection({
                 Sign Out
               </button>
             </div>
+
+            {/* ── Delete Account Zone ── */}
+            {!deleteZoneOpen ? (
+              <div className="mt-6 border-t border-[#E5E7EB] pt-5">
+                <button
+                  type="button"
+                  onClick={openDeleteZone}
+                  className="mx-auto flex items-center gap-1.5 text-[0.82rem] font-semibold text-[#9CA3AF] transition hover:text-[#C40000]"
+                >
+                  <FaTrash className="text-[0.7rem]" />
+                  Delete my account
+                </button>
+              </div>
+            ) : (
+              <div className="mt-6 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-5 text-left">
+                <h4 className="mb-2 flex items-center gap-2 text-[0.95rem] font-extrabold text-[#991B1B]">
+                  <FaTriangleExclamation /> Permanently Delete Account
+                </h4>
+                <p className="mb-3 text-[0.82rem] leading-relaxed text-[#7F1D1D]">
+                  This will permanently delete your account, all your shops, products, analytics, notifications, and every piece of associated data.
+                  <strong> This cannot be undone.</strong>
+                </p>
+                <p className="mb-2 text-[0.82rem] font-bold text-[#991B1B]">
+                  Type <span className="rounded bg-[#FEE2E2] px-1.5 py-0.5 font-mono font-extrabold">CTMerchant</span> to confirm:
+                </p>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="CTMerchant"
+                  autoComplete="off"
+                  className="mb-4 w-full rounded-lg border border-[#FECACA] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F1111] placeholder:font-normal placeholder:text-[#9CA3AF] focus:border-[#EF4444] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/20"
+                />
+                {deleteError && (
+                  <p className="mb-3 text-[0.82rem] font-semibold text-[#C40000]">
+                    {deleteError}
+                  </p>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={closeDeleteZone}
+                    disabled={deleting}
+                    className="flex-1 rounded-lg border border-[#D5D9D9] bg-white px-4 py-2.5 text-[0.88rem] font-bold text-[#0F1111] transition hover:bg-[#F3F4F6] disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deleteConfirmText !== "CTMerchant" || deleting}
+                    onClick={handleDeleteAccount}
+                    className="flex-1 rounded-lg bg-[#C40000] px-4 py-2.5 text-[0.88rem] font-bold text-white transition hover:bg-[#9B0000] disabled:cursor-not-allowed disabled:bg-[#E3E6E6] disabled:text-[#888C8C]"
+                  >
+                    {deleting
+                      ? <span className="flex items-center justify-center gap-2"><FaCircleNotch className="animate-spin" /> Deleting...</span>
+                      : "Delete Forever"}
+                  </button>
+                </div>
+              </div>
+            )}
+
           </div>
         ) : (
           <div className="mx-auto my-5 max-w-[600px] rounded-lg border border-[#D5D9D9] bg-white p-[30px]">
