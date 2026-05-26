@@ -363,13 +363,13 @@ export default function StaffDashboard() {
         locked: adminLocked,
       },
       {
-        title: "Shop Identity",
+        title: "Shop Management",
         icon: <FaFileContract />,
         badge: "Support",
         tone: "slate",
         path: "/staff-shop-identity",
         locked: superLocked,
-        lockedMessage: "Locked shop identity updates are reserved for super admins.",
+        lockedMessage: "Shop management controls are reserved for super admins.",
       },
       {
         title: "Announcements",

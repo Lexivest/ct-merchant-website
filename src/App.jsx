@@ -496,8 +496,8 @@ function getRouteMeta(pathname) {
       noindex: true,
     },
     "/staff-shop-identity": {
-      title: "Shop Identity Updates | CTMerchant",
-      description: "Super-admin controls for locked shop business name, phone, and WhatsApp updates.",
+      title: "Shop Management | CTMerchant",
+      description: "Super-admin controls for shop suspension, open/close status, and locked identity field updates.",
       noindex: true,
     },
     "/staff-announcements": {

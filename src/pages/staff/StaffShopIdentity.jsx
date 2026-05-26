@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useLocation } from "react-router-dom"
 import {
   FaAddressBook,
+  FaBan,
+  FaCircleCheck,
   FaCircleNotch,
   FaLock,
   FaMagnifyingGlass,
@@ -9,6 +11,8 @@ import {
   FaRotateRight,
   FaShieldHalved,
   FaStore,
+  FaToggleOff,
+  FaToggleOn,
 } from "react-icons/fa6"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
@@ -31,6 +35,7 @@ const SHOP_SELECT = `
   status,
   is_verified,
   is_open,
+  is_suspended,
   phone,
   whatsapp,
   address,
@@ -84,6 +89,8 @@ export default function StaffShopIdentity() {
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(() => !prefetchedData && !fetchingStaff)
   const [saving, setSaving] = useState(false)
+  const [suspendToggling, setSuspendToggling] = useState(false)
+  const [openToggling, setOpenToggling] = useState(false)
 
   const loadShops = useCallback(async (queryText = "") => {
     if (!isSuperAdmin) {
@@ -142,7 +149,7 @@ export default function StaffShopIdentity() {
       notify({
         type: "error",
         title: "Could not load shops",
-        message: getFriendlyErrorMessage(error, "Could not load shops for locked field updates."),
+        message: getFriendlyErrorMessage(error, "Could not load shops."),
       })
     } finally {
       setLoading(false)
@@ -191,6 +198,108 @@ export default function StaffShopIdentity() {
   function selectShop(shop) {
     setSelectedShop(shop)
     setForm(buildShopPatchForm(shop))
+  }
+
+  async function handleToggleSuspend() {
+    if (!selectedShop || suspendToggling) return
+    const willSuspend = !selectedShop.is_suspended
+
+    const confirmed = await confirm({
+      type: willSuspend ? "error" : "warning",
+      title: willSuspend
+        ? `Suspend "${selectedShop.name}"?`
+        : `Reinstate "${selectedShop.name}"?`,
+      message: willSuspend
+        ? `This will immediately hide "${selectedShop.name}" from all public listings. The shop will not appear in any search results until it is reinstated.`
+        : `This will restore full public visibility for "${selectedShop.name}". The shop will appear in listings again if all other conditions (approved, verified, open, active subscription) are met.`,
+      confirmText: willSuspend ? "Suspend shop" : "Reinstate shop",
+      cancelText: "Cancel",
+    })
+
+    if (!confirmed) return
+    setSuspendToggling(true)
+
+    try {
+      const { error } = await supabase
+        .from("shops")
+        .update({ is_suspended: willSuspend })
+        .eq("id", selectedShop.id)
+
+      if (error) throw error
+
+      const updatedShop = { ...selectedShop, is_suspended: willSuspend }
+      setSelectedShop(updatedShop)
+      setShops((previous) =>
+        previous.map((shop) => (shop.id === updatedShop.id ? updatedShop : shop))
+      )
+
+      notify({
+        kind: "toast",
+        type: "success",
+        message: willSuspend
+          ? `"${selectedShop.name}" has been suspended.`
+          : `"${selectedShop.name}" has been reinstated.`,
+      })
+    } catch (error) {
+      notify({
+        type: "error",
+        title: "Action failed",
+        message: getFriendlyErrorMessage(error, "Could not update shop suspension status."),
+      })
+    } finally {
+      setSuspendToggling(false)
+    }
+  }
+
+  async function handleToggleOpen() {
+    if (!selectedShop || openToggling) return
+    const willOpen = !selectedShop.is_open
+
+    const confirmed = await confirm({
+      type: "warning",
+      title: willOpen
+        ? `Open "${selectedShop.name}"?`
+        : `Close "${selectedShop.name}"?`,
+      message: willOpen
+        ? `This will mark "${selectedShop.name}" as open. It will appear in public listings if all other conditions are met.`
+        : `This will mark "${selectedShop.name}" as closed. The shop will not appear in public listings.`,
+      confirmText: willOpen ? "Mark as open" : "Mark as closed",
+      cancelText: "Cancel",
+    })
+
+    if (!confirmed) return
+    setOpenToggling(true)
+
+    try {
+      const { error } = await supabase
+        .from("shops")
+        .update({ is_open: willOpen })
+        .eq("id", selectedShop.id)
+
+      if (error) throw error
+
+      const updatedShop = { ...selectedShop, is_open: willOpen }
+      setSelectedShop(updatedShop)
+      setShops((previous) =>
+        previous.map((shop) => (shop.id === updatedShop.id ? updatedShop : shop))
+      )
+
+      notify({
+        kind: "toast",
+        type: "success",
+        message: willOpen
+          ? `"${selectedShop.name}" is now marked open.`
+          : `"${selectedShop.name}" is now marked closed.`,
+      })
+    } catch (error) {
+      notify({
+        type: "error",
+        title: "Action failed",
+        message: getFriendlyErrorMessage(error, "Could not update shop open status."),
+      })
+    } finally {
+      setOpenToggling(false)
+    }
   }
 
   async function handleSave(event) {
@@ -262,8 +371,8 @@ export default function StaffShopIdentity() {
     return (
       <StaffPortalShell
         activeKey="shop-identity"
-        title="Shop Identity Updates"
-        description="Super-admin-only controls for locked shop identity and contact fields."
+        title="Shop Management"
+        description="Super-admin-only controls for shop suspension, open/close status, and locked identity fields."
       >
         <div className="rounded-[28px] border border-amber-200 bg-amber-50 p-8 text-center shadow-sm">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl text-amber-600 shadow-sm">
@@ -271,7 +380,7 @@ export default function StaffShopIdentity() {
           </div>
           <h3 className="text-xl font-black text-slate-900">Super admin required</h3>
           <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">
-            Locked shop identity fields can only be changed by super admins after verifying a merchant request.
+            Shop management controls are reserved for super admins only.
           </p>
         </div>
       </StaffPortalShell>
@@ -281,8 +390,8 @@ export default function StaffShopIdentity() {
   return (
     <StaffPortalShell
       activeKey="shop-identity"
-      title="Shop Identity Updates"
-      description="Update approved shop business name, phone, and WhatsApp after verified merchant support requests."
+      title="Shop Management"
+      description="Manage shop suspension, open/close status, and locked identity fields for verified merchant support requests."
       headerActions={[
         <QuickActionButton
           key="refresh"
@@ -295,10 +404,11 @@ export default function StaffShopIdentity() {
     >
       <SectionHeading
         eyebrow="Super admin"
-        title="Locked merchant details"
-        description="Use this only after confirming the merchant request. Every change is written through a super-admin-only RPC and recorded in the database audit table."
+        title="Shop management"
+        description="Control shop visibility, suspension status, and locked identity fields. Every locked-field change is written through a super-admin-only RPC and recorded in the audit table."
       />
 
+      {/* Search */}
       <form
         onSubmit={(event) => {
           event.preventDefault()
@@ -325,6 +435,8 @@ export default function StaffShopIdentity() {
       </form>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(420px,1fr)]">
+
+        {/* ── Left: Shop list ── */}
         <section className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h3 className="text-lg font-black text-slate-900">Shops</h3>
@@ -344,7 +456,7 @@ export default function StaffShopIdentity() {
               <p className="text-sm font-bold text-slate-500">No matching shops found.</p>
             </div>
           ) : (
-            <div className="max-h-[620px] space-y-3 overflow-y-auto pr-1">
+            <div className="max-h-[700px] space-y-3 overflow-y-auto pr-1">
               {shops.map((shop) => (
                 <button
                   key={shop.id}
@@ -357,19 +469,35 @@ export default function StaffShopIdentity() {
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-black text-slate-950">{shop.name}</div>
-                      <div className="mt-1 text-xs font-semibold text-slate-500">
-                        {shop.unique_id || `Shop #${shop.id}`} - {shopCityLabel(shop)}
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-black text-slate-950">{shop.name}</div>
+                      <div className="mt-0.5 text-xs font-semibold text-slate-500">
+                        {shop.unique_id || `Shop #${shop.id}`} · {shopCityLabel(shop)}
                       </div>
                     </div>
-                    <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase ring-1 ${statusPillClass(shop.status)}`}>
+                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase ring-1 ${statusPillClass(shop.status)}`}>
                       {shop.status || "pending"}
                     </span>
                   </div>
-                  <div className="mt-3 grid gap-2 text-xs font-semibold text-slate-500 sm:grid-cols-2">
-                    <span>Phone: {shop.phone || "Not provided"}</span>
-                    <span>WhatsApp: {shop.whatsapp || "Not provided"}</span>
+
+                  {/* Status badges row */}
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    {shop.is_suspended && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-black text-rose-700">
+                        <FaBan className="text-[8px]" /> Suspended
+                      </span>
+                    )}
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${shop.is_open ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                      {shop.is_open ? "Open" : "Closed"}
+                    </span>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${shop.is_verified ? "bg-sky-50 text-sky-700" : "bg-slate-100 text-slate-400"}`}>
+                      {shop.is_verified ? "Verified" : "Unverified"}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 grid gap-1 text-xs font-semibold text-slate-500 sm:grid-cols-2">
+                    <span>Phone: {shop.phone || "—"}</span>
+                    <span>WhatsApp: {shop.whatsapp || "—"}</span>
                   </div>
                 </button>
               ))}
@@ -377,27 +505,30 @@ export default function StaffShopIdentity() {
           )}
         </section>
 
+        {/* ── Right: Shop detail + controls ── */}
         <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
           {selectedShop ? (
-            <>
-              <div className="mb-5 rounded-3xl bg-slate-950 p-5 text-white">
+            <div className="space-y-5">
+
+              {/* Info header */}
+              <div className="rounded-3xl bg-slate-950 p-5 text-white">
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-xl">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-xl">
                       <FaShieldHalved />
                     </div>
-                    <div>
-                      <h3 className="text-xl font-black">{selectedShop.name}</h3>
+                    <div className="min-w-0">
+                      <h3 className="truncate text-xl font-black">{selectedShop.name}</h3>
                       <p className="text-xs font-semibold text-white/70">
-                        {selectedShop.unique_id || `Shop #${selectedShop.id}`} - {shopCityLabel(selectedShop)}
+                        {selectedShop.unique_id || `Shop #${selectedShop.id}`} · {shopCityLabel(selectedShop)}
                       </p>
                     </div>
                   </div>
-                  <span className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase">
-                    Locked fields
+                  <span className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-black uppercase ring-1 ${statusPillClass(selectedShop.status)}`}>
+                    {selectedShop.status || "pending"}
                   </span>
                 </div>
-                <div className="grid gap-3 text-xs font-semibold text-white/70 sm:grid-cols-2">
+                <div className="grid gap-2 text-xs font-semibold text-white/60 sm:grid-cols-2">
                   <span>Owner: {selectedShop.profiles?.full_name || selectedShop.owner_id}</span>
                   <span>Created: {formatDateTime(selectedShop.created_at)}</span>
                   <span>Verified: {selectedShop.is_verified ? "Yes" : "No"}</span>
@@ -405,7 +536,75 @@ export default function StaffShopIdentity() {
                 </div>
               </div>
 
-              <form onSubmit={(event) => void handleSave(event)} className="space-y-5">
+              {/* ── Shop Controls ── */}
+              <div>
+                <p className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+                  Shop Controls
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+
+                  {/* Open / Close */}
+                  <div className={`rounded-2xl border p-4 transition-colors ${selectedShop.is_open ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
+                    <div className="mb-1 flex items-center justify-between gap-2">
+                      <span className="text-xs font-black uppercase tracking-wide text-slate-500">Store Status</span>
+                      <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black ring-1 ${selectedShop.is_open ? "bg-emerald-100 text-emerald-700 ring-emerald-200" : "bg-amber-100 text-amber-700 ring-amber-200"}`}>
+                        {selectedShop.is_open ? <FaToggleOn /> : <FaToggleOff />}
+                        {selectedShop.is_open ? "Open" : "Closed"}
+                      </span>
+                    </div>
+                    <p className="mb-3 text-xs text-slate-500">
+                      {selectedShop.is_open
+                        ? "Store is currently accepting customers."
+                        : "Store is currently closed to customers."}
+                    </p>
+                    <button
+                      type="button"
+                      disabled={openToggling}
+                      onClick={() => void handleToggleOpen()}
+                      className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-black transition disabled:opacity-60 ${selectedShop.is_open ? "bg-amber-500 text-white hover:bg-amber-600" : "bg-emerald-600 text-white hover:bg-emerald-700"}`}
+                    >
+                      {openToggling ? <FaCircleNotch className="animate-spin" /> : <FaStore />}
+                      {selectedShop.is_open ? "Close store" : "Open store"}
+                    </button>
+                  </div>
+
+                  {/* Suspend / Reinstate */}
+                  <div className={`rounded-2xl border p-4 transition-colors ${selectedShop.is_suspended ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-slate-50"}`}>
+                    <div className="mb-1 flex items-center justify-between gap-2">
+                      <span className="text-xs font-black uppercase tracking-wide text-slate-500">Suspension</span>
+                      <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black ring-1 ${selectedShop.is_suspended ? "bg-rose-100 text-rose-700 ring-rose-200" : "bg-emerald-100 text-emerald-700 ring-emerald-200"}`}>
+                        {selectedShop.is_suspended ? <FaBan /> : <FaCircleCheck />}
+                        {selectedShop.is_suspended ? "Suspended" : "Active"}
+                      </span>
+                    </div>
+                    <p className="mb-3 text-xs text-slate-500">
+                      {selectedShop.is_suspended
+                        ? "Shop is hidden from all public listings."
+                        : "Shop is visible in public listings."}
+                    </p>
+                    <button
+                      type="button"
+                      disabled={suspendToggling}
+                      onClick={() => void handleToggleSuspend()}
+                      className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-black transition disabled:opacity-60 ${selectedShop.is_suspended ? "bg-emerald-600 text-white hover:bg-emerald-700" : "bg-rose-600 text-white hover:bg-rose-700"}`}
+                    >
+                      {suspendToggling ? <FaCircleNotch className="animate-spin" /> : <FaBan />}
+                      {selectedShop.is_suspended ? "Reinstate shop" : "Suspend shop"}
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* ── Divider ── */}
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-slate-200" />
+                <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Locked Identity Fields</span>
+                <div className="h-px flex-1 bg-slate-200" />
+              </div>
+
+              {/* ── Locked fields form ── */}
+              <form onSubmit={(event) => void handleSave(event)} className="space-y-4">
                 <div>
                   <label className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-slate-500">
                     <FaStore className="text-pink-600" />
@@ -456,7 +655,7 @@ export default function StaffShopIdentity() {
                     value={form.reason}
                     onChange={(event) => setForm((previous) => ({ ...previous, reason: event.target.value }))}
                     placeholder="Example: Merchant verified by phone and requested WhatsApp number correction."
-                    className="min-h-[120px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-pink-300 focus:bg-white"
+                    className="min-h-[100px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-pink-300 focus:bg-white"
                   />
                   {formErrors.reason ? <p className="mt-1 text-xs font-bold text-rose-600">{formErrors.reason}</p> : null}
                 </div>
@@ -470,19 +669,21 @@ export default function StaffShopIdentity() {
                   {saving ? "Updating locked details..." : "Update locked details"}
                 </button>
               </form>
-            </>
+
+            </div>
           ) : (
-            <div className="flex min-h-[420px] items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
+            <div className="flex min-h-[460px] items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
               <div>
                 <FaStore className="mx-auto mb-3 text-4xl text-slate-300" />
                 <h3 className="text-lg font-black text-slate-900">Select a shop</h3>
                 <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
-                  Choose a shop from the list to update locked identity and contact fields.
+                  Choose a shop from the list to manage its status and locked identity fields.
                 </p>
               </div>
             </div>
           )}
         </section>
+
       </div>
     </StaffPortalShell>
   )
