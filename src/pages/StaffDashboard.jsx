@@ -4,6 +4,7 @@ import {
   FaArrowRightFromBracket,
   FaArrowTrendUp,
   FaBell,
+  FaBolt,
   FaBriefcase,
   FaBuildingUser,
   FaBullhorn,
