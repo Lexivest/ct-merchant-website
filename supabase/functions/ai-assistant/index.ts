@@ -418,7 +418,7 @@ serve(async (req) => {
             : `name.ilike.%${rawTerm}%`
 
           const { data: prods, error: prodsErr } = await adminClient.from('products')
-            .select('id, name, price, discount_price, stock_count, shop_id, shops!inner(name, is_verified, status, subscription_end_date, is_open)')
+            .select('id, name, price, discount_price, stock_count, shop_id, shops!inner(name, is_verified)')
             .eq('is_available', true)
             .eq('is_approved', true)
             .eq('shops.status', 'approved')
@@ -512,7 +512,7 @@ serve(async (req) => {
               ? keywords.map((w: string) => `name.ilike.%${w}%`).join(",")
               : `name.ilike.%${rawTerm}%`
             const { data: prods, error: prodsErr } = await adminClient.from('products')
-              .select('id, name, price, discount_price, stock_count, shop_id, shops!inner(name, is_verified, status, subscription_end_date, is_open)')
+              .select('id, name, price, discount_price, stock_count, shop_id, shops!inner(name, is_verified)')
               .eq('is_available', true).eq('is_approved', true)
               .eq('shops.status', 'approved').eq('shops.is_open', true)
               .gt('shops.subscription_end_date', nowIso).or(orFilter).limit(20)
