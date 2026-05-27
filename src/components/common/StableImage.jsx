@@ -137,6 +137,11 @@ function StableImageFrame({
   const [failed, setFailed] = useState(false)
   const [usedOriginalFallback, setUsedOriginalFallback] = useState(false)
 
+  // Ref to read current load state inside the stall-detection timeout without
+  // stale closure values (the timeout only re-creates when isNearViewport changes).
+  const stateRef = useRef(null)
+  stateRef.current = { loaded, failed, usedOriginalFallback }
+
   // Only generate a low-res blur URL for Supabase-hosted images on lazy load.
   // Local/CDN assets that getOptimizedImageUrl can't downsize would just return
   // the same URL — a double request for the same full-size file — so skip them.
@@ -165,6 +170,34 @@ function StableImageFrame({
       observer.unobserve(node)
     }
   }, [shouldEagerLoad, isPreviouslyLoaded])
+
+  // Stall detector: if the image (or its transform URL) has not responded
+  // within 8 seconds of entering the viewport, force a graceful fallback.
+  // This handles Supabase Image Transform cold-start hangs on large images
+  // where neither onLoad nor onError fires, leaving the shimmer permanent.
+  useEffect(() => {
+    if (!isNearViewport) return undefined
+
+    const timer = window.setTimeout(() => {
+      const s = stateRef.current
+      if (s.loaded || s.failed) return
+
+      if (!s.usedOriginalFallback && src && finalSrc !== src) {
+        // Transform URL stalled — skip to original URL
+        markTransformFailed(src)
+        setUsedOriginalFallback(true)
+      } else {
+        // Original URL (or no transform fallback) also stalled — fail gracefully
+        setFailed(true)
+        onError?.()
+      }
+    }, 8000)
+
+    return () => window.clearTimeout(timer)
+    // deps intentionally only [isNearViewport]: the timer fires once per
+    // viewport-entry. stateRef provides current state at fire time.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNearViewport])
 
   function handleLoad(event) {
     // naturalWidth === 0 means the browser got a 200 response but couldn't decode the image
