@@ -14,6 +14,8 @@ import {
   FaUpload,
   FaTriangleExclamation,
   FaCheck,
+  FaDownload,
+  FaRightLong,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
@@ -84,6 +86,21 @@ async function deleteDisplayImageByUrl(publicUrl) {
   await supabase.storage.from(DISPLAY_RULE.bucket).remove([storagePath])
 }
 
+/**
+ * Fetch a remote image URL as a File object so it can be fed into the
+ * normal upload flow and land in the sponsored-display-images bucket
+ * with a brand-new URL — completely separate from the source URL.
+ */
+async function fetchImageAsFile(url) {
+  const response = await fetch(url)
+  if (!response.ok) throw new Error(`Could not fetch image (HTTP ${response.status})`)
+  const blob = await response.blob()
+  const ext =
+    blob.type === "image/png"  ? "png"  :
+    blob.type === "image/webp" ? "webp" : "jpg"
+  return new File([blob], `product-img.${ext}`, { type: blob.type || "image/jpeg" })
+}
+
 // ── ImageSlotPicker ────────────────────────────────────────────────────────────
 
 /**
@@ -141,6 +158,105 @@ function ImageSlotPicker({ label, file, existingUrl, onFileChange, onClear, requ
           e.target.value = ""
         }}
       />
+    </div>
+  )
+}
+
+// ── ProductImageStrip ──────────────────────────────────────────────────────────
+
+/**
+ * Shows a product's own images (image_url, image_url_2, image_url_3) with:
+ *  • A download link (opens the raw URL in a new tab for manual save)
+ *  • A "→ Copy to slot N" button that fetches the image and places it into the
+ *    corresponding display slot automatically — no manual download/re-upload needed.
+ *
+ * The copy operation re-uploads to the sponsored-display-images bucket, so the
+ * resulting URL is always new and never collides with the product's own URL.
+ */
+function ProductImageStrip({ product, onCopyToSlot, disabledSlots = [] }) {
+  const [copyingSlot, setCopyingSlot] = useState(null)
+  const [copyError,   setCopyError]   = useState(null)
+
+  const images = [
+    product?.image_url,
+    product?.image_url_2,
+    product?.image_url_3,
+  ].filter(Boolean)
+
+  if (!images.length) return null
+
+  async function handleCopy(url, slot) {
+    setCopyingSlot(slot)
+    setCopyError(null)
+    try {
+      const file = await fetchImageAsFile(url)
+      onCopyToSlot(file, slot)
+    } catch (err) {
+      setCopyError(`Slot ${slot}: ${err.message}`)
+    } finally {
+      setCopyingSlot(null)
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3">
+      <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-blue-600">
+        Product&apos;s existing images — copy or download
+      </p>
+      <div className="flex flex-wrap gap-3">
+        {images.map((url, idx) => {
+          const slot = idx + 1
+          const isBusy = copyingSlot === slot
+          const isDisabled = disabledSlots.includes(slot)
+
+          return (
+            <div key={idx} className="flex flex-col items-center gap-1.5">
+              {/* Thumbnail */}
+              <div className="relative h-16 w-16 overflow-hidden rounded-xl bg-slate-100 shadow-sm">
+                <img src={url} alt="" className="h-full w-full object-cover" />
+                {isDisabled && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-emerald-500/70">
+                    <FaCheck className="text-white" />
+                  </div>
+                )}
+              </div>
+
+              {/* Copy button */}
+              <button
+                type="button"
+                onClick={() => handleCopy(url, slot)}
+                disabled={isBusy || isDisabled}
+                title={isDisabled ? "Already in slot" : `Copy to display slot ${slot}`}
+                className="flex items-center gap-1 rounded-lg bg-blue-600 px-2 py-1 text-[9px] font-black text-white shadow transition hover:bg-blue-700 disabled:bg-slate-300"
+              >
+                {isBusy
+                  ? <FaCircleNotch className="animate-spin text-[8px]" />
+                  : <FaRightLong className="text-[8px]" />
+                }
+                {isDisabled ? "Copied" : `Slot ${slot}`}
+              </button>
+
+              {/* Download link */}
+              <a
+                href={url}
+                download
+                target="_blank"
+                rel="noreferrer"
+                title="Download this image"
+                className="flex items-center gap-1 text-[9px] font-bold text-slate-500 hover:text-blue-600"
+              >
+                <FaDownload className="text-[8px]" /> Download
+              </a>
+            </div>
+          )
+        })}
+      </div>
+      {copyError && (
+        <p className="mt-2 text-[10px] font-bold text-rose-600">{copyError}</p>
+      )}
+      <p className="mt-2 text-[9px] font-semibold text-blue-500">
+        "Copy to Slot" re-uploads the image to the dedicated display bucket — a brand-new URL is created, separate from the product&apos;s own image.
+      </p>
     </div>
   )
 }
@@ -366,7 +482,24 @@ function ImageUploadModal({ banner, onClose, onSaved }) {
           </button>
         </div>
 
-        <div className="px-6 py-6 space-y-6">
+        <div className="max-h-[70vh] overflow-y-auto px-6 py-6 space-y-5">
+          {/* Product image quick-copy strip */}
+          {banner.product && (
+            <ProductImageStrip
+              product={banner.product}
+              onCopyToSlot={(file, slot) => {
+                if (slot === 1) { setFile1(file); setKeep1(false) }
+                if (slot === 2) { setFile2(file); setKeep2(false) }
+                if (slot === 3) { setFile3(file); setKeep3(false) }
+              }}
+              disabledSlots={[
+                (file1 || (keep1 && banner.display_image_url))   ? 1 : null,
+                (file2 || (keep2 && banner.display_image_url_2)) ? 2 : null,
+                (file3 || (keep3 && banner.display_image_url_3)) ? 3 : null,
+              ].filter(Boolean)}
+            />
+          )}
+
           <div className="flex items-start justify-around gap-4">
             <ImageSlotPicker
               label="Primary"
@@ -771,19 +904,43 @@ export default function StaffSponsoredProducts() {
                   ) : availableProducts.length > 0 ? (
                     <div className="grid grid-cols-1 gap-2">
                       {availableProducts.map((p) => (
-                        <button
+                        <div
                           key={p.id}
-                          onClick={() => setSelectedProduct(p)}
                           className={`flex items-center gap-3 p-2 rounded-xl transition-all border-2 ${selectedProduct?.id === p.id ? "border-pink-500 bg-white shadow-sm" : "border-transparent hover:bg-white"}`}
                         >
-                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-slate-200">
-                            <img src={p.image_url} alt="" className="h-full w-full object-cover" />
+                          {/* Product thumbnail + download link */}
+                          <div className="relative shrink-0 group/thumb">
+                            <div className="h-12 w-12 overflow-hidden rounded-lg bg-slate-200">
+                              <img src={p.image_url} alt="" className="h-full w-full object-cover" />
+                            </div>
+                            <a
+                              href={p.image_url}
+                              download
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              title="Download product image"
+                              className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-slate-700 text-white opacity-0 shadow transition group-hover/thumb:opacity-100"
+                            >
+                              <FaDownload className="text-[7px]" />
+                            </a>
                           </div>
-                          <div className="min-w-0 flex-1 text-left">
+
+                          {/* Select button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedProduct(p)
+                              setNewImg1(null)
+                              setNewImg2(null)
+                              setNewImg3(null)
+                            }}
+                            className="min-w-0 flex-1 text-left"
+                          >
                             <div className="truncate text-xs font-black text-slate-900">{p.name}</div>
                             <div className="text-[10px] font-bold text-slate-400">{p.shops.name} • ₦{Number(p.price).toLocaleString()}</div>
-                          </div>
-                        </button>
+                          </button>
+                        </div>
                       ))}
                     </div>
                   ) : (
@@ -792,13 +949,35 @@ export default function StaffSponsoredProducts() {
                 </div>
               </div>
 
-              {/* Display images upload (required) */}
+              {/* Step 3: quick-copy from product images (or download) */}
+              {selectedProduct && (
+                <div>
+                  <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-500">
+                    Step 3a: Use product&apos;s own images
+                  </label>
+                  <ProductImageStrip
+                    product={selectedProduct}
+                    onCopyToSlot={(file, slot) => {
+                      if (slot === 1) setNewImg1(file)
+                      if (slot === 2) setNewImg2(file)
+                      if (slot === 3) setNewImg3(file)
+                    }}
+                    disabledSlots={[
+                      newImg1 ? 1 : null,
+                      newImg2 ? 2 : null,
+                      newImg3 ? 3 : null,
+                    ].filter(Boolean)}
+                  />
+                </div>
+              )}
+
+              {/* Step 3b: Upload display images manually (required) */}
               <div>
                 <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-500">
-                  Step 3: Upload Display Images
+                  {selectedProduct ? "Step 3b: Or upload your own images" : "Step 3: Upload Display Images"}
                   <span className="ml-1 text-rose-500">*</span>
                   <span className="ml-2 font-semibold normal-case text-slate-400">
-                    (uploaded to a separate bucket — not from the product)
+                    (separate bucket — never shares URLs with the product)
                   </span>
                 </label>
                 <div className="flex items-start justify-around rounded-2xl border border-slate-100 bg-slate-50 p-4">
