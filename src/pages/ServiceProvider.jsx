@@ -27,6 +27,7 @@ import useCachedFetch, {
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { fetchShopDetailData } from "../lib/shopDetailData"
 import { logShopAnalyticsEvent } from "../lib/shopAnalytics"
+import { supabase } from "../lib/supabase"
 import { fetchPublicRepoShopDetail, REPO_SEARCH_INTENT_PARAM } from "../lib/repoSearch"
 import { hasValidRepoSearchIntent } from "../lib/routeIntents"
 import {

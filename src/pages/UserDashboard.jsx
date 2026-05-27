@@ -1659,11 +1659,7 @@ function UserDashboard() {
   }
 
   async function openServiceProviderWithTransition(shopId, serviceName = "") {
-    console.log("[svc-open] called", { shopId, serviceName, userId: user?.id || "anon" })
-    if (!shopId) {
-      console.warn("[svc-open] aborted — no shopId")
-      return
-    }
+    if (!shopId) return
 
     const retryAction = () => openServiceProviderWithTransition(shopId, serviceName)
     const cacheKey = `service_provider_${shopId}_${user?.id || "anon"}`
@@ -1671,12 +1667,10 @@ function UserDashboard() {
     const hasFreshCache =
       cachedEntry && Date.now() - cachedEntry.timestamp <= 1000 * 60 * 5
 
-    console.log("[svc-open] cache check", { cacheKey, hasFreshCache, cachedEntry: !!cachedEntry })
     beginRouteTransition(retryAction)
 
     try {
       if (hasFreshCache) {
-        console.log("[svc-open] using fresh cache, navigating")
         await loadServiceProviderPage()
         navigate(`/service-provider?id=${encodeURIComponent(shopId)}&service=${encodeURIComponent(serviceName || "")}`, {
           state: { fromMarketTransition: true },
@@ -1684,7 +1678,6 @@ function UserDashboard() {
         return
       }
 
-      console.log("[svc-open] fetching shop detail for shopId:", shopId)
       const serviceProviderData = await new Promise((resolve, reject) => {
         const timeoutId = window.setTimeout(() => {
           reject(new Error("Timed out while opening the service."))
@@ -1699,18 +1692,15 @@ function UserDashboard() {
         ])
           .then(([shopDetailData]) => {
             window.clearTimeout(timeoutId)
-            console.log("[svc-open] fetchShopDetailData succeeded", { shop: shopDetailData?.shop?.id, shopName: shopDetailData?.shop?.name })
             resolve(shopDetailData)
           })
           .catch((error) => {
             window.clearTimeout(timeoutId)
-            console.error("[svc-open] fetchShopDetailData failed", error)
             reject(error)
           })
       })
 
       primeCachedFetchStore(cacheKey, serviceProviderData, undefined, { persist: "session" })
-      console.log("[svc-open] navigating to service provider page")
 
       navigate(`/service-provider?id=${encodeURIComponent(shopId)}&service=${encodeURIComponent(serviceName || "")}`, {
         state: {
@@ -1719,7 +1709,7 @@ function UserDashboard() {
         },
       })
     } catch (error) {
-      console.error("[svc-open] FAILED", error)
+      console.error("Failed to open service provider", error)
       const safeMessage = isNetworkError(error)
         ? "We could not open this service right now. Please try again."
         : getFriendlyErrorMessage(
