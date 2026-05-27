@@ -546,8 +546,8 @@ img {
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 56px;
-  padding: 0 16px;
+  height: 68px;
+  padding: 0 12px;
   overflow: hidden;
   background: linear-gradient(135deg, #991b1b 0%, #7c2d12 100%);
 }
@@ -558,6 +558,12 @@ img {
   50%       { background: rgba(220, 38, 38, 0.55); }
 }
 
+/* Horizontal marquee for the text block */
+@keyframes flash-text-marquee {
+  0%   { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
 /* Left media (icon circle or thumbnail) */
 .flash-sale-media { flex-shrink: 0; }
 
@@ -565,53 +571,59 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.15);
 }
 
 .flash-sale-icon {
   color: #fbbf24;   /* amber — hot spark colour */
-  font-size: 1rem;
+  font-size: 1.25rem;
 }
 
 .flash-sale-img {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
+  width: 54px;
+  height: 54px;
+  border-radius: 10px;
   object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.30);
 }
 
-/* Centre text block */
+/* Centre text block — overflow-hidden rail for the marquee */
 .flash-sale-text {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+/* Inner wrapper that scrolls horizontally */
+.flash-sale-marquee-inner {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+  animation: flash-text-marquee 14s linear infinite;
+  /* Small pause at start so it doesn't shoot off immediately */
+  animation-delay: 1s;
 }
 
 .flash-sale-title {
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   font-weight: 900;
   color: #ffffff;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .flash-sale-subtitle {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.80);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* Discount badge pill */

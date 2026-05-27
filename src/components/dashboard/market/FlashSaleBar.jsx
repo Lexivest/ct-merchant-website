@@ -133,12 +133,17 @@ export default function FlashSaleBar({ cityId }) {
         )}
       </div>
 
-      {/* ── Centre: title + subtitle ─────────────────────────────────── */}
+      {/* ── Centre: title + subtitle (horizontal marquee) ───────────── */}
       <div className="flash-sale-text">
-        <span className="flash-sale-title">{current.title}</span>
-        {current.subtitle ? (
-          <span className="flash-sale-subtitle">{current.subtitle}</span>
-        ) : null}
+        <div className="flash-sale-marquee-inner">
+          <span className="flash-sale-title">{current.title}</span>
+          {current.subtitle ? (
+            <>
+              <span style={{ color: "rgba(255,255,255,0.4)", fontWeight: 900, fontSize: "0.7rem" }}>—</span>
+              <span className="flash-sale-subtitle">{current.subtitle}</span>
+            </>
+          ) : null}
+        </div>
       </div>
 
       {/* ── Discount badge ────────────────────────────────────────────── */}
