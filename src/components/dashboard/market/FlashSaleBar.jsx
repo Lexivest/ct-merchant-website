@@ -117,21 +117,34 @@ export default function FlashSaleBar({ cityId }) {
   return (
     <div className={`flash-sale-bar${isUrgent ? " flash-sale-bar--urgent" : ""}`}>
 
-      {/* ── Row 1: header strip — label left, discount badge right ───── */}
+      {/* ── Row 1: [empty] · ⚡ Flash Sale (centre) · timer (right) ─── */}
       <div className="flash-sale-header">
+        {/* Left ghost — same width as timer so label stays truly centred */}
+        <div className="flash-sale-header-ghost" aria-hidden="true">
+          {showDays ? <DigitBlock value={0} label="d" urgent={false} /> : null}
+          <DigitBlock value={0} label="h" urgent={false} />
+          <DigitBlock value={0} label="m" urgent={false} />
+          <DigitBlock value={0} label="s" urgent={false} />
+        </div>
+
         <span className="flash-sale-header-label">
           <FaBolt className="flash-sale-header-bolt" />
           Flash Sale
         </span>
-        {current.discount_label ? (
-          <span className="flash-sale-badge">{current.discount_label}</span>
-        ) : null}
+
+        {/* Right: live countdown */}
+        <div className="flash-sale-timer" aria-label="Time remaining">
+          {showDays ? <DigitBlock value={countdown.days}    label="d" urgent={isUrgent} /> : null}
+          <DigitBlock               value={countdown.hours}   label="h" urgent={isUrgent} />
+          <DigitBlock               value={countdown.minutes} label="m" urgent={isUrgent} />
+          <DigitBlock               value={countdown.seconds} label="s" urgent={isUrgent} />
+        </div>
       </div>
 
-      {/* ── Row 2: image · full-width scrolling text · countdown ──────── */}
+      {/* ── Row 2: bigger image · scrolling text · discount badge ─────── */}
       <div className="flash-sale-main-row">
 
-        {/* Left: icon or product thumbnail */}
+        {/* Left: enlarged icon or product thumbnail */}
         <div className="flash-sale-media">
           {current.image_url ? (
             <img
@@ -159,7 +172,6 @@ export default function FlashSaleBar({ cityId }) {
                 </>
               ) : null}
             </span>
-            {/* Copy 2 — aria-hidden so screen readers skip the duplicate */}
             <span className="flash-sale-marquee-copy" aria-hidden="true">
               <span className="flash-sale-title">{current.title}</span>
               {current.subtitle ? (
@@ -172,13 +184,10 @@ export default function FlashSaleBar({ cityId }) {
           </div>
         </div>
 
-        {/* Right: countdown timer */}
-        <div className="flash-sale-timer" aria-label="Time remaining">
-          {showDays ? <DigitBlock value={countdown.days}    label="d" urgent={isUrgent} /> : null}
-          <DigitBlock               value={countdown.hours}   label="h" urgent={isUrgent} />
-          <DigitBlock               value={countdown.minutes} label="m" urgent={isUrgent} />
-          <DigitBlock               value={countdown.seconds} label="s" urgent={isUrgent} />
-        </div>
+        {/* Right: discount badge */}
+        {current.discount_label ? (
+          <span className="flash-sale-badge">{current.discount_label}</span>
+        ) : null}
       </div>
     </div>
   )
