@@ -187,9 +187,21 @@ function StableImageFrame({
         markTransformFailed(src)
         setUsedOriginalFallback(true)
       } else {
-        // Original URL (or no transform fallback) also stalled — fail gracefully
+        // Image hasn't loaded after 8 s. Show the fallback image.
         setFailed(true)
-        onError?.()
+        // Only propagate onError (which triggers parent substitution logic) when
+        // we EXPLICITLY fell back from a transform URL to the original and that
+        // also stalled. This is a real, exhausted failure.
+        //
+        // Do NOT call onError when finalSrc === src from mount (meaning the
+        // transform was already known-broken from a previous load and we went
+        // straight to the original URL). That case is just CDN latency — the
+        // image may still arrive. Calling onError here would cause ShopCard to
+        // swap in a completely different product, making it look like the wrong
+        // item is in the grid (the "sponsored product disappears from shop card" bug).
+        if (s.usedOriginalFallback) {
+          onError?.()
+        }
       }
     }, 8000)
 
