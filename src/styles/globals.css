@@ -542,34 +542,34 @@ img {
 }
 
 /* ── FLASH SALE COUNTDOWN BAR ──────────────────────────────────────────── */
-/* Outer bar: side-by-side — image on left, content column on right.
-   align-items:stretch makes the image fill the full bar height.         */
+/* Outer bar: column — header on top spanning full width, body row below.
+   This is what makes "Flash Sale" truly centred across the entire bar,
+   including over the image/icon area on the left.                       */
 .flash-sale-bar {
   display: flex;
-  align-items: stretch;
-  gap: 10px;
+  flex-direction: column;
+  gap: 4px;
   padding: 6px 12px 8px;
   overflow: hidden;
   background: linear-gradient(135deg, #991b1b 0%, #7c2d12 100%);
 }
 
-/* Right column: stacks header row + main row vertically */
-.flash-sale-content {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 4px;
-}
-
-/* Row 1: label is truly centred via flex justify-content.
-   Badge is position:absolute so it never pushes the label off-centre. */
+/* Row 1: full-width header — "Flash Sale" label + absolute badge.
+   justify-content:center centres the label across the ENTIRE bar width. */
 .flash-sale-header {
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  width: 100%;
+}
+
+/* Row 2: body — image on left, scrolling text + timer on right */
+.flash-sale-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 
 .flash-sale-header-label {
@@ -615,19 +615,19 @@ img {
   100% { transform: translateX(-50%); }
 }
 
-/* Left media — stretches to fill the full bar height */
+/* Left media — sits in the body row */
 .flash-sale-media {
   flex-shrink: 0;
   display: flex;
-  align-items: stretch;
+  align-items: center;
 }
 
 .flash-sale-icon-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 54px;
-  min-height: 54px;
+  width: 44px;
+  height: 44px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.15);
 }
@@ -638,9 +638,8 @@ img {
 }
 
 .flash-sale-img {
-  width: 54px;
-  height: 100%;       /* fills the full bar height (both rows) */
-  min-height: 54px;
+  width: 44px;
+  height: 44px;
   border-radius: 10px;
   object-fit: cover;
   border: 2px solid rgba(255, 255, 255, 0.30);

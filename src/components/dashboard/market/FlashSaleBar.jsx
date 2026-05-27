@@ -117,38 +117,37 @@ export default function FlashSaleBar({ cityId }) {
   return (
     <div className={`flash-sale-bar${isUrgent ? " flash-sale-bar--urgent" : ""}`}>
 
-      {/* ── Left: image spans the full bar height (both rows) ─────────── */}
-      <div className="flash-sale-media">
-        {current.image_url ? (
-          <img
-            src={current.image_url}
-            alt=""
-            aria-hidden="true"
-            className="flash-sale-img"
-          />
-        ) : (
-          <div className="flash-sale-icon-wrap">
-            <FaBolt className="flash-sale-icon" />
-          </div>
-        )}
+      {/* ── Row 1: full-width header — spans the entire bar including the
+           media area so the label is truly centred across all screen widths.
+           Badge is position:absolute so it never pushes the label off-centre. */}
+      <div className="flash-sale-header">
+        <span className="flash-sale-header-label">
+          <FaBolt className="flash-sale-header-bolt" />
+          Flash Sale
+        </span>
+        {current.discount_label ? (
+          <span className="flash-sale-badge">{current.discount_label}</span>
+        ) : null}
       </div>
 
-      {/* ── Right column: header row + main row stacked ───────────────── */}
-      <div className="flash-sale-content">
+      {/* ── Row 2: body — image on left, scrolling text + timer on right ── */}
+      <div className="flash-sale-body">
 
-        {/* Row 1: label centred via flex; badge is position:absolute so it
-             never pushes the label off-centre on narrow screens            */}
-        <div className="flash-sale-header">
-          <span className="flash-sale-header-label">
-            <FaBolt className="flash-sale-header-bolt" />
-            Flash Sale
-          </span>
-          {current.discount_label ? (
-            <span className="flash-sale-badge">{current.discount_label}</span>
-          ) : null}
+        <div className="flash-sale-media">
+          {current.image_url ? (
+            <img
+              src={current.image_url}
+              alt=""
+              aria-hidden="true"
+              className="flash-sale-img"
+            />
+          ) : (
+            <div className="flash-sale-icon-wrap">
+              <FaBolt className="flash-sale-icon" />
+            </div>
+          )}
         </div>
 
-        {/* Row 2: scrolling text · countdown */}
         <div className="flash-sale-main-row">
           <div className="flash-sale-text">
             <div className="flash-sale-marquee-track">
