@@ -17,8 +17,11 @@ export function withStaffAuthTimeout(
       reject(new Error(message))
     }, timeoutMs)
   })
+  // Supabase query builders are thenables, not native Promises — they have
+  // .then() but not .finally(). Promise.resolve() promotes any thenable into
+  // a real native Promise so .finally() is guaranteed to exist.
   return Promise.race([
-    promise.finally(() => window.clearTimeout(timerId)),
+    Promise.resolve(promise).finally(() => window.clearTimeout(timerId)),
     timeoutPromise,
   ])
 }
