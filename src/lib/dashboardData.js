@@ -513,7 +513,10 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
 
   // The RPC returns exactly what we need in one object, but we map snake_case to camelCase
   // to maintain compatibility with the existing frontend state.
+  // areas is included here so it travels in the same dynamic cache entry as shops —
+  // this prevents the areaCount:0 blank-market bug when the base cache expires first.
   return {
+    areas: Array.isArray(data.areas) ? data.areas : [],
     featuredCityBanners,
     sponsoredProducts,
     staffDiscoveries: data.staff_discoveries || [],
@@ -600,9 +603,11 @@ export async function prepareDashboardTransition({
   )
 
   // Split and prime
-  const { profile: cachedProfile, notifications, wishlistCount, featuredCityBanners, sponsoredProducts, staffDiscoveries, fairlyUsedProducts, shops, products, serviceShops, serviceProducts, ...basePart } = data
+  const { profile: cachedProfile, notifications, wishlistCount, featuredCityBanners, sponsoredProducts, staffDiscoveries, fairlyUsedProducts, areas, shops, products, serviceShops, serviceProducts, ...basePart } = data
   void cachedProfile
-  const dynamicPart = { notifications, wishlistCount, featuredCityBanners, sponsoredProducts, staffDiscoveries, fairlyUsedProducts, shops, products, serviceShops, serviceProducts }
+  // areas lives in dynamicPart (same key as shops) so both expire together —
+  // prevents the market section showing blank when base cache expires before dynamic.
+  const dynamicPart = { areas, notifications, wishlistCount, featuredCityBanners, sponsoredProducts, staffDiscoveries, fairlyUsedProducts, shops, products, serviceShops, serviceProducts }
 
   primeCachedFetchStore(baseKey, basePart, Date.now(), { persist: "session" })
   primeCachedFetchStore(dynamicKey, dynamicPart, Date.now(), { persist: "session" })
