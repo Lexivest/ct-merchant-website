@@ -101,28 +101,30 @@ export default function MarketTicker({ cityId }) {
         transition:  "background-color 0.6s ease",
       }}
     >
-      <div style={contentStyle}>
-        {/* Optional thumbnail */}
-        {current?.image_url ? (
-          <img
-            src={current.image_url}
-            alt=""
-            aria-hidden="true"
-            style={{
-              flexShrink:   0,
-              width:        30,
-              height:       30,
-              borderRadius: 7,
-              objectFit:    "cover",
-              background:   "rgba(0,0,0,0.2)",
-            }}
-          />
-        ) : null}
+      <div className="ticker-inner-wrap">
+        <div style={contentStyle}>
+          {/* Optional thumbnail */}
+          {current?.image_url ? (
+            <img
+              src={current.image_url}
+              alt=""
+              aria-hidden="true"
+              style={{
+                flexShrink:   0,
+                width:        30,
+                height:       30,
+                borderRadius: 7,
+                objectFit:    "cover",
+                background:   "rgba(0,0,0,0.2)",
+              }}
+            />
+          ) : null}
 
-        {/* Message text */}
-        <p className="market-ticker-message">
-          {current?.message || ""}
-        </p>
+          {/* Message text */}
+          <p className="market-ticker-message">
+            {current?.message || ""}
+          </p>
+        </div>
       </div>
     </div>
   )

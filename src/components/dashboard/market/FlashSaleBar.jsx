@@ -108,42 +108,45 @@ export default function FlashSaleBar({ cityId }) {
 
   return (
     <div className={`flash-sale-bar${isUrgent ? " flash-sale-bar--urgent" : ""}`}>
+      <div className="ticker-inner-wrap">
 
-      {/* ── Left: icon or product thumbnail ──────────────────────────── */}
-      <div className="flash-sale-media">
-        {current.image_url ? (
-          <img
-            src={current.image_url}
-            alt=""
-            aria-hidden="true"
-            className="flash-sale-img"
-          />
-        ) : (
-          <div className="flash-sale-icon-wrap">
-            <FaBolt className="flash-sale-icon" />
-          </div>
-        )}
-      </div>
+        {/* ── Left: icon or product thumbnail ────────────────────────── */}
+        <div className="flash-sale-media">
+          {current.image_url ? (
+            <img
+              src={current.image_url}
+              alt=""
+              aria-hidden="true"
+              className="flash-sale-img"
+            />
+          ) : (
+            <div className="flash-sale-icon-wrap">
+              <FaBolt className="flash-sale-icon" />
+            </div>
+          )}
+        </div>
 
-      {/* ── Centre: title + subtitle ─────────────────────────────────── */}
-      <div className="flash-sale-text">
-        <span className="flash-sale-title">{current.title}</span>
-        {current.subtitle ? (
-          <span className="flash-sale-subtitle">{current.subtitle}</span>
+        {/* ── Centre: title + subtitle ───────────────────────────────── */}
+        <div className="flash-sale-text">
+          <span className="flash-sale-title">{current.title}</span>
+          {current.subtitle ? (
+            <span className="flash-sale-subtitle">{current.subtitle}</span>
+          ) : null}
+        </div>
+
+        {/* ── Discount badge ──────────────────────────────────────────── */}
+        {current.discount_label ? (
+          <span className="flash-sale-badge">{current.discount_label}</span>
         ) : null}
-      </div>
 
-      {/* ── Discount badge ────────────────────────────────────────────── */}
-      {current.discount_label ? (
-        <span className="flash-sale-badge">{current.discount_label}</span>
-      ) : null}
+        {/* ── Countdown timer ─────────────────────────────────────────── */}
+        <div className="flash-sale-timer" aria-label="Time remaining">
+          {showDays ? <DigitBlock value={countdown.days}    label="d" urgent={isUrgent} /> : null}
+          <DigitBlock               value={countdown.hours}   label="h" urgent={isUrgent} />
+          <DigitBlock               value={countdown.minutes} label="m" urgent={isUrgent} />
+          <DigitBlock               value={countdown.seconds} label="s" urgent={isUrgent} />
+        </div>
 
-      {/* ── Countdown timer ───────────────────────────────────────────── */}
-      <div className="flash-sale-timer" aria-label="Time remaining">
-        {showDays ? <DigitBlock value={countdown.days}    label="d" urgent={isUrgent} /> : null}
-        <DigitBlock               value={countdown.hours}   label="h" urgent={isUrgent} />
-        <DigitBlock               value={countdown.minutes} label="m" urgent={isUrgent} />
-        <DigitBlock               value={countdown.seconds} label="s" urgent={isUrgent} />
       </div>
     </div>
   )
