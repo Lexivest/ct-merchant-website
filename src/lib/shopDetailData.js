@@ -133,6 +133,8 @@ export async function fetchShopDetailData({
 
   const normalizedShopId = normalizeRecordId(shopId)
 
+  console.log("[shopDetail] calling RPC get_shop_detail_payload", { p_shop_id: normalizedShopId, p_user_id: userId })
+
   // p_user_id powers the has_liked check inside the RPC.
   // (View tracking lives in shop_analytics_events, logged elsewhere.)
   const { data, error } = await supabase.rpc("get_shop_detail_payload", {
@@ -140,24 +142,28 @@ export async function fetchShopDetailData({
     p_user_id: userId,
   })
 
+  console.log("[shopDetail] RPC response", { data, error })
+
   if (error) {
-    console.error("Shop detail RPC error:", error)
+    console.error("[shopDetail] RPC error:", error)
     if (isNetworkError(error)) {
       throw new Error("We could not open this shop right now. Please try again.")
     }
 
     try {
+      console.log("[shopDetail] falling back to direct query")
       return await fetchShopDetailDataDirect({
         shopId: normalizedShopId,
         userId,
       })
     } catch (fallbackError) {
-      console.error("Shop detail direct fallback error:", fallbackError)
+      console.error("[shopDetail] direct fallback also failed:", fallbackError)
       throw fallbackError
     }
   }
 
   if (!data || !data.shop) {
+    console.warn("[shopDetail] RPC returned null shop", { data, shopId: normalizedShopId, userId })
     throw new Error("This shop is unavailable right now. Please try again later.")
   }
 
