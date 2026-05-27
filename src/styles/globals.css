@@ -563,15 +563,26 @@ img {
   gap: 4px;
 }
 
-/* Row 1: label truly centred, badge pinned right via absolute */
+/* Row 1: three-slot flex centres the label perfectly.
+   [side flex:1][label][side flex:1 → badge right-aligned]
+   Both side divs grow equally, so the label is always at the midpoint. */
 .flash-sale-header {
-  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
+}
+
+.flash-sale-header-side {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.flash-sale-header-side--right {
+  justify-content: flex-end;
 }
 
 .flash-sale-header-label {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -586,12 +597,6 @@ img {
 .flash-sale-header-bolt {
   color: #fbbf24;
   font-size: 0.58rem;
-}
-
-/* Badge stays at the far right without displacing the centred label */
-.flash-sale-header .flash-sale-badge {
-  position: absolute;
-  right: 0;
 }
 
 /* Row 2: scrolling text + timer */
