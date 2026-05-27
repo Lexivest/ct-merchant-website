@@ -43,27 +43,35 @@ export default function FlashSaleBar({ cityId }) {
   const tickRef = useRef(null)
 
   // ── Fetch active, non-expired sales ──────────────────────────────────
+  // Re-fetches every 5 minutes so newly-started sales appear without a
+  // full page reload (flash sales can start after the initial dashboard load).
   useEffect(() => {
     if (!cityId) return
 
-    const nowIso = new Date().toISOString()
+    function fetchSales() {
+      const nowIso = new Date().toISOString()
 
-    supabase
-      .from("flash_sales")
-      .select("id, title, subtitle, discount_label, image_url, ends_at")
-      .or(`city_id.eq.${cityId},city_id.is.null`)
-      .eq("is_active", true)
-      .lte("starts_at", nowIso)
-      .gt("ends_at",   nowIso)
-      .order("ends_at", { ascending: true })   // soonest-ending first (most urgent)
-      .limit(10)
-      .then(({ data }) => {
-        if (data?.length) {
-          setSales(data)
-          setSaleIndex(0)
-          setCountdown(calcRemaining(data[0].ends_at))
-        }
-      })
+      supabase
+        .from("flash_sales")
+        .select("id, title, subtitle, discount_label, image_url, ends_at")
+        .or(`city_id.eq.${cityId},city_id.is.null`)
+        .eq("is_active", true)
+        .lte("starts_at", nowIso)
+        .gt("ends_at",   nowIso)
+        .order("ends_at", { ascending: true })
+        .limit(10)
+        .then(({ data }) => {
+          if (data?.length) {
+            setSales(data)
+            setSaleIndex(0)
+            setCountdown(calcRemaining(data[0].ends_at))
+          }
+        })
+    }
+
+    fetchSales()
+    const refetchInterval = setInterval(fetchSales, 5 * 60 * 1000) // every 5 min
+    return () => clearInterval(refetchInterval)
   }, [cityId])
 
   // ── 1-second countdown tick ───────────────────────────────────────────
