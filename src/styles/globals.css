@@ -544,12 +544,43 @@ img {
 /* ── FLASH SALE COUNTDOWN BAR ──────────────────────────────────────────── */
 .flash-sale-bar {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 68px;
-  padding: 0 12px;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px 12px 8px;
   overflow: hidden;
   background: linear-gradient(135deg, #991b1b 0%, #7c2d12 100%);
+}
+
+/* Row 1: "⚡ Flash Sale" label on the left, discount badge on the right */
+.flash-sale-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.flash-sale-header-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.75);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.flash-sale-header-bolt {
+  color: #fbbf24;
+  font-size: 0.55rem;
+}
+
+/* Row 2: image + scrolling text + timer in a single flex row */
+.flash-sale-main-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 
 /* Digit blocks pulse red when < 10 min remain */
@@ -576,21 +607,21 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.15);
 }
 
 .flash-sale-icon {
   color: #fbbf24;
-  font-size: 1.25rem;
+  font-size: 1rem;
 }
 
 .flash-sale-img {
-  width: 54px;
-  height: 54px;
-  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
   object-fit: cover;
   border: 2px solid rgba(255, 255, 255, 0.30);
 }
