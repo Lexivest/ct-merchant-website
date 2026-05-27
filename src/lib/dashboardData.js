@@ -387,8 +387,21 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
     : allReturnedShops.filter((shop) => isServiceShop(shop))
   const normalShopIds = new Set(rawShops.map((shop) => String(shop.id)))
   const serviceShopIds = new Set(rawServiceShops.map((shop) => String(shop.id)))
+
+  // Product IDs already visible in the sponsored carousel — hide from shop cards
+  // so the same product doesn't appear twice on the same screen.
+  const sponsoredProductIds = new Set(
+    rawSponsoredProducts
+      .filter((sp) => sp.layout === "product" && sp.template_key)
+      .map((sp) => String(sp.template_key))
+  )
+
   const rawProducts = Array.isArray(data.products)
-    ? data.products.filter((product) => normalShopIds.has(String(product.shop_id)))
+    ? data.products.filter(
+        (product) =>
+          normalShopIds.has(String(product.shop_id)) &&
+          !sponsoredProductIds.has(String(product.id))
+      )
     : []
   const rawServiceProducts = Array.isArray(data.service_products)
     ? data.service_products.filter((product) => serviceShopIds.has(String(product.shop_id)))
