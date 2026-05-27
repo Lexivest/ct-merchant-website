@@ -136,19 +136,16 @@ export default function FlashSaleBar({ cityId }) {
       {/* ── Right column: header row + main row stacked ───────────────── */}
       <div className="flash-sale-content">
 
-        {/* Row 1: three-slot flex — empty left balances badge on right,
-             label lands at the exact midpoint of the content column      */}
+        {/* Row 1: label centred via flex; badge is position:absolute so it
+             never pushes the label off-centre on narrow screens            */}
         <div className="flash-sale-header">
-          <div className="flash-sale-header-side" />
           <span className="flash-sale-header-label">
             <FaBolt className="flash-sale-header-bolt" />
             Flash Sale
           </span>
-          <div className="flash-sale-header-side flash-sale-header-side--right">
-            {current.discount_label ? (
-              <span className="flash-sale-badge">{current.discount_label}</span>
-            ) : null}
-          </div>
+          {current.discount_label ? (
+            <span className="flash-sale-badge">{current.discount_label}</span>
+          ) : null}
         </div>
 
         {/* Row 2: scrolling text · countdown */}
