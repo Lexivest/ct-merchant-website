@@ -133,16 +133,29 @@ export default function FlashSaleBar({ cityId }) {
         )}
       </div>
 
-      {/* ── Centre: title + subtitle (horizontal marquee) ───────────── */}
+      {/* ── Centre: seamless two-copy marquee ───────────────────────── */}
       <div className="flash-sale-text">
-        <div className="flash-sale-marquee-inner">
-          <span className="flash-sale-title">{current.title}</span>
-          {current.subtitle ? (
-            <>
-              <span style={{ color: "rgba(255,255,255,0.4)", fontWeight: 900, fontSize: "0.7rem" }}>—</span>
-              <span className="flash-sale-subtitle">{current.subtitle}</span>
-            </>
-          ) : null}
+        <div className="flash-sale-marquee-track">
+          {/* Copy 1 */}
+          <span className="flash-sale-marquee-copy">
+            <span className="flash-sale-title">{current.title}</span>
+            {current.subtitle ? (
+              <>
+                <span style={{ color: "rgba(255,255,255,0.35)", fontWeight: 900, fontSize: "0.7rem" }}>—</span>
+                <span className="flash-sale-subtitle">{current.subtitle}</span>
+              </>
+            ) : null}
+          </span>
+          {/* Copy 2 — identical, aria-hidden so screen readers skip the duplicate */}
+          <span className="flash-sale-marquee-copy" aria-hidden="true">
+            <span className="flash-sale-title">{current.title}</span>
+            {current.subtitle ? (
+              <>
+                <span style={{ color: "rgba(255,255,255,0.35)", fontWeight: 900, fontSize: "0.7rem" }}>—</span>
+                <span className="flash-sale-subtitle">{current.subtitle}</span>
+              </>
+            ) : null}
+          </span>
         </div>
       </div>
 

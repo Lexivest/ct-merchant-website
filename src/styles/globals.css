@@ -558,10 +558,15 @@ img {
   50%       { background: rgba(220, 38, 38, 0.55); }
 }
 
-/* Horizontal marquee for the text block */
+/* ── Seamless two-copy marquee ──────────────────────────────────────────
+   The track holds two identical copies of the text side by side.
+   We animate the whole track exactly one copy-width (-50% of track) to
+   the left. When the first copy exits left, the second copy has arrived
+   at the same position — the loop is perfectly gapless at any speed.
+   ──────────────────────────────────────────────────────────────────── */
 @keyframes flash-text-marquee {
-  0%   { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 /* Left media (icon circle or thumbnail) */
@@ -578,7 +583,7 @@ img {
 }
 
 .flash-sale-icon {
-  color: #fbbf24;   /* amber — hot spark colour */
+  color: #fbbf24;
   font-size: 1.25rem;
 }
 
@@ -590,7 +595,7 @@ img {
   border: 2px solid rgba(255, 255, 255, 0.30);
 }
 
-/* Centre text block — overflow-hidden rail for the marquee */
+/* Centre text block — overflow-hidden clipping rail */
 .flash-sale-text {
   flex: 1;
   min-width: 0;
@@ -599,15 +604,21 @@ img {
   align-items: center;
 }
 
-/* Inner wrapper that scrolls horizontally */
-.flash-sale-marquee-inner {
+/* The track: two side-by-side copies, animated as one unit */
+.flash-sale-marquee-track {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  animation: flash-text-marquee 22s linear infinite;
+}
+
+/* Each copy: text content + right-padding that becomes the inter-copy gap */
+.flash-sale-marquee-copy {
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
   white-space: nowrap;
-  animation: flash-text-marquee 14s linear infinite;
-  /* Small pause at start so it doesn't shoot off immediately */
-  animation-delay: 1s;
+  padding-right: 72px;   /* visible gap between the end of one copy and start of next */
 }
 
 .flash-sale-title {
