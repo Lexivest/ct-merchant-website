@@ -102,6 +102,14 @@ function StaffPortal() {
       navigate("/staff-dashboard", { replace: true, state: { fromStaffTransition: true } })
       
     } catch (error) {
+      // The underlying Supabase HTTP request may still be in-flight after a
+      // timeout. Pre-emptively sign out so that if a delayed SIGNED_IN event
+      // arrives and briefly populates auth state, it is immediately revoked
+      // rather than landing the user on the dashboard unexpectedly.
+      // signOutUser() flags the sign-out as intentional, which causes
+      // onAuthStateChange('SIGNED_OUT') to skip the 4-second debounce and
+      // clear state immediately — preventing any dashboard flash.
+      void signOutUser().catch(() => {})
       setErrorMessage(error.message)
       setIsSubmitting(false)
     }

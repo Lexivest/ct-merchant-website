@@ -7,14 +7,19 @@ export function withStaffAuthTimeout(
   message = "Staff verification is taking too long. Please check your connection and try again.",
   timeoutMs = STAFF_AUTH_TIMEOUT_MS
 ) {
+  // Keep the timerId outside both branches so the winning side can cancel it.
+  // Previously the timer cleared itself inside its own callback — meaning it
+  // was never cleared when the main promise won the race, leaving a dangling
+  // rejected-promise call on an already-settled Promise.race.
+  let timerId
+  const timeoutPromise = new Promise((_, reject) => {
+    timerId = window.setTimeout(() => {
+      reject(new Error(message))
+    }, timeoutMs)
+  })
   return Promise.race([
-    promise,
-    new Promise((_, reject) => {
-      const timerId = window.setTimeout(() => {
-        window.clearTimeout(timerId)
-        reject(new Error(message))
-      }, timeoutMs)
-    }),
+    promise.finally(() => window.clearTimeout(timerId)),
+    timeoutPromise,
   ])
 }
 
