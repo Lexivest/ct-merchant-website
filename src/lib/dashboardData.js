@@ -406,7 +406,7 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
   )
 
   if (!Array.isArray(data.shops) || !Array.isArray(data.products)) {
-    console.warn("[dashboard-rpc:market-shape]", {
+    console.warn("dashboard-rpc / market-shape", {
       cityId: resolvedCityId,
       keys: Object.keys(data || {}),
       shopsType: typeof data?.shops,
@@ -415,7 +415,7 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
   }
 
   if (rawShops.length === 0 || rawProducts.length === 0) {
-    console.info("[dashboard-rpc:market-empty]", {
+    console.info("dashboard-rpc / market-empty", {
       cityId: resolvedCityId,
       shops: rawShops.length,
       serviceShops: rawServiceShops.length,
