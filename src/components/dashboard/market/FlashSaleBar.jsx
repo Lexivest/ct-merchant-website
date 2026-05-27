@@ -117,68 +117,69 @@ export default function FlashSaleBar({ cityId }) {
   return (
     <div className={`flash-sale-bar${isUrgent ? " flash-sale-bar--urgent" : ""}`}>
 
-      {/* ── Row 1: header strip — label left, discount badge right ───── */}
-      <div className="flash-sale-header">
-        <span className="flash-sale-header-label">
-          <FaBolt className="flash-sale-header-bolt" />
-          Flash Sale
-        </span>
-        {current.discount_label ? (
-          <span className="flash-sale-badge">{current.discount_label}</span>
-        ) : null}
+      {/* ── Left: image spans the full bar height (both rows) ─────────── */}
+      <div className="flash-sale-media">
+        {current.image_url ? (
+          <img
+            src={current.image_url}
+            alt=""
+            aria-hidden="true"
+            className="flash-sale-img"
+          />
+        ) : (
+          <div className="flash-sale-icon-wrap">
+            <FaBolt className="flash-sale-icon" />
+          </div>
+        )}
       </div>
 
-      {/* ── Row 2: image · full-width scrolling text · countdown ──────── */}
-      <div className="flash-sale-main-row">
+      {/* ── Right column: header row + main row stacked ───────────────── */}
+      <div className="flash-sale-content">
 
-        {/* Left: icon or product thumbnail */}
-        <div className="flash-sale-media">
-          {current.image_url ? (
-            <img
-              src={current.image_url}
-              alt=""
-              aria-hidden="true"
-              className="flash-sale-img"
-            />
-          ) : (
-            <div className="flash-sale-icon-wrap">
-              <FaBolt className="flash-sale-icon" />
-            </div>
-          )}
+        {/* Row 1: ⚡ Flash Sale centred · badge pinned right */}
+        <div className="flash-sale-header">
+          <span className="flash-sale-header-label">
+            <FaBolt className="flash-sale-header-bolt" />
+            Flash Sale
+          </span>
+          {current.discount_label ? (
+            <span className="flash-sale-badge">{current.discount_label}</span>
+          ) : null}
         </div>
 
-        {/* Centre: seamless two-copy marquee */}
-        <div className="flash-sale-text">
-          <div className="flash-sale-marquee-track">
-            <span className="flash-sale-marquee-copy">
-              <span className="flash-sale-title">{current.title}</span>
-              {current.subtitle ? (
-                <>
-                  <span style={{ color: "rgba(255,255,255,0.35)", fontWeight: 900, fontSize: "0.7rem" }}>—</span>
-                  <span className="flash-sale-subtitle">{current.subtitle}</span>
-                </>
-              ) : null}
-            </span>
-            {/* Copy 2 — aria-hidden so screen readers skip the duplicate */}
-            <span className="flash-sale-marquee-copy" aria-hidden="true">
-              <span className="flash-sale-title">{current.title}</span>
-              {current.subtitle ? (
-                <>
-                  <span style={{ color: "rgba(255,255,255,0.35)", fontWeight: 900, fontSize: "0.7rem" }}>—</span>
-                  <span className="flash-sale-subtitle">{current.subtitle}</span>
-                </>
-              ) : null}
-            </span>
+        {/* Row 2: scrolling text · countdown */}
+        <div className="flash-sale-main-row">
+          <div className="flash-sale-text">
+            <div className="flash-sale-marquee-track">
+              <span className="flash-sale-marquee-copy">
+                <span className="flash-sale-title">{current.title}</span>
+                {current.subtitle ? (
+                  <>
+                    <span style={{ color: "rgba(255,255,255,0.35)", fontWeight: 900, fontSize: "0.7rem" }}>—</span>
+                    <span className="flash-sale-subtitle">{current.subtitle}</span>
+                  </>
+                ) : null}
+              </span>
+              <span className="flash-sale-marquee-copy" aria-hidden="true">
+                <span className="flash-sale-title">{current.title}</span>
+                {current.subtitle ? (
+                  <>
+                    <span style={{ color: "rgba(255,255,255,0.35)", fontWeight: 900, fontSize: "0.7rem" }}>—</span>
+                    <span className="flash-sale-subtitle">{current.subtitle}</span>
+                  </>
+                ) : null}
+              </span>
+            </div>
+          </div>
+
+          <div className="flash-sale-timer" aria-label="Time remaining">
+            {showDays ? <DigitBlock value={countdown.days}    label="d" urgent={isUrgent} /> : null}
+            <DigitBlock               value={countdown.hours}   label="h" urgent={isUrgent} />
+            <DigitBlock               value={countdown.minutes} label="m" urgent={isUrgent} />
+            <DigitBlock               value={countdown.seconds} label="s" urgent={isUrgent} />
           </div>
         </div>
 
-        {/* Right: countdown timer */}
-        <div className="flash-sale-timer" aria-label="Time remaining">
-          {showDays ? <DigitBlock value={countdown.days}    label="d" urgent={isUrgent} /> : null}
-          <DigitBlock               value={countdown.hours}   label="h" urgent={isUrgent} />
-          <DigitBlock               value={countdown.minutes} label="m" urgent={isUrgent} />
-          <DigitBlock               value={countdown.seconds} label="s" urgent={isUrgent} />
-        </div>
       </div>
     </div>
   )
