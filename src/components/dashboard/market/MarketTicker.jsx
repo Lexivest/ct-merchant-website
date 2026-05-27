@@ -20,23 +20,30 @@ export default function MarketTicker({ cityId }) {
 
   const intervalRef = useRef(null)
 
-  // ── Fetch ──────────────────────────────────────────────────────────────
+  // ── Fetch (+ 5-minute re-fetch so new messages appear without a full reload)
   useEffect(() => {
     if (!cityId) return
-    supabase
-      .from("ticker_messages")
-      .select("id, message, image_url, bg_color")
-      .or(`city_id.eq.${cityId},city_id.is.null`)
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: false })
-      .limit(20)
-      .then(({ data }) => {
-        if (data?.length) {
-          setMessages(data)
-          setBarColor(data[0]?.bg_color || DEFAULT_COLOR)
-        }
-      })
+
+    function fetchMessages() {
+      supabase
+        .from("ticker_messages")
+        .select("id, message, image_url, bg_color")
+        .or(`city_id.eq.${cityId},city_id.is.null`)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false })
+        .limit(20)
+        .then(({ data }) => {
+          if (data?.length) {
+            setMessages(data)
+            setBarColor(data[0]?.bg_color || DEFAULT_COLOR)
+          }
+        })
+    }
+
+    fetchMessages()
+    const refetchInterval = setInterval(fetchMessages, 5 * 60 * 1000)
+    return () => clearInterval(refetchInterval)
   }, [cityId])
 
   // ── Cycle with 3-phase directional slide + background colour fade ──────

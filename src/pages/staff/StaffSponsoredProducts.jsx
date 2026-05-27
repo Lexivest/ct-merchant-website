@@ -75,7 +75,9 @@ async function uploadDisplayImage(file, sponsorId, slot) {
 
 /**
  * Delete a display image from storage given its public URL.
- * Silently ignores 404s (already deleted).
+ * Throws on real errors so callers know a delete failed and can abort
+ * the parent operation (preventing orphaned DB rows pointing at ghost files).
+ * Silently ignores "Object not found" — file was already gone.
  */
 async function deleteDisplayImageByUrl(publicUrl) {
   if (!publicUrl) return
@@ -83,7 +85,8 @@ async function deleteDisplayImageByUrl(publicUrl) {
   const idx = publicUrl.indexOf(marker)
   if (idx === -1) return
   const storagePath = publicUrl.slice(idx + marker.length).split("?")[0]
-  await supabase.storage.from(DISPLAY_RULE.bucket).remove([storagePath])
+  const { error } = await supabase.storage.from(DISPLAY_RULE.bucket).remove([storagePath])
+  if (error && !error.message?.toLowerCase().includes("not found")) throw error
 }
 
 /**
@@ -727,6 +730,9 @@ export default function StaffSponsoredProducts() {
     }
 
     setSaving(true)
+    // Track the inserted row ID so we can roll it back if anything after the
+    // insert fails (upload error, DB update error, etc.)
+    let sponsorId = null
     try {
       // 1. Insert the record first to get the real ID for the storage path
       const { data: inserted, error: insertError } = await supabase
@@ -746,7 +752,7 @@ export default function StaffSponsoredProducts() {
 
       if (insertError) throw insertError
 
-      const sponsorId = inserted.id
+      sponsorId = inserted.id
 
       // 2. Upload display images (separate bucket — never shares URLs with products)
       const [url1, url2, url3] = await Promise.all([
@@ -768,6 +774,9 @@ export default function StaffSponsoredProducts() {
 
       if (updateError) throw updateError
 
+      // Success — clear tracking so the catch block won't roll back
+      sponsorId = null
+
       invalidateMarketplaceDashboardCaches()
 
       notify({ type: "success", title: "Product Sponsored", message: "The product is now featured in the marketplace." })
@@ -777,6 +786,10 @@ export default function StaffSponsoredProducts() {
       setNewImg3(null)
       await loadInitialData()
     } catch (error) {
+      // Roll back the inserted row so it doesn't linger as a paused ghost card
+      if (sponsorId) {
+        await supabase.from("sponsored_products").delete().eq("id", sponsorId).catch(() => null)
+      }
       notify({ type: "error", title: "Action failed", message: getFriendlyErrorMessage(error) })
     } finally {
       setSaving(false)
