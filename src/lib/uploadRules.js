@@ -22,6 +22,14 @@ export const UPLOAD_RULES = Object.freeze({
     maxBytes: 1 * MB,
     allowedMime: ["image/jpeg", "image/png", "image/webp"],
   }),
+  // Dedicated display images for sponsored product cards.
+  // These live in a completely separate bucket from products.image_url so
+  // StableImage's per-URL caching state never causes cross-section interference.
+  sponsoredDisplayImages: Object.freeze({
+    bucket: "sponsored-display-images",
+    maxBytes: 2 * MB,
+    allowedMime: ["image/jpeg", "image/png", "image/webp"],
+  }),
   featuredCityBanners: Object.freeze({
     bucket: "featured-city-banners",
     maxBytes: 2 * MB,

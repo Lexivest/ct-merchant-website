@@ -38,9 +38,8 @@ function SponsoredProductCard({ sponsored, onOpenProduct, onOpenServiceProvider 
       id: sourceProduct.id || sponsored.product_id || sponsored.template_key || sponsored.id,
       name: sourceProduct.name || sponsored.product_name || sponsored.name || "Sponsored Product",
       price: sourceProduct.price ?? sponsored.price ?? sponsored.product_price ?? 0,
-      image_url: sourceProduct.image_url || sponsored.image_url || "",
-      image_url_2: sourceProduct.image_url_2 || sponsored.image_url_2 || null,
-      image_url_3: sourceProduct.image_url_3 || sponsored.image_url_3 || null,
+      // Deliberately no image_url here — display images live on the sponsored
+      // record itself (display_image_url*) in a separate bucket.
       shop_id:
         sourceProduct.shop_id ||
         sponsored.product_shop_id ||
@@ -78,22 +77,17 @@ function SponsoredProductCard({ sponsored, onOpenProduct, onOpenServiceProvider 
       isServiceCategory(serviceCategory),
   )
 
-  // Image rotation logic
+  // Image rotation logic — reads ONLY from sponsored.display_image_url*,
+  // never from product.image_url* to prevent cross-section URL collisions.
   const [imgIndex, setImgIndex] = useState(0)
   const images = useMemo(() => {
-    if (!product) return []
-    return Array.from(
-      new Set(
-        [
-          product.image_url,
-          product.image_url_2,
-          product.image_url_3,
-          sponsored?.shop_image_url,
-          sponsored?.shop_storefront_url,
-        ].filter(Boolean),
-      ),
-    )
-  }, [product, sponsored])
+    if (!sponsored) return []
+    return [
+      sponsored.display_image_url,
+      sponsored.display_image_url_2,
+      sponsored.display_image_url_3,
+    ].filter(Boolean)
+  }, [sponsored])
 
   useEffect(() => {
     if (images.length <= 1) return

@@ -479,18 +479,29 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
           }
         : null
 
+      // image_url/2/3 on the RPC row are now sp.display_image_url* —
+      // dedicated images from the sponsored-display-images bucket that are
+      // completely separate from products.image_url. Skip any record that
+      // has no primary display image yet (staff hasn't uploaded one).
+      const displayImageUrl = item.image_url || ""
+      if (!displayImageUrl) return null
+
       return {
         ...item,
         shop_id: shopId || item.shop_id,
         shop_category: shopCategory || item.shop_category,
         is_service: isServiceSponsor,
+        // Expose the display images at the top level so SponsoredProductCard
+        // can read them directly without touching product.image_url*
+        display_image_url:   displayImageUrl,
+        display_image_url_2: item.image_url_2 || null,
+        display_image_url_3: item.image_url_3 || null,
         product: {
           id: item.product_id || item.template_key || item.id,
           name: item.product_name || item.name || "Sponsored Product",
           price: item.price ?? item.product_price ?? 0,
-          image_url: item.image_url || "",
-          image_url_2: item.image_url_2 || null,
-          image_url_3: item.image_url_3 || null,
+          // Deliberately NO image_url here — sponsored display images are on
+          // the parent object (display_image_url*), never on product.*
           shop_id: shopId,
           category: item.product_category || shopCategory,
           is_service: isServiceSponsor,
