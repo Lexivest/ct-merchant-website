@@ -798,6 +798,19 @@ function MarketSection({
     }
   }
 
+  // Products that appear in the sponsored strip must not also appear in the
+  // shop card grids — showing the same image in two places at once causes
+  // StableImage's session-persisted transform-failure state to interfere
+  // between the two renders, making the product vanish from the shop card.
+  const sponsoredProductIds = useMemo(() => {
+    const ids = new Set()
+    ;(dashboardData?.sponsoredProducts || []).forEach((s) => {
+      const id = s.product?.id || s.product_id
+      if (id) ids.add(id)
+    })
+    return ids
+  }, [dashboardData?.sponsoredProducts])
+
   const productsByShopId = useMemo(() => {
     const grouped = new Map()
 
@@ -805,6 +818,8 @@ function MarketSection({
       if (!product?.shop_id || !product.image_url || product.condition === "Fairly Used") {
         return
       }
+      // Skip products already shown in the sponsored strip
+      if (sponsoredProductIds.has(product.id)) return
 
       const existing = grouped.get(product.shop_id)
       if (existing && existing.length >= 11) return
@@ -817,7 +832,7 @@ function MarketSection({
     })
 
     return grouped
-  }, [dashboardData?.products])
+  }, [dashboardData?.products, sponsoredProductIds])
 
   const categoryPreviewImageByName = useMemo(() => {
     const shopCategoryById = new Map(
