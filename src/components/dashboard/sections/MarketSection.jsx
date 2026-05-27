@@ -464,7 +464,8 @@ const ShopCard = memo(function ShopCard({ shop, products, onOpenShop }) {
               width={300}
               height={300}
               aspectRatio={1}
-              containerClassName="h-full w-full bg-[#F8FAFC]"
+              containerClassName="h-full w-full"
+              placeholderClassName="bg-transparent"
               className="h-full w-full object-cover"
               onError={() => handleImageError(index)}
             />
@@ -522,6 +523,7 @@ const ShopCard = memo(function ShopCard({ shop, products, onOpenShop }) {
                   width={68}
                   height={68}
                   aspectRatio={1}
+                  placeholderClassName="bg-transparent"
                   className="h-full w-full object-cover"
                 />
               </div>
@@ -616,7 +618,8 @@ const ServiceMarketCard = memo(function ServiceMarketCard({ provider, onOpenServ
                 width={300}
                 height={300}
                 aspectRatio={1}
-                containerClassName="h-full w-full bg-[#F8FAFC]"
+                containerClassName="h-full w-full"
+                placeholderClassName="bg-transparent"
                 className="h-full w-full object-cover"
                 onError={handleHeroError}
               />
@@ -653,7 +656,8 @@ const ServiceMarketCard = memo(function ServiceMarketCard({ provider, onOpenServ
               width={300}
               height={300}
               aspectRatio={1}
-              containerClassName="h-full w-full bg-[#F8FAFC]"
+              containerClassName="h-full w-full"
+              placeholderClassName="bg-transparent"
               className="h-full w-full object-cover"
               onError={() => handleImageError(index)}
             />
