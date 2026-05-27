@@ -1,0 +1,1 @@
+-- Applied via Supabase MCP (no local SQL file)
