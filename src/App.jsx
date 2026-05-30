@@ -5,6 +5,7 @@ import useAuthSession, { primeAuthSessionState } from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
 import OnlineRouteGuard from "./components/common/OnlineRouteGuard"
 import SiteVisitTracker from "./components/common/SiteVisitTracker"
+import CookieNotice from "./components/common/CookieNotice"
 import NetworkStatusScreen from "./components/common/NetworkStatusScreen"
 import { PageLoadingScreen } from "./components/common/PageStatusScreen"
 import { isProfileComplete, signOutUser } from "./lib/auth"
@@ -1089,6 +1090,7 @@ function App() {
   return (
     <>
       <AppShell />
+      <CookieNotice />
     </>
   )
 }
