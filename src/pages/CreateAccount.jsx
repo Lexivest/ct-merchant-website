@@ -530,6 +530,18 @@ function CreateAccount() {
               <h1 className="text-2xl font-extrabold text-slate-900">Create Account</h1>
               <p className="mt-2 text-sm leading-6 text-slate-500">Join the professional merchant network.</p>
 
+              {/* --- MERCHANT SIGN-UP NOTICE --- */}
+              <div className="mt-4 flex items-start gap-3 rounded-2xl border border-orange-200 bg-orange-50 p-3.5">
+                <span className="text-lg leading-none">🏪</span>
+                <div className="min-w-0">
+                  <p className="text-[0.82rem] font-extrabold text-orange-900">Planning to sell on CTMerchant?</p>
+                  <p className="mt-0.5 text-[0.78rem] font-semibold leading-snug text-orange-800">
+                    We strongly recommend signing up with Google for a faster, more secure merchant
+                    account and a smoother shop verification.
+                  </p>
+                </div>
+              </div>
+
               <div className="mt-5 space-y-3 flex flex-col items-center">
                 {/* --- IMPLICIT GOOGLE CONSENT --- */}
                 <div className="w-full flex justify-center min-h-[44px] relative">
