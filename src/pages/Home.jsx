@@ -28,6 +28,7 @@ import {
   sendPasswordResetCode,
   signInWithGoogleIdToken,
   signInWithPassword,
+  signOutUser,
   verifyRecoveryCodeAndResetPassword,
 } from "../lib/auth"
 import { supabase } from "../lib/supabase"
@@ -66,6 +67,22 @@ import { isServiceCategory, isServiceShop } from "../lib/serviceCategories"
 
 // --- LOCAL ASSET IMPORT ---
 import banner from "../assets/images/banner.jpg"
+
+// ── Login timeout ─────────────────────────────────────────────────────────────
+// Mirrors withStaffAuthTimeout from staffAuth.js. Wraps any async login step
+// in a race so a hanging network request never leaves the spinner running forever.
+const LOGIN_TIMEOUT_MS = 12000
+
+function withLoginTimeout(promise, message = "Login is taking too long. Please check your connection and try again.") {
+  let timerId
+  const timeoutPromise = new Promise((_, reject) => {
+    timerId = window.setTimeout(() => reject(new Error(message)), LOGIN_TIMEOUT_MS)
+  })
+  return Promise.race([
+    Promise.resolve(promise).finally(() => window.clearTimeout(timerId)),
+    timeoutPromise,
+  ])
+}
 
 const CONTACT_MESSAGE_WORD_LIMIT = 300
 
@@ -761,53 +778,64 @@ function Home() {
     try {
       setLoginLoading(true)
 
-      const result = await signInWithPassword({
-        email: loginForm.email,
-        password: loginForm.password,
-      })
+      // Step 1 — authenticate (time-boxed: hangs → throws after 12 s)
+      const result = await withLoginTimeout(
+        signInWithPassword({ email: loginForm.email, password: loginForm.password }),
+        "Login is taking too long. Please check your connection and try again."
+      )
 
       const signedInUser = result.auth?.user || result.auth?.session?.user
       if (!signedInUser) {
         throw new Error("Login did not return a valid user session.")
       }
 
-      const currentProfile = await supabase
-        .from("vw_user_profiles")
-        .select("*")
-        .eq("id", signedInUser.id)
-        .maybeSingle()
+      // Step 2 — profile fetch (time-boxed)
+      const currentProfile = await withLoginTimeout(
+        supabase.from("vw_user_profiles").select("*").eq("id", signedInUser.id).maybeSingle(),
+        "Could not load your profile. Please check your connection and try again."
+      )
 
       if (currentProfile.error) {
         throw new Error("Could not verify your profile. Please try again.")
       }
 
-      const didOpenDashboard = await openDashboardWithTransition({
-        session: result.auth?.session || null,
-        user: signedInUser,
-        profile: currentProfile.data || null,
-        suspended: false,
-        profileLoaded: true,
-      })
+      // Step 3 — dashboard preload + navigate (time-boxed)
+      const didOpenDashboard = await withLoginTimeout(
+        openDashboardWithTransition({
+          session: result.auth?.session || null,
+          user: signedInUser,
+          profile: currentProfile.data || null,
+          suspended: false,
+          profileLoaded: true,
+        }),
+        "Opening your dashboard is taking too long. Please try again."
+      )
 
       if (!didOpenDashboard) {
         setLoginLoading(false)
       }
 
     } catch (error) {
+      // A Supabase request may still be in-flight after a timeout. Sign out
+      // pre-emptively so that if a delayed SIGNED_IN event arrives and briefly
+      // populates auth state, it is immediately revoked — preventing a broken
+      // half-logged-in state that crashes the dashboard and requires clearing
+      // browser history to escape. signOutUser() flags the sign-out as
+      // intentional so onAuthStateChange clears state without debounce.
+      void signOutUser().catch(() => {})
+
       const message = getFriendlyErrorMessage(error, "We could not sign you in. Check your connection and try again.")
-      
+
       let title = "Login failed"
       if (message.toLowerCase().includes("remaining before")) {
         title = "Warning"
       } else if (/suspended|restricted/i.test(message)) {
         title = "Account suspended"
+      } else if (message.toLowerCase().includes("too long") || message.toLowerCase().includes("connection")) {
+        title = "Connection problem"
       }
 
-      notify({
-        type: "error",
-        title,
-        message,
-      })
+      notify({ type: "error", title, message })
       setLoginLoading(false)
     }
   }
