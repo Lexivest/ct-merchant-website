@@ -158,6 +158,8 @@ export function buildVisitTimeline(data, windowDays) {
       {
         ...item,
         total_visits: Number(item.total_visits) || 0,
+        unique_visitors: Number(item.unique_visitors) || 0,
+        unique_home_visits: Number(item.unique_home_visits) || 0,
         authenticated_visits: Number(item.authenticated_visits) || 0,
       },
     ])
@@ -177,6 +179,8 @@ export function buildVisitTimeline(data, windowDays) {
       existing || {
         visit_date: key,
         total_visits: 0,
+        unique_visitors: 0,
+        unique_home_visits: 0,
         authenticated_visits: 0,
       }
     )
@@ -187,7 +191,7 @@ export function buildVisitTimeline(data, windowDays) {
 
 export function VisitTrendChart({ data }) {
   const safeData = Array.isArray(data) ? data : []
-  const maxVisits = safeData.reduce((max, item) => Math.max(max, Number(item.total_visits) || 0), 0)
+  const maxVisits = safeData.reduce((max, item) => Math.max(max, Number(item.unique_visitors) || 0), 0)
 
   if (!safeData.length) {
     return (
@@ -201,8 +205,8 @@ export function VisitTrendChart({ data }) {
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex h-56 items-end justify-between gap-2">
         {safeData.map((item, index) => {
-          const totalVisits = Number(item.total_visits) || 0
-          const height = maxVisits > 0 ? Math.max((totalVisits / maxVisits) * 100, totalVisits > 0 ? 12 : 4) : 4
+          const uniqueVisitors = Number(item.unique_visitors) || 0
+          const height = maxVisits > 0 ? Math.max((uniqueVisitors / maxVisits) * 100, uniqueVisitors > 0 ? 12 : 4) : 4
           const labelDate = new Date(`${item.visit_date}T12:00:00`)
           const showLabel =
             safeData.length <= 8 ||
@@ -212,12 +216,12 @@ export function VisitTrendChart({ data }) {
 
           return (
             <div key={item.visit_date} className="flex min-w-0 flex-1 max-w-[24px] flex-col items-center gap-2">
-              <div className="text-[11px] font-semibold text-slate-400">{totalVisits}</div>
+              <div className="text-[11px] font-semibold text-slate-400">{uniqueVisitors}</div>
               <div className="flex h-44 w-full items-end">
                 <div
                   className="w-full rounded-t-2xl bg-gradient-to-t from-[#DB2777] via-pink-500 to-[#2E1065] transition-all"
                   style={{ height: `${height}%` }}
-                  title={`${labelDate.toLocaleDateString("en-NG")}: ${totalVisits} visits`}
+                  title={`${labelDate.toLocaleDateString("en-NG")}: ${uniqueVisitors} unique visitor${uniqueVisitors === 1 ? "" : "s"}`}
                 />
               </div>
               <div className="h-8 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400">

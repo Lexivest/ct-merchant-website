@@ -57,6 +57,8 @@ export default function StaffTraffic() {
   }, [fetchVisitStats, visitWindow])
 
   const visitTimeline = useMemo(() => buildVisitTimeline(visitStats, visitWindow), [visitStats, visitWindow])
+  const uniqueVisitorsInWindow = visitTimeline.reduce((sum, item) => sum + (Number(item.unique_visitors) || 0), 0)
+  const uniqueHomeVisitsInWindow = visitTimeline.reduce((sum, item) => sum + (Number(item.unique_home_visits) || 0), 0)
   const totalVisitsInWindow = visitTimeline.reduce((sum, item) => sum + (Number(item.total_visits) || 0), 0)
 
   return (
@@ -94,10 +96,29 @@ export default function StaffTraffic() {
         }
       />
 
-      <div className="mb-8 max-w-sm">
+      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="rounded-3xl border border-pink-200 bg-gradient-to-br from-white to-pink-50 p-6 shadow-sm">
+          <div className="text-xs font-black uppercase tracking-wide text-pink-500">Unique Visitors</div>
+          <div className="mt-3 text-4xl font-black text-slate-900">{uniqueVisitorsInWindow}</div>
+          <div className="mt-1 text-xs font-semibold text-slate-400">
+            Distinct browsers that opened the site in the last {visitWindow} days
+          </div>
+        </div>
+
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="text-xs font-black uppercase tracking-wide text-slate-400">Total Page Visits</div>
-          <div className="mt-3 text-4xl font-black text-slate-900">{totalVisitsInWindow}</div>
+          <div className="text-xs font-black uppercase tracking-wide text-slate-400">Unique Home Visits</div>
+          <div className="mt-3 text-4xl font-black text-slate-900">{uniqueHomeVisitsInWindow}</div>
+          <div className="mt-1 text-xs font-semibold text-slate-400">
+            Opened ctmerchant.com.ng homepage
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="text-xs font-black uppercase tracking-wide text-slate-400">Total Page Views</div>
+          <div className="mt-3 text-4xl font-black text-slate-500">{totalVisitsInWindow}</div>
+          <div className="mt-1 text-xs font-semibold text-slate-400">
+            All page loads (not de-duplicated)
+          </div>
         </div>
       </div>
 
