@@ -1,6 +1,9 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import MainLayout from "../layouts/MainLayout"
 import PageSeo from "../components/common/PageSeo"
+import InlineErrorState from "../components/common/InlineErrorState"
+import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
+import { useNetworkStatus } from "../lib/networkStatus"
 import { supabase } from "../lib/supabase"
 
 /* ── helpers ── */
@@ -47,7 +50,6 @@ function AgentAvatar({ agent, size = 64 }) {
     return () => { cancelled = true }
   }, [src, failed, email])
 
-  const radius  = size / 2
   const fs      = Math.round(size * 0.35)
   const border  = Math.round(size * 0.075)
 
@@ -187,28 +189,60 @@ function ActiveCard({ agent }) {
 }
 
 function SkeletonCard() {
-  return <div className="h-72 animate-pulse rounded-3xl bg-slate-100" />
+  return (
+    <div className="rounded-3xl bg-pink-100 p-1 shadow-sm">
+      <div className="overflow-hidden rounded-[22px] border border-pink-50 bg-white">
+        {/* colour band */}
+        <div className="relative h-20 animate-pulse bg-slate-200">
+          {/* avatar placeholder */}
+          <div className="absolute -bottom-8 left-5 h-16 w-16 rounded-full border-4 border-white bg-slate-300" />
+        </div>
+        <div className="px-5 pb-5 pt-11 space-y-3">
+          <div className="h-4 w-2/5 animate-pulse rounded-full bg-slate-200" />
+          <div className="h-3 w-1/3 animate-pulse rounded-full bg-slate-100" />
+          <div className="h-8 w-28 animate-pulse rounded-xl bg-slate-100" />
+          <div className="space-y-2 pt-1">
+            <div className="h-3 w-3/5 animate-pulse rounded-full bg-slate-100" />
+            <div className="h-3 w-1/2 animate-pulse rounded-full bg-slate-100" />
+            <div className="h-3 w-2/5 animate-pulse rounded-full bg-slate-100" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 /* ── Page ── */
 export default function Agents() {
   const [agents,       setAgents]       = useState([])
   const [loading,      setLoading]      = useState(true)
+  const [loadError,    setLoadError]    = useState(null)
   const [search,       setSearch]       = useState("")
   const [regionFilter, setRegionFilter] = useState("all")
   const [typeFilter,   setTypeFilter]   = useState("all")
+  const { isOffline }                   = useNetworkStatus()
+
+  const fetchAgents = useCallback(async () => {
+    setLoading(true)
+    setLoadError(null)
+    try {
+      const { data, error } = await supabase
+        .from("agent_applications")
+        .select("full_name, agent_id, email, phone, questionnaire, bio, reviewed_at, created_at, profile_photo_url")
+        .eq("status", "approved")
+        .order("reviewed_at", { ascending: false })
+      if (error) throw error
+      setAgents(data || [])
+    } catch (err) {
+      setLoadError(getFriendlyErrorMessage(err, "Could not load agents. Please check your connection and try again."))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    supabase
-      .from("agent_applications")
-      .select("full_name, agent_id, email, phone, questionnaire, bio, reviewed_at, created_at, profile_photo_url")
-      .eq("status", "approved")
-      .order("reviewed_at", { ascending: false })
-      .then(({ data, error }) => {
-        if (!error) setAgents(data || [])
-        setLoading(false)
-      })
-  }, [])
+    fetchAgents()
+  }, [fetchAgents])
 
   const regions = useMemo(() => {
     const set = new Set()
@@ -279,7 +313,7 @@ export default function Agents() {
       </section>
 
       {/* ── FILTER BAR ── */}
-      <div className="border-b border-slate-200 bg-white">
+      <div className={`border-b border-slate-200 bg-white transition-opacity ${loading || loadError ? "pointer-events-none opacity-40" : ""}`}>
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
           {/* search */}
           <div className="relative min-w-[200px] flex-1">
@@ -351,6 +385,17 @@ export default function Agents() {
         {loading ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : loadError ? (
+          <div className="mx-auto max-w-lg py-16">
+            <InlineErrorState
+              title={isOffline ? "You're offline" : "Could not load agents"}
+              message={isOffline
+                ? "No internet connection. Reconnect and tap Retry to load the agent directory."
+                : loadError}
+              onRetry={fetchAgents}
+              retryLabel="Try again"
+            />
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-24 text-center">
