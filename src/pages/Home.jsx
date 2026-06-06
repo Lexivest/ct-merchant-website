@@ -636,43 +636,63 @@ function Home() {
     try {
       setGoogleLoading(true)
 
-      const result = await signInWithGoogleIdToken(response.credential)
+      // Step 1 — authenticate (time-boxed: hangs → throws after 12 s)
+      const result = await withLoginTimeout(
+        signInWithGoogleIdToken(response.credential),
+        "Google sign-in is taking too long. Please check your connection and try again."
+      )
       const signedInUser = result.auth?.user || result.auth?.session?.user
 
       if (!signedInUser) {
         throw new Error("Google sign-in did not return a valid user.")
       }
 
-      const currentProfile = await supabase
-        .from("vw_user_profiles")
-        .select("*")
-        .eq("id", signedInUser.id)
-        .maybeSingle()
+      // Step 2 — profile fetch (time-boxed)
+      const currentProfile = await withLoginTimeout(
+        supabase
+          .from("vw_user_profiles")
+          .select("*")
+          .eq("id", signedInUser.id)
+          .maybeSingle(),
+        "Could not load your profile. Please check your connection and try again."
+      )
 
       if (currentProfile.error) {
         throw new Error("Could not verify your profile. Please try again.")
       }
 
-      const didOpenDashboard = await openDashboardWithTransition({
-        session: result.auth?.session || null,
-        user: signedInUser,
-        profile: currentProfile.data || null,
-        suspended: false,
-        profileLoaded: true,
-      })
+      // Step 3 — dashboard preload + navigate (time-boxed)
+      const didOpenDashboard = await withLoginTimeout(
+        openDashboardWithTransition({
+          session: result.auth?.session || null,
+          user: signedInUser,
+          profile: currentProfile.data || null,
+          suspended: false,
+          profileLoaded: true,
+        }),
+        "Opening your dashboard is taking too long. Please try again."
+      )
 
       if (!didOpenDashboard) {
         setGoogleLoading(false)
       }
 
     } catch (error) {
+      // A Supabase request may still be in-flight after a timeout. Sign out
+      // pre-emptively so that if a delayed SIGNED_IN event arrives and briefly
+      // populates auth state, it is immediately revoked — preventing a broken
+      // half-logged-in state. Mirrors the email login catch block.
+      void signOutUser().catch(() => {})
+
       const message = getFriendlyErrorMessage(error, "Please try again.")
-      
+
       let title = "Google sign-in failed"
       if (message.toLowerCase().includes("remaining before")) {
         title = "Warning"
       } else if (/suspended|restricted/i.test(message)) {
         title = "Account suspended"
+      } else if (message.toLowerCase().includes("too long") || message.toLowerCase().includes("connection")) {
+        title = "Connection problem"
       }
 
       notify({
