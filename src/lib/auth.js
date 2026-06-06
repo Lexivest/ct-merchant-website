@@ -177,6 +177,13 @@ export async function signOutUser() {
 const LOGIN_SUSPENSION_THRESHOLD = 3
 const SECURITY_HEARTBEAT_RPC = "ctm_security_heartbeat"
 
+// If supabase.auth.signInWithPassword() itself takes longer than this, the
+// outer withLoginTimeout / withStaffAuthTimeout race has almost certainly
+// already fired. Running the FAILURE heartbeat afterward would increment the
+// failure count for a request the user never received feedback for — silently
+// building up suspensions on a poor connection. Skip it in that case.
+const ORPHANED_HEARTBEAT_THRESHOLD_MS = 8000
+
 function isMissingRpcError(error) {
   const message = String(error?.message || "").toLowerCase()
   const code = String(error?.code || "").toLowerCase()
@@ -237,6 +244,7 @@ function isLikelyCredentialFailure(error) {
 
 export async function signInWithPassword({ email, password }) {
   const normalizedEmail = normalizeEmail(email)
+  const authCallStart = Date.now()
 
   // No pre-flight CHECK: suspension is enforced by the post-success heartbeat
   // (signs out + throws if blocked). Saves one round-trip on every login.
@@ -249,28 +257,36 @@ export async function signInWithPassword({ email, password }) {
     const isCreds = isLikelyCredentialFailure(error)
 
     if (isCreds) {
-      try {
-        const status = await runSecurityHeartbeat(
-          normalizedEmail,
-          "FAILURE",
-          "Could not update login security right now."
-        )
+      // Guard: if the auth round-trip itself was slow, the outer timeout wrapper
+      // has likely already rejected. Skip the FAILURE heartbeat so it doesn't
+      // run orphaned in the background and accumulate suspension counts that the
+      // user never saw clear feedback for (e.g. repeated "taking too long" on a
+      // poor connection eventually triggering an unwanted account suspension).
+      const authMs = Date.now() - authCallStart
+      if (authMs < ORPHANED_HEARTBEAT_THRESHOLD_MS) {
+        try {
+          const status = await runSecurityHeartbeat(
+            normalizedEmail,
+            "FAILURE",
+            "Could not update login security right now."
+          )
 
-        if (status.isSuspended) {
-          throw new Error("Your account is suspended due to too many failed attempts. Please contact support.")
-        }
+          if (status.isSuspended) {
+            throw new Error("Your account is suspended due to too many failed attempts. Please contact support.")
+          }
 
-        if (status.attemptsRemaining < 3) {
-          const remaining = status.attemptsRemaining
-          const msg = `Invalid credentials. You have ${remaining} attempt${remaining === 1 ? "" : "s"} remaining before your account is suspended.`
-          throw new Error(msg)
+          if (status.attemptsRemaining < 3) {
+            const remaining = status.attemptsRemaining
+            const msg = `Invalid credentials. You have ${remaining} attempt${remaining === 1 ? "" : "s"} remaining before your account is suspended.`
+            throw new Error(msg)
+          }
+        } catch (guardError) {
+          const msg = guardError.message || ""
+          if (msg.includes("suspended") || msg.includes("remaining")) {
+            throw guardError
+          }
+          console.error("[Security] Tracking failed:", guardError)
         }
-      } catch (guardError) {
-        const msg = guardError.message || ""
-        if (msg.includes("suspended") || msg.includes("remaining")) {
-          throw guardError
-        }
-        console.error("[Security] Tracking failed:", guardError)
       }
       throw new Error("Invalid credentials. Please check your email and password.")
     }
