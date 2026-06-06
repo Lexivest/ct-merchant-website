@@ -59,21 +59,21 @@ export default function StaffTraffic() {
   const visitTimeline = useMemo(() => buildVisitTimeline(visitStats, visitWindow), [visitStats, visitWindow])
   const uniqueVisitorsInWindow = visitTimeline.reduce((sum, item) => sum + (Number(item.unique_visitors) || 0), 0)
   const uniqueHomeVisitsInWindow = visitTimeline.reduce((sum, item) => sum + (Number(item.unique_home_visits) || 0), 0)
-  const totalVisitsInWindow = visitTimeline.reduce((sum, item) => sum + (Number(item.total_visits) || 0), 0)
+  const windowLabel = visitWindow === 1 ? "today" : `in the last ${visitWindow} days`
 
   return (
     <StaffPortalShell
       activeKey="traffic"
-      title="Traffic Intelligence"
-      description="A focused workspace for platform traffic monitoring and visitor trends."
+      title="Unique Visitors"
+      description="How many distinct people open the platform — counted once per visitor per day."
     >
       <SectionHeading
         eyebrow="Insights"
-        title="Traffic Monitoring"
-        description="Review daily visit movement and general platform discovery trends."
+        title="Unique Visitor Trends"
+        description="Daily unique visitors to the platform and to the homepage. Each browser is counted at most once per day; no visitor identity or device data is stored."
         actions={
           <div className="flex flex-wrap gap-2">
-            {[7, 30, 90].map((days) => (
+            {[1, 7, 30, 90].map((days) => (
               <button
                 key={days}
                 type="button"
@@ -82,7 +82,7 @@ export default function StaffTraffic() {
                   visitWindow === days ? "bg-slate-900 text-white" : "bg-white text-slate-600 shadow-sm hover:bg-slate-100"
                 }`}
               >
-                {days} days
+                {days === 1 ? "Today" : `${days} days`}
               </button>
             ))}
             <button
@@ -96,12 +96,12 @@ export default function StaffTraffic() {
         }
       />
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-8 grid gap-4 sm:grid-cols-2">
         <div className="rounded-3xl border border-pink-200 bg-gradient-to-br from-white to-pink-50 p-6 shadow-sm">
-          <div className="text-xs font-black uppercase tracking-wide text-pink-500">Unique Visitors</div>
+          <div className="text-xs font-black uppercase tracking-wide text-pink-500">Unique Site Visitors</div>
           <div className="mt-3 text-4xl font-black text-slate-900">{uniqueVisitorsInWindow}</div>
           <div className="mt-1 text-xs font-semibold text-slate-400">
-            Distinct browsers that opened the site in the last {visitWindow} days
+            Distinct people who opened the platform {windowLabel}
           </div>
         </div>
 
@@ -109,15 +109,7 @@ export default function StaffTraffic() {
           <div className="text-xs font-black uppercase tracking-wide text-slate-400">Unique Home Visits</div>
           <div className="mt-3 text-4xl font-black text-slate-900">{uniqueHomeVisitsInWindow}</div>
           <div className="mt-1 text-xs font-semibold text-slate-400">
-            Opened ctmerchant.com.ng homepage
-          </div>
-        </div>
-
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="text-xs font-black uppercase tracking-wide text-slate-400">Total Page Views</div>
-          <div className="mt-3 text-4xl font-black text-slate-500">{totalVisitsInWindow}</div>
-          <div className="mt-1 text-xs font-semibold text-slate-400">
-            All page loads (not de-duplicated)
+            Opened ctmerchant.com.ng homepage {windowLabel}
           </div>
         </div>
       </div>

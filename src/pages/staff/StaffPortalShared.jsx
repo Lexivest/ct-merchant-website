@@ -157,10 +157,8 @@ export function buildVisitTimeline(data, windowDays) {
       String(item.visit_date),
       {
         ...item,
-        total_visits: Number(item.total_visits) || 0,
         unique_visitors: Number(item.unique_visitors) || 0,
         unique_home_visits: Number(item.unique_home_visits) || 0,
-        authenticated_visits: Number(item.authenticated_visits) || 0,
       },
     ])
   )
@@ -178,10 +176,8 @@ export function buildVisitTimeline(data, windowDays) {
     days.push(
       existing || {
         visit_date: key,
-        total_visits: 0,
         unique_visitors: 0,
         unique_home_visits: 0,
-        authenticated_visits: 0,
       }
     )
   }
@@ -401,7 +397,7 @@ export function StaffInfoDrawer({ open, onClose, authUser, staffData, counts = n
                 </div>
               </div>
               <div className="rounded-2xl bg-slate-50 px-3 py-3">
-                <div className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Visits</div>
+                <div className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Visitors</div>
                 <div className="mt-1 text-xl font-black text-slate-950">{summary?.visitsToday || 0}</div>
               </div>
             </div>
@@ -716,7 +712,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
       lagosToday
         ? supabase
             .from("daily_site_visits")
-            .select("total_visits")
+            .select("unique_visits")
             .eq("visit_date", lagosToday)
             .maybeSingle()
         : Promise.resolve({ data: null, error: null }),
@@ -745,7 +741,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
 
     const visitsToday =
       visitsTodayResult.status === "fulfilled" && !visitsTodayResult.value.error
-        ? Number(visitsTodayResult.value.data?.total_visits) || 0
+        ? Number(visitsTodayResult.value.data?.unique_visits) || 0
         : 0
     const radarCount =
       radarResult.status === "fulfilled" && !radarResult.value.error
