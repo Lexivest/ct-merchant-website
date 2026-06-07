@@ -2,7 +2,6 @@ import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
-  FaBriefcase,
   FaChevronRight,
   FaCircleCheck,
   FaLocationDot,
@@ -416,14 +415,6 @@ export default function ServiceCategory() {
               </div>
             ) : (
               <>
-                <div className="mb-6 flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-pink-100 text-[1.4rem] text-pink-600">
-                    <FaBriefcase />
-                  </div>
-                  <div className="text-[0.9rem] font-semibold text-[#565959]">
-                    {providers.length} verified providers found in your city
-                  </div>
-                </div>
                 {providers.map((provider) => (
                   <ServiceProviderCard
                     key={provider.shop.id}

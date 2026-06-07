@@ -174,7 +174,7 @@ function Area() {
   const services = data?.services || []
   const serviceProducts = data?.serviceProducts || []
   const visibleListings = viewMode === "services" ? services : shops
-  const headerTitle = `${viewMode === "services" ? "Services" : "Shops"} in ${areaName}`
+  const headerTitle = `${areaName} Biz & Services`
   const serviceProductsByShopId = serviceProducts.reduce((map, product) => {
     const key = String(product?.shop_id || "")
     if (!key) return map

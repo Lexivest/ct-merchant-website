@@ -5,7 +5,6 @@ import {
   FaChevronRight,
   FaCircleCheck,
   FaStoreSlash,
-  FaLayerGroup,
   FaLocationDot,
 } from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
@@ -225,18 +224,6 @@ function Cat() {
           />
         ) : (
           <>
-            <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-pink-100 text-[1.4rem] text-pink-600">
-                <FaLayerGroup />
-              </div>
-              <div>
-                <div className="text-[1.4rem] font-extrabold text-[#0F1111]">{catName}</div>
-                <div className="mt-0.5 text-[0.9rem] font-semibold text-[#565959]">
-                  {shops.length} verified stores found in your city
-                </div>
-              </div>
-            </div>
-
             {shops.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-lg border border-[#D5D9D9] bg-white px-5 py-16 text-center text-[#888C8C]">
                 <FaStoreSlash className="mb-4 text-[3rem] opacity-30" />
