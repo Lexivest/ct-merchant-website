@@ -105,6 +105,26 @@ function sanitizeHistory(rawHistory: unknown) {
     .filter(Boolean) as { role: string; content: string }[]
 }
 
+// Detects raw function-call syntax the model leaks into plain text instead of
+// using the tool-calls API. Matches ANYWHERE in the content (not just line start)
+// — e.g. "Let me search. search_products{"name":"Shoes"}".
+const RAW_TOOL_CALL_RX =
+  /(search_products|search_shops|get_shops_in_user_area)\s*(\{[\s\S]*?\})/
+
+// Final safety net: strip any tool-call syntax or "thinking out loud" narration
+// the model may still leak into its user-facing reply (LLaMA does this often).
+function sanitizeFinalReply(text: string) {
+  if (!text) return ""
+  let out = String(text)
+  // Remove raw function-call syntax e.g. search_products{"name":"Shoes"}
+  out = out.replace(/(?:search_products|search_shops|get_shops_in_user_area)\s*\{[\s\S]*?\}/gi, "")
+  // Remove agentic preamble sentences (plan narration) on their own line.
+  out = out.replace(/(?:^|\n)\s*(?:let me|i['']?ll|i will|i'm going to|first,? i)\b[^\n]*/gi, "\n")
+  // Tidy leftover whitespace.
+  out = out.replace(/[ \t]{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim()
+  return out
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
@@ -202,14 +222,19 @@ serve(async (req) => {
 
     IDENTITY & CONSTRAINTS:
     - You are CT-AI, a CTMerchant shopping assistant.
+    - CRITICAL OUTPUT RULE: NEVER reveal your reasoning, plans, or internal steps. NEVER write phrases like "Let me try a broader search", "I'll search", or "If I find...". NEVER write function/tool-call syntax (e.g. search_products{...}) in your reply. To fetch data you MUST use the provided function tools silently — never type a function call as text. Output ONLY the final, user-facing answer.
     - NEVER engage in outside world conversations (politics, general knowledge, other platforms, etc.).
-    - If a user asks something outside CTMerchant or if you are confused, kindly tell the user: "Please contact support." Do not make support text a link.
+    - If a user asks something outside CTMerchant or you don't have the answer, respond warmly — e.g. "I'm sorry, I can't help with that one. Please contact support for more information." Always keep the words "contact support" as plain text (the app turns it into a tappable button). Do not write it as an HTML link.
     - If a user needs to login or you are in a repo-search guest state, tell them: "Please login to your account." Do not make login text a link.
     - Always stay focused on CTMerchant products, services, and shops.
 
     WHO WE ARE:
     CTMerchant is a digital collection of shops and their locations in a city to enhance discovery and mitigate fake online sales claims.
     CTMerchant is a trademark of CT-Merchant LTD, a registered e-commerce company founded in 2025 in Nigeria. The company is governed by a Board of Directors, a Director General, and Shareholders.
+
+    COMPANY LEADERSHIP & OWNERSHIP:
+    - If asked about the founder, owner, CEO, leadership, or management, ANSWER with the governance structure (do NOT deflect to support): CTMerchant is a trademark of CT-Merchant LTD, founded in 2025 in Nigeria, and is governed by a Board of Directors, a Director General, and Shareholders.
+    - NEVER invent, guess, or state a specific individual's name. If the user insists on the name of a specific person, warmly say: "I don't have that detail. Please contact support for more information."
 
     HOW TO USE THE PLATFORM:
     1. Create free account: To open an account, users should click the **Create Account** button on the home screen. Creating an account is completely free.
@@ -285,9 +310,12 @@ serve(async (req) => {
            - Use 'search_shops' with category "${s.category}".
            - Exclude the current shop from results (already handled).
            - If no other shops are found, say "no other shops found in this category yet" and suggest the user explore other areas.
-        2. If asked for "Shops in your area":
+        2. If asked for "Shops in your area" (the user's OWN area, no area named):
            - Use 'get_shops_in_user_area'.
            - If no shops are found, say "no shops found in your area yet" and suggest browsing by category.
+        2b. If the user names a SPECIFIC area/neighbourhood (e.g. "shops in Farin Gada", "check Terminus area"):
+           - Use 'search_shops' with the 'area' argument set to that exact area name.
+           - List the shops returned. If none, say no active shops were found in that area yet and suggest a nearby area or browsing by category.
         3. If asked "Tell me about this shop", provide a friendly summary: name, category, address, verified status.
         4. DO NOT offer price comparison for shops. Answers must be simple and straight forward.
 
@@ -323,13 +351,14 @@ serve(async (req) => {
         type: "function",
         function: {
           name: "search_shops",
-          description: "Search for approved shops.",
+          description: "Search for approved shops. Use the 'area' argument when the user names a specific neighbourhood/area (e.g. 'Farin Gada', 'Terminus').",
           parameters: {
             type: "object",
             properties: {
               name: { type: "string" },
               category: { type: "string" },
               city: { type: "string" },
+              area: { type: "string", description: "Neighbourhood/area name to filter shops by, e.g. 'Farin Gada'." },
             },
           },
         },
@@ -449,14 +478,20 @@ serve(async (req) => {
             ? context.shop?.is_service === true
             : false
 
+          // When filtering by area name we must inner-join the areas table.
+          const shopSelect = 'id, name, address, is_verified, category, area_id, cities!inner(name)'
+            + (args.area ? ', areas!inner(name)' : '')
           let q = adminClient.from('shops')
-            .select('id, name, address, is_verified, category, area_id, cities!inner(name)')
+            .select(shopSelect)
             .eq('status', 'approved')
             .eq('is_open', true)
             .gt('subscription_end_date', nowIso)
-            .eq('is_service', shopIsService)
+          // An explicit area query is a discovery request — return ALL shop types
+          // in that area. Otherwise constrain to the current shop's type.
+          if (!args.area) q = q.eq('is_service', shopIsService)
           if (args.name) q = q.ilike('name', `%${args.name}%`)
           if (args.category) q = q.ilike('category', `%${args.category}%`)
+          if (args.area) q = q.ilike('areas.name', `%${args.area}%`)
           const targetCity = args.city || userCity
           if (targetCity) q = q.ilike('cities.name', `%${targetCity}%`)
           if (context.shop?.id) {
@@ -464,7 +499,9 @@ serve(async (req) => {
           }
           const { data: shops, error: shopsErr } = await q.limit(5)
           if (shopsErr) console.warn("[search_shops]", shopsErr.message)
-          result = shops?.length ? JSON.stringify(shops) : "no other shops yet in the category"
+          result = shops?.length
+            ? JSON.stringify(shops)
+            : (args.area ? "no shops found in that area yet" : "no other shops yet in the category")
         }
         messages.push({ tool_call_id: toolCall.id, role: "tool", name, content: result })
       }
@@ -475,9 +512,10 @@ serve(async (req) => {
 
       // Guard: LLaMA sometimes emits raw tool-call syntax in content instead of
       // populating tool_calls (e.g. `search_products{"name":"Computer"}`).
-      // Detect it, execute the tool, then get a proper natural-language reply.
-      const rawCallRx = /^(search_products|search_shops|get_shops_in_user_area)\s*(\{[\s\S]*?\})\s*$/m
-      const rawMatch = finalReplyText.trim().match(rawCallRx)
+      // Detect it ANYWHERE in the content (the model often prefixes a sentence
+      // like "Let me try a broader search."), execute the tool, then get a
+      // proper natural-language reply.
+      const rawMatch = finalReplyText.match(RAW_TOOL_CALL_RX)
       if (rawMatch) {
         try {
           const name = rawMatch[1]
@@ -524,18 +562,24 @@ serve(async (req) => {
           } else if (name === "search_shops") {
             const shopIsService = context.page === 'shop_detail'
               ? context.shop?.is_service === true : false
+            const shopSelect = 'id, name, address, is_verified, category, area_id, cities!inner(name)'
+              + (args.area ? ', areas!inner(name)' : '')
             let q = adminClient.from('shops')
-              .select('id, name, address, is_verified, category, area_id, cities!inner(name)')
+              .select(shopSelect)
               .eq('status', 'approved').eq('is_open', true)
-              .gt('subscription_end_date', nowIso).eq('is_service', shopIsService)
+              .gt('subscription_end_date', nowIso)
+            if (!args.area) q = q.eq('is_service', shopIsService)
             if (args.name) q = q.ilike('name', `%${args.name}%`)
             if (args.category) q = q.ilike('category', `%${args.category}%`)
+            if (args.area) q = q.ilike('areas.name', `%${args.area}%`)
             const targetCity = args.city || userCity
             if (targetCity) q = q.ilike('cities.name', `%${targetCity}%`)
             if (context.shop?.id) q = q.neq('id', context.shop.id)
             const { data: shops, error: shopsErr } = await q.limit(5)
             if (shopsErr) console.warn("[search_shops fallback]", shopsErr.message)
-            result = shops?.length ? JSON.stringify(shops) : "no other shops yet in the category"
+            result = shops?.length
+              ? JSON.stringify(shops)
+              : (args.area ? "no shops found in that area yet" : "no other shops yet in the category")
           }
 
           // Inject synthetic tool result and call AI again for a clean reply
@@ -553,6 +597,12 @@ serve(async (req) => {
           finalReplyText = "I'm sorry, I had trouble processing that request. Please try again."
         }
       }
+    }
+
+    // Final backstop: strip any tool syntax / plan narration that survived.
+    finalReplyText = sanitizeFinalReply(finalReplyText)
+    if (!finalReplyText) {
+      finalReplyText = "I'm sorry, I couldn't find a clear answer for that. Please try rephrasing."
     }
 
     if (user) {

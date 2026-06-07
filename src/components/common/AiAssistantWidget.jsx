@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { FaPaperPlane, FaRobot, FaRotateLeft, FaXmark } from "react-icons/fa6"
+import { FaHeadset, FaPaperPlane, FaRobot, FaRotateLeft, FaXmark } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { isNetworkOffline } from "../../lib/networkStatus"
@@ -489,24 +489,44 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
           className="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-3"
           onClick={handleMessageClick}
         >
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`max-w-[90%] rounded-2xl px-3 py-2.5 text-sm leading-5 ${
-                message.role === "assistant"
-                  ? "rounded-bl-sm border border-slate-200 bg-white text-slate-800"
-                  : message.role === "error"
-                  ? "mx-auto border border-red-200 bg-red-50 text-center text-red-700"
-                  : "ml-auto rounded-br-sm bg-pink-600 text-white shadow-sm"
-              }`}
-            >
-              {message.role === "assistant" ? (
-                <div dangerouslySetInnerHTML={{ __html: sanitizeAssistantHtml(message.content) }} />
-              ) : (
-                message.content
-              )}
-            </div>
-          ))}
+          {messages.map((message, index) => {
+            const showSupport =
+              message.role === "assistant" && /contact support/i.test(message.content)
+
+            return (
+              <div key={index}>
+                <div
+                  className={`max-w-[90%] rounded-2xl px-3 py-2.5 text-sm leading-5 ${
+                    message.role === "assistant"
+                      ? "rounded-bl-sm border border-slate-200 bg-white text-slate-800"
+                      : message.role === "error"
+                      ? "mx-auto border border-red-200 bg-red-50 text-center text-red-700"
+                      : "ml-auto rounded-br-sm bg-pink-600 text-white shadow-sm"
+                  }`}
+                >
+                  {message.role === "assistant" ? (
+                    <div dangerouslySetInnerHTML={{ __html: sanitizeAssistantHtml(message.content) }} />
+                  ) : (
+                    message.content
+                  )}
+                </div>
+
+                {showSupport && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false)
+                      navigate("/contact")
+                    }}
+                    className="mt-1.5 flex items-center gap-1.5 rounded-full bg-pink-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-pink-700"
+                  >
+                    <FaHeadset className="text-sm" />
+                    Contact Support
+                  </button>
+                )}
+              </div>
+            )
+          })}
 
           {isSending ? (
             <div className="max-w-[85%] rounded-2xl rounded-bl-sm border border-slate-200 bg-white px-3 py-2.5 text-sm leading-5 text-slate-500 italic">
