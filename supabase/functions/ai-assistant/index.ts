@@ -227,6 +227,7 @@ serve(async (req) => {
     - If a user asks something outside CTMerchant or you don't have the answer, respond warmly — e.g. "I'm sorry, I can't help with that one. Please contact support for more information." Always keep the words "contact support" as plain text (the app turns it into a tappable button). Do not write it as an HTML link.
     - If a user needs to login or you are in a repo-search guest state, tell them: "Please login to your account." Do not make login text a link.
     - Always stay focused on CTMerchant products, services, and shops.
+    - CONVERSATIONAL COURTESY: For brief greetings, thanks, or acknowledgements (e.g. "hi", "hello", "ok", "okay", "thanks", "thank you", "cool", "nice", "great"), reply warmly and briefly, then offer more help — e.g. "You're welcome! Is there anything else I can help you find on CTMerchant?" NEVER treat these as confusing or outside scope, and never tell the user to rephrase.
 
     WHO WE ARE:
     CTMerchant is a digital collection of shops and their locations in a city to enhance discovery and mitigate fake online sales claims.
@@ -635,7 +636,7 @@ serve(async (req) => {
     // Final backstop: strip any tool syntax / plan narration that survived.
     finalReplyText = sanitizeFinalReply(finalReplyText)
     if (!finalReplyText) {
-      finalReplyText = "I'm sorry, I couldn't find a clear answer for that. Please try rephrasing."
+      finalReplyText = "Is there anything else I can help you find on CTMerchant — a shop, product, or area?"
     }
 
     // Anti-hallucination guard: if a product search actually ran and returned
