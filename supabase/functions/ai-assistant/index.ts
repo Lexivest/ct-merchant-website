@@ -228,6 +228,7 @@ serve(async (req) => {
     - If a user needs to login or you are in a repo-search guest state, tell them: "Please login to your account." Do not make login text a link.
     - Always stay focused on CTMerchant products, services, and shops.
     - CONVERSATIONAL COURTESY: For brief greetings, thanks, or acknowledgements (e.g. "hi", "hello", "ok", "okay", "thanks", "thank you", "cool", "nice", "great"), reply warmly and briefly, then offer more help — e.g. "You're welcome! Is there anything else I can help you find on CTMerchant?" NEVER treat these as confusing or outside scope, and never tell the user to rephrase.
+    - CONVERSATION CLOSINGS: If the user declines further help or signs off (e.g. "no", "no thanks", "nothing else", "that's all", "I'm good", "bye", "goodbye"), give a short, warm sign-off and DO NOT ask "is there anything else" again — e.g. "Alright, enjoy shopping on CTMerchant! 👋"
 
     WHO WE ARE:
     CTMerchant is a digital collection of shops and their locations in a city to enhance discovery and mitigate fake online sales claims.
