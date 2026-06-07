@@ -268,7 +268,7 @@ serve(async (req) => {
 
     GUIDELINES:
     1. HTML ONLY: Use <b>, <ul>, <li>, and marketplace item links only. No Markdown. Only shop/product result links may use <a href="...">, and they must point to /shop-detail?id=SHOP_ID or /product-detail?id=PRODUCT_ID.
-    2. NO HALLUCINATIONS: Only suggest items returned by your tools.
+    2. NO HALLUCINATIONS (CRITICAL): Only mention shops and products your tools actually returned. NEVER invent or guess shop names, product names, prices, IDs, or counts. If a tool returns nothing, say so honestly — never fabricate plausible-looking results.
     3. VERIFICATION: If is_verified is true, call the shop a "Verified Merchant" and add a "✅" next to its name.
     4. STOCK: Item is IN STOCK if stock_count > 0.
     5. ANSWERS: Must be simple and straight forward.
@@ -290,9 +290,10 @@ serve(async (req) => {
              "Nike Air Max Sneaker" → search "Sneaker"
         2. Call 'search_products' with those keyword(s).
         3. If fewer than 2 results come back, call 'search_products' again with an even shorter/broader keyword (e.g. just "Scooter" → "motor", or "Laptop" → "computer").
-        4. Include results from ANY shop, including the current shop — do NOT skip same-shop products.
-        5. Present up to five results arranged from lowest to highest price and compare each price to the current product (₦${p.discount_price || p.price}).
-        6. Only say "did not find any similar product" if both search attempts return nothing.
+        4. Include results from ANY shop.
+        5. CRITICAL ANTI-HALLUCINATION: ONLY list products that the tool actually returned. NEVER invent, guess, pad, or make up product names, shop names, or prices. If the tool returns 1 product, list exactly 1. If the tool result says "did not find any similar product", you MUST follow step 7 — do NOT fabricate options.
+        6. Present each REAL result as a tappable link using the product's id from the tool result: <a href="/product-detail?id=PRODUCT_ID">PRODUCT_NAME</a>. Order from lowest to highest price and compare each price to the current product (₦${p.discount_price || p.price}).
+        7. If both search attempts return nothing, reply exactly: "I couldn't find any similar products to compare right now. You can explore other shops or check back later." Never invent alternatives.
 
         CONTEXT:
         - Current Product Name: ${p.name}
@@ -318,6 +319,7 @@ serve(async (req) => {
            - List the shops returned. If none, say no active shops were found in that area yet and suggest a nearby area or browsing by category.
         3. If asked "Tell me about this shop", provide a friendly summary: name, category, address, verified status.
         4. DO NOT offer price comparison for shops. Answers must be simple and straight forward.
+        5. CRITICAL ANTI-HALLUCINATION: ONLY list shops that 'search_shops' / 'get_shops_in_user_area' actually returned. NEVER invent, guess, or pad shop names or addresses. If a tool returns none, say so honestly — do not fabricate shops. Present each real shop as <a href="/shop-detail?id=SHOP_ID">SHOP_NAME</a> using the id from the tool result.
 
         LINKS: <a href="/shop-detail?id=${s.id}" style="color:#db2777; font-weight:bold; text-decoration:underline;">Visit This Shop</a>
         `
@@ -396,6 +398,20 @@ serve(async (req) => {
 
     const aiMsg = data.choices[0].message
     let finalReplyText = ""
+    // Track searches so we can hard-block fabricated results: if a search ran
+    // and returned nothing, the model must NOT invent shops/products.
+    let productSearchAttempted = false
+    let productSearchHadResults = false
+    let shopSearchAttempted = false
+    let shopSearchHadResults = false
+    let shopEmptyMessage = ""
+
+    // Friendly, honest message for an empty shop search (category / area / user area).
+    const buildShopEmptyMessage = (args: any) => {
+      if (args?.area) return `I couldn't find any active shops in that area yet. You can try a nearby area, or browse by category.`
+      if (args?.category) return `I couldn't find any active shops in that category yet. You can try another category or area.`
+      return `I couldn't find any matching shops right now. You can try another area or category, or check back later.`
+    }
 
     if (aiMsg.tool_calls) {
       messages.push(aiMsg)
@@ -431,6 +447,9 @@ serve(async (req) => {
             }
             const { data: shops, error: shopsErr } = await q.limit(5)
             if (shopsErr) console.warn("[get_shops_in_user_area]", shopsErr.message)
+            shopSearchAttempted = true
+            if (shops?.length) shopSearchHadResults = true
+            else shopEmptyMessage = "I couldn't find any shops in your area yet. You can try browsing by category, or check a nearby area."
             result = shops?.length ? JSON.stringify(shops) : "no other shops yet in your area"
           }
         } else if (name === "search_products") {
@@ -469,6 +488,9 @@ serve(async (req) => {
             return priceA - priceB
           })
 
+          productSearchAttempted = true
+          if (filtered.length) productSearchHadResults = true
+
           result = filtered.length ? JSON.stringify(filtered.slice(0, 5)) : "did not find any similar product"
         } else if (name === "search_shops") {
           // Match is_service to whatever type the current shop is.
@@ -499,6 +521,9 @@ serve(async (req) => {
           }
           const { data: shops, error: shopsErr } = await q.limit(5)
           if (shopsErr) console.warn("[search_shops]", shopsErr.message)
+          shopSearchAttempted = true
+          if (shops?.length) shopSearchHadResults = true
+          else shopEmptyMessage = buildShopEmptyMessage(args)
           result = shops?.length
             ? JSON.stringify(shops)
             : (args.area ? "no shops found in that area yet" : "no other shops yet in the category")
@@ -539,6 +564,9 @@ serve(async (req) => {
               if (context.page === 'shop_detail' && context.shop?.id) q = q.neq('id', context.shop.id)
               const { data: shops, error: shopsErr } = await q.limit(5)
               if (shopsErr) console.warn("[get_shops_in_user_area fallback]", shopsErr.message)
+              shopSearchAttempted = true
+              if (shops?.length) shopSearchHadResults = true
+              else shopEmptyMessage = "I couldn't find any shops in your area yet. You can try browsing by category, or check a nearby area."
               result = shops?.length ? JSON.stringify(shops) : "no other shops yet in your area"
             }
           } else if (name === "search_products") {
@@ -558,6 +586,8 @@ serve(async (req) => {
             let filtered = prods || []
             if (context.product?.id) filtered = filtered.filter((p: any) => p.id !== context.product.id)
             filtered.sort((a: any, b: any) => (a.discount_price ?? a.price) - (b.discount_price ?? b.price))
+            productSearchAttempted = true
+            if (filtered.length) productSearchHadResults = true
             result = filtered.length ? JSON.stringify(filtered.slice(0, 5)) : "did not find any similar product"
           } else if (name === "search_shops") {
             const shopIsService = context.page === 'shop_detail'
@@ -577,6 +607,9 @@ serve(async (req) => {
             if (context.shop?.id) q = q.neq('id', context.shop.id)
             const { data: shops, error: shopsErr } = await q.limit(5)
             if (shopsErr) console.warn("[search_shops fallback]", shopsErr.message)
+            shopSearchAttempted = true
+            if (shops?.length) shopSearchHadResults = true
+            else shopEmptyMessage = buildShopEmptyMessage(args)
             result = shops?.length
               ? JSON.stringify(shops)
               : (args.area ? "no shops found in that area yet" : "no other shops yet in the category")
@@ -603,6 +636,19 @@ serve(async (req) => {
     finalReplyText = sanitizeFinalReply(finalReplyText)
     if (!finalReplyText) {
       finalReplyText = "I'm sorry, I couldn't find a clear answer for that. Please try rephrasing."
+    }
+
+    // Anti-hallucination guard: if a product search actually ran and returned
+    // nothing, never let a fabricated comparison through — override with an
+    // honest reply regardless of what the model produced.
+    if (context.page === 'product_detail' && productSearchAttempted && !productSearchHadResults) {
+      finalReplyText = "I couldn't find any similar products to compare right now. You can explore other shops or check back later for more options."
+    }
+
+    // Same guard for shop searches (category / area / user area): if a shop
+    // search ran and returned nothing, never let fabricated shops through.
+    if (shopSearchAttempted && !shopSearchHadResults) {
+      finalReplyText = shopEmptyMessage || "I couldn't find any matching shops right now. You can try another area or category, or check back later."
     }
 
     if (user) {
