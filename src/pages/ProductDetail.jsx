@@ -568,32 +568,47 @@ function ProductDetail() {
         : `₦${Number(currentProduct.price || 0).toLocaleString()}`
 
     const shopName = currentShop?.name || "our shop"
-    const cityName = currentShop?.cities?.name || "your local"
-    const text = `Check out ${title} for ${priceText}. ${shopName}. ${cityName} biz repository.`
-    const url = window.location.href
+    // Clean homepage + shop ID — no referral product-detail link.
+    const ctId = currentShop?.unique_id || currentShop?.id || ""
+    const onlinePart = ctId
+      ? `enter ID ${ctId} at www.ctmerchant.com.ng`
+      : `shop online at www.ctmerchant.com.ng`
+    const text = `🛍️ Check out ${title} for ${priceText} at ${shopName} — ${onlinePart}`
+
+    // Build the product image first. This is image-or-nothing: if we can't
+    // share an image, we do NOT fall back to a text-only / clipboard share.
+    let file = null
+    if (currentProduct.image_url) {
+      try {
+        const response = await fetch(currentProduct.image_url)
+        const blob = await response.blob()
+        file = new File([blob], "product.jpg", { type: blob.type || "image/jpeg" })
+      } catch { /* image fetch failed — handled below */ }
+    }
+    if (!file) {
+      notify({
+        type: "error",
+        title: "Couldn't prepare the image",
+        message: "Please check your connection and try again.",
+      })
+      return
+    }
+
+    // Block unsupported browsers (e.g. desktop Firefox) instead of degrading
+    // to a text-only share.
+    if (!(navigator.canShare && navigator.canShare({ files: [file] }))) {
+      notify({
+        type: "error",
+        title: "Sharing not supported here",
+        message: "Your browser can't share this product. Please try from the Chrome app on your phone.",
+      })
+      return
+    }
 
     try {
-      if (navigator.share) {
-        let file = null
-        if (currentProduct.image_url) {
-          try {
-            const response = await fetch(currentProduct.image_url)
-            const blob = await response.blob()
-            file = new File([blob], "product.jpg", { type: blob.type })
-          } catch { /* ignore image fetch error */ }
-        }
-
-        if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({ title, text, url, files: [file] })
-        } else {
-          await navigator.share({ title, text, url })
-        }
-      } else {
-        await navigator.clipboard.writeText(`${text}\n${url}`)
-        notify({ type: "success", title: "Link copied", message: "The product link was copied to your clipboard." })
-      }
+      await navigator.share({ title, text, files: [file] })
     } catch (error) {
-      console.error("Error sharing:", error)
+      if (error?.name !== "AbortError") console.error("Error sharing:", error)
     }
   }
 
