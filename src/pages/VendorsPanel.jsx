@@ -628,7 +628,7 @@ function VendorsPanel() {
               ctx.font = "800 24px Arial, sans-serif"
               ctx.fillStyle = "#FBBF24"
               ctx.fillText("SHOP ADDRESS", SIZE / 2, 168)
-              ctx.font = "600 30px Arial, sans-serif"
+              ctx.font = "600 38px Arial, sans-serif"
               ctx.fillStyle = "rgba(255,255,255,0.92)"
               const address = activeShop.address || "Registered Business Address"
               const addrWords = address.split(/\s+/)
@@ -642,7 +642,7 @@ function VendorsPanel() {
                 } else { addrLine = test }
               }
               if (addrLine && addrLines.length < 2) addrLines.push(addrLine)
-              addrLines.slice(0, 2).forEach((ln, i) => ctx.fillText(ln, SIZE / 2, 212 + i * 38))
+              addrLines.slice(0, 2).forEach((ln, i) => ctx.fillText(ln, SIZE / 2, 212 + i * 46))
               ctx.textAlign = "left"
 
               // ── 2×2 product grid (discount-first, frosted labels) ─────
