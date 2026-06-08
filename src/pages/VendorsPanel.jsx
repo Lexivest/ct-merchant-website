@@ -368,7 +368,6 @@ function VendorsPanel() {
     if (isSharing) return
     setIsSharing(true)
 
-    const url = storefrontUrl
     const objectUrls = []
 
     try {
@@ -718,7 +717,7 @@ function VendorsPanel() {
               return new File([blob], "shop-products.jpg", { type: "image/jpeg" })
             })(),
             // Timeout — fall through to shop logo if grid takes too long
-            new Promise((resolve) => setTimeout(() => resolve(null), 8000)),
+            new Promise((resolve) => setTimeout(() => resolve(null), 20000)),
           ])
 
           if (gridFile) file = gridFile
@@ -746,19 +745,25 @@ function VendorsPanel() {
           ? `🛍️ Visit ${activeShop.name} — we are located at ${activeShop.address}, or shop online: ${onlineCap}`
           : `🛍️ Visit ${activeShop.name} — shop online: ${onlineCap}`
 
+        // Never pass `url` — it injects the referral-style ?id= link into the
+        // message body. The caption already carries the clean homepage + ID,
+        // and the card's QR holds the direct shop link.
         if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-          // No url — the QR code in the image is the link; passing url adds the
-          // ugly ?id= link to the WhatsApp message body
           await navigator.share({ title, text, files: [file] })
         } else {
-          // No image — include the url so the recipient can still navigate
-          await navigator.share({ title, text, url })
+          await navigator.share({ title, text })
         }
       } else {
-        // Desktop fallback — copy text to clipboard
-        const text = `Check out ${activeShop.name} on CTMerchant.${activeShop.address ? `\n📍 ${activeShop.address}` : ""}\n${url}`
-        await navigator.clipboard.writeText(text)
-        notify({ type: "success", title: "Link copied", message: "Your shop link was copied to your clipboard." })
+        // Desktop fallback — copy the caption to the clipboard.
+        const ctIdCap = activeShop.unique_id || activeShop.id || ""
+        const onlineCap = ctIdCap
+          ? `enter ID ${ctIdCap} at www.ctmerchant.com.ng`
+          : "www.ctmerchant.com.ng"
+        const caption = activeShop.address
+          ? `🛍️ Visit ${activeShop.name} — we are located at ${activeShop.address}, or shop online: ${onlineCap}`
+          : `🛍️ Visit ${activeShop.name} — shop online: ${onlineCap}`
+        await navigator.clipboard.writeText(caption)
+        notify({ type: "success", title: "Copied", message: "Your shop details were copied to your clipboard." })
       }
     } catch {
       // User cancelled or share failed — silently ignore
