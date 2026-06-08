@@ -32,7 +32,6 @@ const vendorRouteLoaders = {
   "/merchant-banner": () => import("../pages/vendors/MerchantBanner"),
   "/merchant-settings": () => import("../pages/vendors/MerchantSettings"),
   "/merchant-news": () => import("../pages/vendors/MerchantNews"),
-  "/merchant-promo-banner": () => import("../pages/vendors/MerchantPromoBanner"),
   "/merchant-analytics": () => import("../pages/vendors/MerchantAnalytics"),
   "/merchant-video-kyc": () => import("../pages/vendors/MerchantVideoKYC"),
   "/remita": () => import("../pages/vendors/MerchantPayment"),
@@ -452,49 +451,6 @@ async function prepareMerchantAnalyticsData({ userId, shopId }) {
   }
 }
 
-async function prepareMerchantPromoBannerData({ userId, shopId }) {
-  await fetchProfileSuspension(userId)
-  const shop = await fetchOwnedShop(
-    userId,
-    shopId,
-    "id, name, unique_id, category, address, image_url, subscription_end_date, cities(name)"
-  )
-
-  if (!isFutureDate(shop.subscription_end_date)) {
-    throw new Error(
-      "Activate your service plan before you can generate a promo banner."
-    )
-  }
-
-  const { data: products, error } = await supabase
-    .from("products")
-    .select("id, name, price, discount_price, condition, image_url")
-    .eq("shop_id", shop.id)
-    .eq("is_approved", true)
-    .limit(4)
-
-  if (error) throw error
-
-  const fallbackProduct = {
-    id: "fallback",
-    name: "Featured Product",
-    price: null,
-    image_url:
-      "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=800&auto=format&fit=crop",
-  }
-
-  const availableProducts = (products || []).filter((product) => product.image_url)
-  const finalProducts = availableProducts.length
-    ? Array.from({ length: 4 }, (_, index) => availableProducts[index % availableProducts.length])
-    : Array(4).fill(fallbackProduct)
-
-  return {
-    kind: "merchant-promo-banner",
-    shopData: shop,
-    products: finalProducts,
-  }
-}
-
 async function prepareMerchantVideoKYCData({ userId, shopId, search = "" }) {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -606,7 +562,6 @@ const vendorRoutePreparers = {
   "/merchant-banner": prepareMerchantBannerData,
   "/merchant-settings": prepareMerchantSettingsData,
   "/merchant-news": prepareMerchantNewsData,
-  "/merchant-promo-banner": prepareMerchantPromoBannerData,
   "/merchant-analytics": prepareMerchantAnalyticsData,
   "/merchant-video-kyc": prepareMerchantVideoKYCData,
   "/remita": prepareMerchantPaymentData,

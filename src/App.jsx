@@ -196,7 +196,6 @@ const loadMerchantProducts = () => import("./pages/vendors/MerchantProducts")
 const loadMerchantBanner = () => import("./pages/vendors/MerchantBanner")
 const loadMerchantSettings = () => import("./pages/vendors/MerchantSettings")
 const loadMerchantNews = () => import("./pages/vendors/MerchantNews")
-const loadMerchantPromoBanner = () => import("./pages/vendors/MerchantPromoBanner")
 const loadMerchantAnalytics = () => import("./pages/vendors/MerchantAnalytics")
 const loadMerchantPayment = () => import("./pages/vendors/MerchantPayment")
 const loadMerchantServiceFee = () => import("./pages/vendors/MerchantServiceFee")
@@ -259,7 +258,6 @@ const MerchantProducts = resilientLazy(loadMerchantProducts, { pageLabel: "merch
 const MerchantBanner = resilientLazy(loadMerchantBanner, { pageLabel: "shop banner" })
 const MerchantSettings = resilientLazy(loadMerchantSettings, { pageLabel: "merchant settings" })
 const MerchantNews = resilientLazy(loadMerchantNews, { pageLabel: "merchant news" })
-const MerchantPromoBanner = resilientLazy(loadMerchantPromoBanner, { pageLabel: "promo banner studio" })
 const MerchantAnalytics = resilientLazy(loadMerchantAnalytics, { pageLabel: "merchant analytics" })
 const MerchantPayment = resilientLazy(loadMerchantPayment, { pageLabel: "payment page" })
 const MerchantServiceFee = resilientLazy(loadMerchantServiceFee, { pageLabel: "service fee page" })
@@ -561,11 +559,6 @@ function getRouteMeta(pathname) {
     "/merchant-video-kyc": {
       title: "Video KYC | CTMerchant",
       description: "Complete merchant video verification securely inside CTMerchant.",
-      noindex: true,
-    },
-    "/merchant-promo-banner": {
-      title: "Promo Banner Studio | CTMerchant",
-      description: "Create approved promotional banner assets for your CTMerchant shop.",
       noindex: true,
     },
     "/merchant-settings": {
@@ -975,15 +968,6 @@ function AppShell() {
         />
 
         {/* --- LOCKED PREMIUM ROUTES START HERE --- */}
-        <Route
-          path="/merchant-promo-banner"
-          element={withVendorOnlineGuard(
-            <SubscriptionGuard>
-              <MerchantPromoBanner />
-            </SubscriptionGuard>
-          )}
-        />
-
         <Route
           path="/merchant-settings"
           element={withVendorOnlineGuard(<MerchantSettings />)}
