@@ -519,15 +519,17 @@ function VendorsPanel() {
               const peekFill   = Array.from({ length: PEEK_COUNT }, (_, i) => allLoaded[i % allLoaded.length])
 
               // ── Canvas dimensions (mirrors the mobile storefront card) ──
-              const SIZE     = 1080
+              const SIZE     = 1080  // width
               const HALF     = SIZE / 2
               const HEADER_H = 290   // shop logo + name + address
+              const GRID_H   = 900   // product grid — shorter than wide so the
+              const CELL_H   = GRID_H / 2  // whole card fits WhatsApp's preview
               const PEEK_H   = 110   // thumbnail strip
               const FOOTER_H = 290   // CTM brand + biz tagline + QR
               const GRID_Y   = HEADER_H
               const canvas   = document.createElement("canvas")
               canvas.width   = SIZE
-              canvas.height  = HEADER_H + SIZE + PEEK_H + FOOTER_H
+              canvas.height  = HEADER_H + GRID_H + PEEK_H + FOOTER_H
               const ctx      = canvas.getContext("2d")
 
               // Polyfill roundRect for browsers that lack it (older Firefox),
@@ -645,10 +647,10 @@ function VendorsPanel() {
 
               // ── 2×2 product grid (discount-first, frosted labels) ─────
               const cells = [
-                [0,    GRID_Y,        HALF, HALF],
-                [HALF, GRID_Y,        HALF, HALF],
-                [0,    GRID_Y + HALF, HALF, HALF],
-                [HALF, GRID_Y + HALF, HALF, HALF],
+                [0,    GRID_Y,          HALF, CELL_H],
+                [HALF, GRID_Y,          HALF, CELL_H],
+                [0,    GRID_Y + CELL_H, HALF, CELL_H],
+                [HALF, GRID_Y + CELL_H, HALF, CELL_H],
               ]
               for (let i = 0; i < 4; i++) {
                 const item = gridItems[i % gridItems.length]
@@ -697,18 +699,18 @@ function VendorsPanel() {
                 }
               }
               ctx.fillStyle = "rgba(0,0,0,0.5)"
-              ctx.fillRect(HALF - 1, GRID_Y, 2, SIZE)
-              ctx.fillRect(0, GRID_Y + HALF - 1, SIZE, 2)
+              ctx.fillRect(HALF - 1, GRID_Y, 2, GRID_H)
+              ctx.fillRect(0, GRID_Y + CELL_H - 1, SIZE, 2)
 
               // ── Peek strip ────────────────────────────────────────────
-              const peekY  = HEADER_H + SIZE
+              const peekY  = HEADER_H + GRID_H
               const thumbW = Math.floor(SIZE / PEEK_COUNT)
               for (let i = 0; i < PEEK_COUNT; i++) drawCover(peekFill[i], i * thumbW, peekY, thumbW, PEEK_H)
               ctx.fillStyle = "rgba(0,0,0,0.3)"
               for (let i = 1; i < PEEK_COUNT; i++) ctx.fillRect(i * thumbW, peekY, 1, PEEK_H)
 
               // ── FOOTER — CTM logo + {City} Biz & Services + QR ────────
-              const footY = HEADER_H + SIZE + PEEK_H
+              const footY = HEADER_H + GRID_H + PEEK_H
               drawBlueBand(0, footY, SIZE, FOOTER_H)
               drawBadge(ctmLogoImg, 32, footY + (FOOTER_H - 150) / 2, 150, "contain", "CT")  // CTM logo, left
               const QR2 = 168
