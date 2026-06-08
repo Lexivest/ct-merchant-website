@@ -400,7 +400,14 @@ function VendorsPanel() {
 
               cityName = shopCity?.cities?.name || null
 
-              const validProducts = (products || []).filter((p) => p.image_url)
+              const validProducts = (products || [])
+                .filter((p) => p.image_url)
+                .sort((a, b) => {
+                  // Surface discounted products first so they land in the top row.
+                  const ad = a.discount_price && Number(a.discount_price) < Number(a.price) ? 1 : 0
+                  const bd = b.discount_price && Number(b.discount_price) < Number(b.price) ? 1 : 0
+                  return bd - ad
+                })
               if (validProducts.length < 2) return null
 
               // Split: first 4 for the main grid, rest for the peek strip
@@ -496,210 +503,160 @@ function VendorsPanel() {
                 } catch { logoImg = null }
               }
 
+              // Load the CTMerchant brand logo for the footer (same-origin → no taint)
+              let ctmLogoImg = null
+              try {
+                ctmLogoImg = await new Promise((resolve, reject) => {
+                  const img = new window.Image()
+                  img.onload = () => resolve(img)
+                  img.onerror = reject
+                  img.src = "/logo.jpg"
+                })
+              } catch { ctmLogoImg = null }
+
               // Always produce exactly 8 peek thumbnails by cycling all loaded images
               const PEEK_COUNT = 8
               const allLoaded  = [...gridImages, ...peekImages]
               const peekFill   = Array.from({ length: PEEK_COUNT }, (_, i) => allLoaded[i % allLoaded.length])
 
-              // ── Canvas dimensions ──────────────────────────────────────
+              // ── Canvas dimensions (mirrors the mobile storefront card) ──
               const SIZE     = 1080
               const HALF     = SIZE / 2
-              const HEADER_H = 190   // blue banner at top
-              const PEEK_H   = 100   // thumbnail strip at bottom
-              const GRID_Y   = HEADER_H  // grid starts below header
+              const HEADER_H = 290   // shop logo + name + address
+              const PEEK_H   = 110   // thumbnail strip
+              const FOOTER_H = 290   // CTM brand + biz tagline + QR
+              const GRID_Y   = HEADER_H
               const canvas   = document.createElement("canvas")
               canvas.width   = SIZE
-              canvas.height  = HEADER_H + SIZE + PEEK_H
+              canvas.height  = HEADER_H + SIZE + PEEK_H + FOOTER_H
               const ctx      = canvas.getContext("2d")
+
+              // ── helpers ────────────────────────────────────────────────
+              const drawCover = (img, x, y, w, h) => {
+                const scale = Math.max(w / img.width, h / img.height)
+                const sw = img.width * scale
+                const sh = img.height * scale
+                ctx.save()
+                ctx.beginPath()
+                ctx.rect(x, y, w, h)
+                ctx.clip()
+                ctx.drawImage(img, x + (w - sw) / 2, y + (h - sh) / 2, sw, sh)
+                ctx.restore()
+              }
+              const drawBlueBand = (x, y, w, h) => {
+                const g = ctx.createLinearGradient(x, y, x + w, y + h)
+                g.addColorStop(0, "#003B95")
+                g.addColorStop(0.5, "#002D74")
+                g.addColorStop(1, "#003B95")
+                ctx.fillStyle = g
+                ctx.fillRect(x, y, w, h)
+              }
+              const drawBadge = (img, x, y, size, mode) => {
+                ctx.fillStyle = "#FFFFFF"
+                ctx.beginPath()
+                ctx.roundRect(x, y, size, size, 14)
+                ctx.fill()
+                if (!img) return
+                const inner = size - 8
+                ctx.save()
+                ctx.beginPath()
+                ctx.roundRect(x + 4, y + 4, inner, inner, 12)
+                ctx.clip()
+                const scale = mode === "contain"
+                  ? Math.min(inner / img.width, inner / img.height)
+                  : Math.max(inner / img.width, inner / img.height)
+                const sw = img.width * scale
+                const sh = img.height * scale
+                ctx.drawImage(img, x + 4 + (inner - sw) / 2, y + 4 + (inner - sh) / 2, sw, sh)
+                ctx.restore()
+              }
+              const truncate = (text, maxW, font) => {
+                ctx.font = font
+                let t = String(text || "")
+                if (ctx.measureText(t).width <= maxW) return t
+                while (t.length > 4 && ctx.measureText(t + "…").width > maxW) t = t.slice(0, -1)
+                return t.trimEnd() + "…"
+              }
 
               // Base dark background
               ctx.fillStyle = "#1a1a2e"
               ctx.fillRect(0, 0, SIZE, canvas.height)
 
-              // ── Blue header banner ─────────────────────────────────────
-              const hGrad = ctx.createLinearGradient(0, 0, SIZE, HEADER_H)
-              hGrad.addColorStop(0,   "#0D47A1")
-              hGrad.addColorStop(0.5, "#1565C0")
-              hGrad.addColorStop(1,   "#0A3880")
-              ctx.fillStyle = hGrad
-              ctx.fillRect(0, 0, SIZE, HEADER_H)
+              // ── HEADER — shop logo + name + address ────────────────────
+              drawBlueBand(0, 0, SIZE, HEADER_H)
+              drawBadge(logoImg, 28, 28, 120, "cover")  // shop logo, top-left
 
-              // QR code — right side of header
-              const QR_SIZE = 148
-              const QR_PAD  = 18
-              const qrX     = SIZE - QR_SIZE - QR_PAD
-              const qrY     = (HEADER_H - QR_SIZE) / 2
-
-              // White rounded background for QR
-              ctx.fillStyle = "#FFFFFF"
-              ctx.beginPath()
-              ctx.roundRect(qrX - 8, qrY - 8, QR_SIZE + 16, QR_SIZE + 16, 10)
-              ctx.fill()
-              ctx.drawImage(qrImg, qrX, qrY, QR_SIZE, QR_SIZE)
-
-              // "Scan to visit" under QR
-              ctx.font = `500 17px system-ui, Arial, sans-serif`
-              ctx.fillStyle = "rgba(255,255,255,0.7)"
-              const scanW = ctx.measureText("Scan to visit").width
-              ctx.fillText("Scan to visit", qrX + (QR_SIZE - scanW) / 2, qrY + QR_SIZE + 28)
-
-              // Shop logo — left side of header, same size as QR
-              const logoX = QR_PAD
-              const logoY = qrY
-              if (logoImg) {
-                // White rounded background mirrors the QR background
-                ctx.fillStyle = "#FFFFFF"
-                ctx.beginPath()
-                ctx.roundRect(logoX - 8, logoY - 8, QR_SIZE + 16, QR_SIZE + 16, 10)
-                ctx.fill()
-                // Cover-crop logo into the square
-                const la = logoImg.naturalWidth / logoImg.naturalHeight
-                let lsx, lsy, lsw, lsh
-                if (la >= 1) { lsh = logoImg.naturalHeight; lsw = lsh; lsx = (logoImg.naturalWidth - lsw) / 2; lsy = 0 }
-                else         { lsw = logoImg.naturalWidth;  lsh = lsw; lsy = (logoImg.naturalHeight - lsh) / 2; lsx = 0 }
-                ctx.save()
-                ctx.beginPath()
-                ctx.roundRect(logoX, logoY, QR_SIZE, QR_SIZE, 8)
-                ctx.clip()
-                ctx.drawImage(logoImg, lsx, lsy, lsw, lsh, logoX, logoY, QR_SIZE, QR_SIZE)
-                ctx.restore()
-              }
-
-              // Text — centered in the gap between logo (or edge) and QR
-              const textStart  = logoImg ? logoX + QR_SIZE + QR_PAD : 0
-              const textCenter = (textStart + qrX) / 2
-              const maxTextW   = qrX - textStart - QR_PAD
               ctx.textAlign = "center"
-
-              // Shop name — white, bold, centered
-              ctx.font = `800 34px system-ui, Arial, sans-serif`
+              const nameFont = "800 50px system-ui, Arial, sans-serif"
+              const nameDisplay = truncate(activeShop.name, SIZE - 130, nameFont)
+              ctx.font = nameFont
               ctx.fillStyle = "#FFFFFF"
-              // Truncate if too long for the text area
-              let shopNameDisplay = activeShop.name
-              while (ctx.measureText(shopNameDisplay).width > maxTextW && shopNameDisplay.length > 4) {
-                shopNameDisplay = shopNameDisplay.slice(0, -1)
-              }
-              if (shopNameDisplay.length < activeShop.name.length) shopNameDisplay = shopNameDisplay.trimEnd() + "…"
-              ctx.fillText(shopNameDisplay, textCenter, 48)
-
-              // Pink underline under shop name — centered
-              const nameW = Math.min(ctx.measureText(shopNameDisplay).width, maxTextW)
+              ctx.fillText(nameDisplay, SIZE / 2, 92)
               ctx.fillStyle = "#EC4899"
-              ctx.fillRect(textCenter - nameW / 2, 56, nameW, 4)
-
-              // Shop category — centered, truncated if too long
-              ctx.font = `500 27px system-ui, Arial, sans-serif`
-              ctx.fillStyle = "rgba(255,255,255,0.9)"
-              const rawCategory = activeShop.category || "General"
-              let categoryDisplay = rawCategory
-              while (ctx.measureText(categoryDisplay).width > maxTextW && categoryDisplay.length > 4) {
-                categoryDisplay = categoryDisplay.slice(0, -1)
+              ctx.fillRect(SIZE / 2 - 70, 112, 140, 6)             // pink underline
+              ctx.font = "800 24px system-ui, Arial, sans-serif"
+              ctx.fillStyle = "#FBBF24"
+              ctx.fillText("SHOP ADDRESS", SIZE / 2, 168)
+              ctx.font = "600 30px system-ui, Arial, sans-serif"
+              ctx.fillStyle = "rgba(255,255,255,0.92)"
+              const address = activeShop.address || "Registered Business Address"
+              const addrWords = address.split(/\s+/)
+              const addrLines = []
+              let addrLine = ""
+              for (const w of addrWords) {
+                const test = addrLine ? addrLine + " " + w : w
+                if (ctx.measureText(test).width > SIZE - 140 && addrLine) {
+                  addrLines.push(addrLine); addrLine = w
+                  if (addrLines.length === 2) break
+                } else { addrLine = test }
               }
-              if (categoryDisplay.length < rawCategory.length) categoryDisplay = categoryDisplay.trimEnd() + "…"
-              ctx.fillText(categoryDisplay, textCenter, 100)
+              if (addrLine && addrLines.length < 2) addrLines.push(addrLine)
+              addrLines.slice(0, 2).forEach((ln, i) => ctx.fillText(ln, SIZE / 2, 212 + i * 38))
+              ctx.textAlign = "left"
 
-              // Website — pink, centered
-              ctx.font = `700 27px system-ui, Arial, sans-serif`
-              ctx.fillStyle = "#FCA5A5"
-              ctx.fillText("www.ctmerchant.com.ng", textCenter, 143)
-
-              // CT ID (7-digit unique_id used in repo search) — centered
-              const ctId = activeShop.unique_id || activeShop.id
-              ctx.font = `400 22px system-ui, Arial, sans-serif`
-              ctx.fillStyle = "rgba(255,255,255,0.5)"
-              ctx.fillText(`CT ID: ${ctId}`, textCenter, 178)
-
-              ctx.textAlign = "left"  // reset for rest of canvas
-              // ────────────────────────────────────────────────────────────
-
-              // ── Main 2×2 (or 2-col) product grid ──────────────────────
-              const count = Math.min(gridImages.length, 4)
-              // All cells offset downward by HEADER_H
-              const cells =
-                count === 2
-                  ? [[0, GRID_Y, HALF, SIZE], [HALF, GRID_Y, HALF, SIZE]]
-                  : [
-                      [0,    GRID_Y,        HALF, HALF],
-                      [HALF, GRID_Y,        HALF, HALF],
-                      [0,    GRID_Y + HALF, HALF, HALF],
-                      [HALF, GRID_Y + HALF, HALF, HALF],
-                    ]
-
-              for (let i = 0; i < count; i++) {
+              // ── 2×2 product grid (discount-first, frosted labels) ─────
+              const cells = [
+                [0,    GRID_Y,        HALF, HALF],
+                [HALF, GRID_Y,        HALF, HALF],
+                [0,    GRID_Y + HALF, HALF, HALF],
+                [HALF, GRID_Y + HALF, HALF, HALF],
+              ]
+              for (let i = 0; i < 4; i++) {
+                const item = gridItems[i % gridItems.length]
+                const img  = gridImages[i % gridImages.length]
                 const [cx, cy, cw, ch] = cells[i]
-                const img = gridImages[i]
-                const scale = Math.max(cw / img.width, ch / img.height)
-                const sw = img.width * scale
-                const sh = img.height * scale
-                const dx = cx + (cw - sw) / 2
-                const dy = cy + (ch - sh) / 2
-                ctx.save()
-                ctx.beginPath()
-                ctx.rect(cx, cy, cw, ch)
-                ctx.clip()
-                ctx.drawImage(img, dx, dy, sw, sh)
-                ctx.restore()
-              }
+                drawCover(img, cx, cy, cw, ch)
 
-              // Grid dividers
-              ctx.fillStyle = "rgba(0,0,0,0.6)"
-              if (count === 2) {
-                ctx.fillRect(HALF - 1, GRID_Y, 3, SIZE)
-              } else {
-                ctx.fillRect(HALF - 1, GRID_Y, 3, SIZE)
-                ctx.fillRect(0, GRID_Y + HALF - 1, SIZE, 3)
-              }
-
-              // ── Name / price / badge overlays ──────────────────────────
-              for (let i = 0; i < count; i++) {
-                const [cx, cy, cw, ch] = cells[i]
-                const product = gridItems[i].product
+                const product = item.product
                 const hasDiscount =
-                  product.discount_price &&
-                  Number(product.discount_price) < Number(product.price)
+                  product.discount_price && Number(product.discount_price) < Number(product.price)
+                const stripH = 132
+                const pad = 22
+                const stripY = cy + ch - stripH
 
-                const isSmall   = ch <= HALF
-                const stripH    = isSmall ? 130 : 160
-                const nameSize  = isSmall ? 26  : 32
-                const priceSize = isSmall ? 28  : 36
-                const badgeSize = isSmall ? 22  : 28
-                const pad       = isSmall ? 16  : 20
-                const stripY    = cy + ch - stripH
-
-                ctx.save()
-                ctx.globalAlpha = 0.82
-                ctx.fillStyle = "#0a0a14"
+                // frosted transparent-white label
+                ctx.fillStyle = "rgba(255,255,255,0.80)"
                 ctx.fillRect(cx, stripY, cw, stripH)
-                ctx.restore()
 
-                const maxChars = isSmall ? 20 : 25
-                const shortName =
-                  product.name.length > maxChars
-                    ? product.name.slice(0, maxChars - 1) + "…"
-                    : product.name
-                ctx.font = `700 ${nameSize}px system-ui, Arial, sans-serif`
-                ctx.fillStyle = "#FFFFFF"
-                ctx.fillText(shortName, cx + pad, stripY + pad + nameSize)
-
-                const displayPrice = hasDiscount
-                  ? Number(product.discount_price)
-                  : Number(product.price)
-                ctx.font = `800 ${priceSize}px system-ui, Arial, sans-serif`
-                ctx.fillStyle = "#FFD700"
+                // product name (deep pink)
+                ctx.fillStyle = "#DB2777"
                 ctx.fillText(
-                  "N" + Math.round(displayPrice).toLocaleString("en-NG"),
-                  cx + pad, stripY + stripH - pad
+                  truncate(product.name, cw - pad * 2, "800 33px system-ui, Arial, sans-serif"),
+                  cx + pad, stripY + pad + 30,
                 )
-
+                // price (dark)
+                const displayPrice = hasDiscount ? Number(product.discount_price) : Number(product.price)
+                ctx.font = "900 42px system-ui, Arial, sans-serif"
+                ctx.fillStyle = "#0F172A"
+                ctx.fillText("₦" + Math.round(displayPrice).toLocaleString("en-NG"), cx + pad, stripY + stripH - pad)
+                // discount badge (bottom-right)
                 if (hasDiscount) {
-                  const pct = Math.round(
-                    (1 - Number(product.discount_price) / Number(product.price)) * 100
-                  )
+                  const pct = Math.round((1 - Number(product.discount_price) / Number(product.price)) * 100)
                   const badgeText = `-${pct}%`
-                  ctx.font = `800 ${badgeSize}px system-ui, Arial, sans-serif`
-                  const bPad   = isSmall ? 12 : 16
+                  ctx.font = "800 28px system-ui, Arial, sans-serif"
+                  const bPad = 14
                   const badgeW = ctx.measureText(badgeText).width + bPad * 2
-                  const badgeH = badgeSize + bPad
+                  const badgeH = 28 + bPad
                   const badgeX = cx + cw - badgeW - pad
                   const badgeY = stripY + stripH - badgeH - pad
                   ctx.fillStyle = "#E53E3E"
@@ -707,37 +664,47 @@ function VendorsPanel() {
                   ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 6)
                   ctx.fill()
                   ctx.fillStyle = "#FFFFFF"
-                  ctx.fillText(badgeText, badgeX + bPad, badgeY + badgeH - bPad * 0.55)
+                  ctx.fillText(badgeText, badgeX + bPad, badgeY + badgeH - bPad * 0.7)
                 }
               }
+              ctx.fillStyle = "rgba(0,0,0,0.5)"
+              ctx.fillRect(HALF - 1, GRID_Y, 2, SIZE)
+              ctx.fillRect(0, GRID_Y + HALF - 1, SIZE, 2)
 
-              // ── Peek strip — 8 visible thumbnails, no dimming ─────────
-              {
-                const peekY  = HEADER_H + SIZE
-                const thumbW = Math.floor(SIZE / PEEK_COUNT)
+              // ── Peek strip ────────────────────────────────────────────
+              const peekY  = HEADER_H + SIZE
+              const thumbW = Math.floor(SIZE / PEEK_COUNT)
+              for (let i = 0; i < PEEK_COUNT; i++) drawCover(peekFill[i], i * thumbW, peekY, thumbW, PEEK_H)
+              ctx.fillStyle = "rgba(0,0,0,0.3)"
+              for (let i = 1; i < PEEK_COUNT; i++) ctx.fillRect(i * thumbW, peekY, 1, PEEK_H)
 
-                for (let i = 0; i < PEEK_COUNT; i++) {
-                  const px  = i * thumbW
-                  const img = peekFill[i]
-                  const scale = Math.max(thumbW / img.width, PEEK_H / img.height)
-                  const sw = img.width * scale
-                  const sh = img.height * scale
-                  const dx = px + (thumbW - sw) / 2
-                  const dy = peekY + (PEEK_H - sh) / 2
-                  ctx.save()
-                  ctx.beginPath()
-                  ctx.rect(px, peekY, thumbW, PEEK_H)
-                  ctx.clip()
-                  ctx.drawImage(img, dx, dy, sw, sh)
-                  ctx.restore()
-                }
-
-                // Thin dividers only — no fade, no dim
-                ctx.fillStyle = "rgba(0,0,0,0.35)"
-                for (let i = 1; i < PEEK_COUNT; i++) {
-                  ctx.fillRect(i * thumbW, peekY, 1, PEEK_H)
-                }
-              }
+              // ── FOOTER — CTM logo + {City} Biz & Services + QR ────────
+              const footY = HEADER_H + SIZE + PEEK_H
+              drawBlueBand(0, footY, SIZE, FOOTER_H)
+              drawBadge(ctmLogoImg, 32, footY + (FOOTER_H - 150) / 2, 150, "contain")  // CTM logo, left
+              const QR2 = 168
+              const qr2X = SIZE - QR2 - 36
+              const qr2Y = footY + (FOOTER_H - QR2) / 2 - 16
+              drawBadge(qrImg, qr2X, qr2Y, QR2, "contain")  // QR, right
+              ctx.textAlign = "center"
+              ctx.font = "600 22px system-ui, Arial, sans-serif"
+              ctx.fillStyle = "rgba(255,255,255,0.75)"
+              ctx.fillText("Scan to visit", qr2X + QR2 / 2, qr2Y + QR2 + 34)
+              const cCenter = (32 + 150 + qr2X) / 2
+              const midY = footY + FOOTER_H / 2
+              const bizText = cityName ? `${cityName} Biz & Services` : "Biz & Services"
+              ctx.font = "800 34px system-ui, Arial, sans-serif"
+              ctx.fillStyle = "#FFFFFF"
+              ctx.fillText(truncate(bizText, qr2X - (32 + 150) - 24, "800 34px system-ui, Arial, sans-serif"), cCenter, midY - 30)
+              ctx.fillStyle = "#EC4899"
+              ctx.fillRect(cCenter - 56, midY - 18, 112, 5)
+              ctx.font = "800 30px system-ui, Arial, sans-serif"
+              ctx.fillStyle = "#FCA5A5"
+              ctx.fillText("www.ctmerchant.com.ng", cCenter, midY + 28)
+              ctx.font = "600 26px system-ui, Arial, sans-serif"
+              ctx.fillStyle = "rgba(255,255,255,0.6)"
+              ctx.fillText(String(activeShop.unique_id || activeShop.id || ""), cCenter, midY + 68)
+              ctx.textAlign = "left"
               // ────────────────────────────────────────────────────────────
 
               // Export as JPEG
@@ -769,10 +736,15 @@ function VendorsPanel() {
         // Build share text — short caption + tappable website link
         const bizHub = cityName ? `${cityName} Biz Hub` : "CTMerchant"
         const title  = `${activeShop.name} | ${bizHub}`
-        const text   = [
-          `Check out ${activeShop.name} on *${bizHub}* 🛍️ www.ctmerchant.com.ng`,
-          activeShop.address ? `📍 ${activeShop.address}` : null,
-        ].filter(Boolean).join("\n")
+        // Clean homepage + shop ID (no referral-style ?id= link); QR carries
+        // the direct shop link. Mirrors the mobile share caption.
+        const ctIdCap = activeShop.unique_id || activeShop.id || ""
+        const onlineCap = ctIdCap
+          ? `enter ID ${ctIdCap} at www.ctmerchant.com.ng`
+          : "www.ctmerchant.com.ng"
+        const text = activeShop.address
+          ? `🛍️ Visit ${activeShop.name} — we are located at ${activeShop.address}, or shop online: ${onlineCap}`
+          : `🛍️ Visit ${activeShop.name} — shop online: ${onlineCap}`
 
         if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
           // No url — the QR code in the image is the link; passing url adds the
