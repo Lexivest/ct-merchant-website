@@ -565,12 +565,23 @@ function VendorsPanel() {
                 ctx.fillStyle = g
                 ctx.fillRect(x, y, w, h)
               }
-              const drawBadge = (img, x, y, size, mode) => {
+              const drawBadge = (img, x, y, size, mode, fallbackText) => {
                 ctx.fillStyle = "#FFFFFF"
                 ctx.beginPath()
                 ctx.roundRect(x, y, size, size, 14)
                 ctx.fill()
-                if (!img) return
+                if (!img) {
+                  if (fallbackText) {
+                    ctx.save()
+                    ctx.fillStyle = "#003B95"
+                    ctx.font = `800 ${Math.round(size * 0.36)}px Arial, sans-serif`
+                    ctx.textAlign = "center"
+                    ctx.textBaseline = "middle"
+                    ctx.fillText(fallbackText, x + size / 2, y + size / 2)
+                    ctx.restore()
+                  }
+                  return
+                }
                 const inner = size - 8
                 ctx.save()
                 ctx.beginPath()
@@ -597,21 +608,25 @@ function VendorsPanel() {
               ctx.fillRect(0, 0, SIZE, canvas.height)
 
               // ── HEADER — shop logo + name + address ────────────────────
+              const shopInitials = String(activeShop.name || "CT")
+                .trim().split(/\s+/).filter(Boolean).slice(0, 2)
+                .map((w) => w[0]?.toUpperCase() || "").join("") || "CT"
               drawBlueBand(0, 0, SIZE, HEADER_H)
-              drawBadge(logoImg, 28, 28, 120, "cover")  // shop logo, top-left
+              drawBadge(logoImg, 28, 28, 120, "cover", shopInitials)  // shop logo, top-left
 
               ctx.textAlign = "center"
-              const nameFont = "800 50px system-ui, Arial, sans-serif"
+              ctx.textBaseline = "alphabetic"
+              const nameFont = "800 50px Arial, sans-serif"
               const nameDisplay = truncate(activeShop.name, SIZE - 130, nameFont)
               ctx.font = nameFont
               ctx.fillStyle = "#FFFFFF"
               ctx.fillText(nameDisplay, SIZE / 2, 92)
               ctx.fillStyle = "#EC4899"
               ctx.fillRect(SIZE / 2 - 70, 112, 140, 6)             // pink underline
-              ctx.font = "800 24px system-ui, Arial, sans-serif"
+              ctx.font = "800 24px Arial, sans-serif"
               ctx.fillStyle = "#FBBF24"
               ctx.fillText("SHOP ADDRESS", SIZE / 2, 168)
-              ctx.font = "600 30px system-ui, Arial, sans-serif"
+              ctx.font = "600 30px Arial, sans-serif"
               ctx.fillStyle = "rgba(255,255,255,0.92)"
               const address = activeShop.address || "Registered Business Address"
               const addrWords = address.split(/\s+/)
@@ -655,19 +670,19 @@ function VendorsPanel() {
                 // product name (deep pink)
                 ctx.fillStyle = "#DB2777"
                 ctx.fillText(
-                  truncate(product.name, cw - pad * 2, "800 33px system-ui, Arial, sans-serif"),
+                  truncate(product.name, cw - pad * 2, "800 33px Arial, sans-serif"),
                   cx + pad, stripY + pad + 30,
                 )
                 // price (dark)
                 const displayPrice = hasDiscount ? Number(product.discount_price) : Number(product.price)
-                ctx.font = "900 42px system-ui, Arial, sans-serif"
+                ctx.font = "900 42px Arial, sans-serif"
                 ctx.fillStyle = "#0F172A"
                 ctx.fillText("₦" + Math.round(displayPrice).toLocaleString("en-NG"), cx + pad, stripY + stripH - pad)
                 // discount badge (bottom-right)
                 if (hasDiscount) {
                   const pct = Math.round((1 - Number(product.discount_price) / Number(product.price)) * 100)
                   const badgeText = `-${pct}%`
-                  ctx.font = "800 28px system-ui, Arial, sans-serif"
+                  ctx.font = "800 28px Arial, sans-serif"
                   const bPad = 14
                   const badgeW = ctx.measureText(badgeText).width + bPad * 2
                   const badgeH = 28 + bPad
@@ -701,21 +716,21 @@ function VendorsPanel() {
               const qr2Y = footY + (FOOTER_H - QR2) / 2 - 16
               drawBadge(qrImg, qr2X, qr2Y, QR2, "contain")  // QR, right
               ctx.textAlign = "center"
-              ctx.font = "600 22px system-ui, Arial, sans-serif"
+              ctx.font = "600 22px Arial, sans-serif"
               ctx.fillStyle = "rgba(255,255,255,0.75)"
               ctx.fillText("Scan to visit", qr2X + QR2 / 2, qr2Y + QR2 + 34)
               const cCenter = (32 + 150 + qr2X) / 2
               const midY = footY + FOOTER_H / 2
               const bizText = cityName ? `${cityName} Biz & Services` : "Biz & Services"
-              ctx.font = "800 34px system-ui, Arial, sans-serif"
+              ctx.font = "800 34px Arial, sans-serif"
               ctx.fillStyle = "#FFFFFF"
-              ctx.fillText(truncate(bizText, qr2X - (32 + 150) - 24, "800 34px system-ui, Arial, sans-serif"), cCenter, midY - 30)
+              ctx.fillText(truncate(bizText, qr2X - (32 + 150) - 24, "800 34px Arial, sans-serif"), cCenter, midY - 30)
               ctx.fillStyle = "#EC4899"
               ctx.fillRect(cCenter - 56, midY - 18, 112, 5)
-              ctx.font = "800 30px system-ui, Arial, sans-serif"
+              ctx.font = "800 30px Arial, sans-serif"
               ctx.fillStyle = "#FCA5A5"
               ctx.fillText("www.ctmerchant.com.ng", cCenter, midY + 28)
-              ctx.font = "600 26px system-ui, Arial, sans-serif"
+              ctx.font = "600 26px Arial, sans-serif"
               ctx.fillStyle = "rgba(255,255,255,0.6)"
               ctx.fillText(String(activeShop.unique_id || activeShop.id || ""), cCenter, midY + 68)
               ctx.textAlign = "left"
