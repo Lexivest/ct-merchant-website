@@ -371,10 +371,10 @@ function VendorsPanel() {
     const objectUrls = []
 
     try {
-      if (navigator.share) {
-        let file = null
-        let cityName = null
+      let file = null
+      let cityName = null
 
+      {
         // Try to build a product grid using the Canvas API (no server needed)
         try {
           const gridFile = await Promise.race([
@@ -529,6 +529,21 @@ function VendorsPanel() {
               canvas.width   = SIZE
               canvas.height  = HEADER_H + SIZE + PEEK_H + FOOTER_H
               const ctx      = canvas.getContext("2d")
+
+              // Polyfill roundRect for browsers that lack it (older Firefox),
+              // so the card still builds instead of throwing.
+              if (typeof ctx.roundRect !== "function") {
+                ctx.roundRect = function (x, y, w, h, r) {
+                  const rr = Math.min(typeof r === "number" ? r : 0, w / 2, h / 2)
+                  this.moveTo(x + rr, y)
+                  this.arcTo(x + w, y, x + w, y + h, rr)
+                  this.arcTo(x + w, y + h, x, y + h, rr)
+                  this.arcTo(x, y + h, x, y, rr)
+                  this.arcTo(x, y, x + w, y, rr)
+                  this.closePath()
+                  return this
+                }
+              }
 
               // ── helpers ────────────────────────────────────────────────
               const drawCover = (img, x, y, w, h) => {
@@ -723,47 +738,51 @@ function VendorsPanel() {
           if (gridFile) file = gridFile
         } catch { /* canvas failed — fall through to shop logo */ }
 
-        // Fall back to shop logo if grid couldn't be built
-        if (!file && activeShop.image_url) {
-          try {
-            const resp = await fetch(activeShop.image_url)
-            const blob = await resp.blob()
-            file = new File([blob], "shop.jpg", { type: blob.type })
-          } catch { /* ignore */ }
-        }
+      }
 
-        // Build share text — short caption + tappable website link
-        const bizHub = cityName ? `${cityName} Biz Hub` : "CTMerchant"
-        const title  = `${activeShop.name} | ${bizHub}`
-        // Clean homepage + shop ID (no referral-style ?id= link); QR carries
-        // the direct shop link. Mirrors the mobile share caption.
-        const ctIdCap = activeShop.unique_id || activeShop.id || ""
-        const onlineCap = ctIdCap
-          ? `enter ID ${ctIdCap} at www.ctmerchant.com.ng`
-          : "www.ctmerchant.com.ng"
-        const text = activeShop.address
-          ? `🛍️ Visit ${activeShop.name} — we are located at ${activeShop.address}, or shop online: ${onlineCap}`
-          : `🛍️ Visit ${activeShop.name} — shop online: ${onlineCap}`
+      // Robust: card-or-nothing. If the card image couldn't be built, show an
+      // error and stop — never open a degraded text-only share.
+      if (!file) {
+        notify({
+          type: "error",
+          title: "Couldn't build your card",
+          message: "Please check your connection and try again.",
+        })
+        return
+      }
 
-        // Never pass `url` — it injects the referral-style ?id= link into the
-        // message body. The caption already carries the clean homepage + ID,
-        // and the card's QR holds the direct shop link.
-        if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({ title, text, files: [file] })
-        } else {
-          await navigator.share({ title, text })
-        }
+      // Caption — clean homepage + shop ID (no referral ?id= link); the card's
+      // QR holds the direct shop link.
+      const bizHub = cityName ? `${cityName} Biz Hub` : "CTMerchant"
+      const title  = `${activeShop.name} | ${bizHub}`
+      const ctIdCap = activeShop.unique_id || activeShop.id || ""
+      const onlineCap = ctIdCap
+        ? `enter ID ${ctIdCap} at www.ctmerchant.com.ng`
+        : "www.ctmerchant.com.ng"
+      const text = activeShop.address
+        ? `🛍️ Visit ${activeShop.name} — we are located at ${activeShop.address}, or shop online: ${onlineCap}`
+        : `🛍️ Visit ${activeShop.name} — shop online: ${onlineCap}`
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        // Native image share (Chrome/Android, Safari/iOS).
+        await navigator.share({ title, text, files: [file] })
       } else {
-        // Desktop fallback — copy the caption to the clipboard.
-        const ctIdCap = activeShop.unique_id || activeShop.id || ""
-        const onlineCap = ctIdCap
-          ? `enter ID ${ctIdCap} at www.ctmerchant.com.ng`
-          : "www.ctmerchant.com.ng"
-        const caption = activeShop.address
-          ? `🛍️ Visit ${activeShop.name} — we are located at ${activeShop.address}, or shop online: ${onlineCap}`
-          : `🛍️ Visit ${activeShop.name} — shop online: ${onlineCap}`
-        await navigator.clipboard.writeText(caption)
-        notify({ type: "success", title: "Copied", message: "Your shop details were copied to your clipboard." })
+        // Web Share with files is unsupported (e.g. Firefox, most desktops) —
+        // download the card and copy the caption so it can be shared manually.
+        const dlUrl = URL.createObjectURL(file)
+        const a = document.createElement("a")
+        a.href = dlUrl
+        a.download = `CTMerchant_${activeShop.unique_id || activeShop.id || "store"}.jpg`
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        URL.revokeObjectURL(dlUrl)
+        try { await navigator.clipboard.writeText(text) } catch { /* ignore */ }
+        notify({
+          type: "success",
+          title: "Card downloaded",
+          message: "This browser can't share images directly, so we saved your card and copied the caption — attach it from your gallery.",
+        })
       }
     } catch {
       // User cancelled or share failed — silently ignore
