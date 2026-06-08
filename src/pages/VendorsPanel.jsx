@@ -665,10 +665,16 @@ function VendorsPanel() {
                 const pad = 22
                 const stripY = cy + ch - stripH
 
-                // frosted transparent-white label
-                ctx.fillStyle = "rgba(255,255,255,0.80)"
+                // see-through label — transparent so the product shows behind it
+                ctx.fillStyle = "rgba(255,255,255,0.25)"
                 ctx.fillRect(cx, stripY, cw, stripH)
 
+                // White glow keeps the text readable over the product image
+                ctx.save()
+                ctx.shadowColor = "rgba(255,255,255,0.95)"
+                ctx.shadowBlur = 5
+                ctx.shadowOffsetX = 0
+                ctx.shadowOffsetY = 1
                 // product name (deep pink)
                 ctx.fillStyle = "#DB2777"
                 ctx.fillText(
@@ -680,6 +686,7 @@ function VendorsPanel() {
                 ctx.font = "900 42px Arial, sans-serif"
                 ctx.fillStyle = "#0F172A"
                 ctx.fillText("₦" + Math.round(displayPrice).toLocaleString("en-NG"), cx + pad, stripY + stripH - pad)
+                ctx.restore()
                 // discount badge (bottom-right)
                 if (hasDiscount) {
                   const pct = Math.round((1 - Number(product.discount_price) / Number(product.price)) * 100)
