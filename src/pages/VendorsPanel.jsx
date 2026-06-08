@@ -509,7 +509,7 @@ function VendorsPanel() {
                   const img = new window.Image()
                   img.onload = () => resolve(img)
                   img.onerror = reject
-                  img.src = "/logo.jpg"
+                  img.src = "/ctm-logo.jpg"
                 })
               } catch { ctmLogoImg = null }
 
@@ -710,7 +710,7 @@ function VendorsPanel() {
               // ── FOOTER — CTM logo + {City} Biz & Services + QR ────────
               const footY = HEADER_H + SIZE + PEEK_H
               drawBlueBand(0, footY, SIZE, FOOTER_H)
-              drawBadge(ctmLogoImg, 32, footY + (FOOTER_H - 150) / 2, 150, "contain")  // CTM logo, left
+              drawBadge(ctmLogoImg, 32, footY + (FOOTER_H - 150) / 2, 150, "contain", "CT")  // CTM logo, left
               const QR2 = 168
               const qr2X = SIZE - QR2 - 36
               const qr2Y = footY + (FOOTER_H - QR2) / 2 - 16
