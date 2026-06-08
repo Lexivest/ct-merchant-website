@@ -729,19 +729,19 @@ function VendorsPanel() {
               ctx.fillStyle = "rgba(255,255,255,0.75)"
               ctx.fillText("Scan to visit", qr2X + QR2 / 2, qr2Y + QR2 + 34)
               const cCenter = (32 + 150 + qr2X) / 2
-              const midY = footY + FOOTER_H / 2
+              const topY = footY + 56   // anchor the text block to the top of the footer
               const bizText = cityName ? `${cityName} Biz & Services` : "Biz & Services"
               ctx.font = "800 48px Arial, sans-serif"
               ctx.fillStyle = "#FFFFFF"
-              ctx.fillText(truncate(bizText, qr2X - (32 + 150) - 24, "800 48px Arial, sans-serif"), cCenter, midY - 28)
+              ctx.fillText(truncate(bizText, qr2X - (32 + 150) - 24, "800 48px Arial, sans-serif"), cCenter, topY)
               ctx.fillStyle = "#EC4899"
-              ctx.fillRect(cCenter - 70, midY - 8, 140, 6)
+              ctx.fillRect(cCenter - 70, topY + 20, 140, 6)
               ctx.font = "800 30px Arial, sans-serif"
               ctx.fillStyle = "#FCA5A5"
-              ctx.fillText("www.ctmerchant.com.ng", cCenter, midY + 30)
+              ctx.fillText("www.ctmerchant.com.ng", cCenter, topY + 58)
               ctx.font = "600 26px Arial, sans-serif"
               ctx.fillStyle = "rgba(255,255,255,0.6)"
-              ctx.fillText(String(activeShop.unique_id || activeShop.id || ""), cCenter, midY + 70)
+              ctx.fillText(String(activeShop.unique_id || activeShop.id || ""), cCenter, topY + 98)
               ctx.textAlign = "left"
               // ────────────────────────────────────────────────────────────
 
