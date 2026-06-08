@@ -39,15 +39,15 @@ function ServiceCard({ icon, title, subtitle, onClick }) {
     <div className="svc-card rounded-[22px] bg-pink-200 p-1 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:bg-pink-300 hover:shadow-[0_8px_16px_rgba(219,39,119,0.15)]">
       <button
         type="button"
-        className="flex h-full min-h-[128px] w-full flex-col items-center justify-center rounded-[18px] border border-pink-100 bg-white px-4 py-5 text-center"
+        className="flex h-full min-h-[98px] w-full flex-col items-center justify-center rounded-[18px] border border-pink-100 bg-white px-3 py-3 text-center"
         onClick={onClick}
       >
-        <div className="svc-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-pink-50 text-[1.4rem] text-[#565959] shadow-[inset_0_0_0_1px_rgba(244,114,182,0.12)]">
+        <div className="svc-icon mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-pink-50 text-[1.2rem] text-[#565959] shadow-[inset_0_0_0_1px_rgba(244,114,182,0.12)]">
           {icon}
         </div>
-        <strong className="text-[0.95rem] font-extrabold text-[#0F1111]">{title}</strong>
+        <strong className="text-[0.9rem] font-extrabold text-[#0F1111]">{title}</strong>
         {subtitle ? (
-          <div className="mt-1 text-[0.8rem] font-semibold text-[#565959]">{subtitle}</div>
+          <div className="mt-0.5 text-[0.78rem] font-semibold text-[#565959]">{subtitle}</div>
         ) : null}
       </button>
     </div>
