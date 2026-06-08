@@ -731,17 +731,17 @@ function VendorsPanel() {
               const cCenter = (32 + 150 + qr2X) / 2
               const midY = footY + FOOTER_H / 2
               const bizText = cityName ? `${cityName} Biz & Services` : "Biz & Services"
-              ctx.font = "800 34px Arial, sans-serif"
+              ctx.font = "800 48px Arial, sans-serif"
               ctx.fillStyle = "#FFFFFF"
-              ctx.fillText(truncate(bizText, qr2X - (32 + 150) - 24, "800 34px Arial, sans-serif"), cCenter, midY - 30)
+              ctx.fillText(truncate(bizText, qr2X - (32 + 150) - 24, "800 48px Arial, sans-serif"), cCenter, midY - 28)
               ctx.fillStyle = "#EC4899"
-              ctx.fillRect(cCenter - 56, midY - 18, 112, 5)
+              ctx.fillRect(cCenter - 70, midY - 8, 140, 6)
               ctx.font = "800 30px Arial, sans-serif"
               ctx.fillStyle = "#FCA5A5"
-              ctx.fillText("www.ctmerchant.com.ng", cCenter, midY + 28)
+              ctx.fillText("www.ctmerchant.com.ng", cCenter, midY + 30)
               ctx.font = "600 26px Arial, sans-serif"
               ctx.fillStyle = "rgba(255,255,255,0.6)"
-              ctx.fillText(String(activeShop.unique_id || activeShop.id || ""), cCenter, midY + 68)
+              ctx.fillText(String(activeShop.unique_id || activeShop.id || ""), cCenter, midY + 70)
               ctx.textAlign = "left"
               // ────────────────────────────────────────────────────────────
 
