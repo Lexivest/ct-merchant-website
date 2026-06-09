@@ -568,8 +568,9 @@ function ProductDetail() {
         : `₦${Number(currentProduct.price || 0).toLocaleString()}`
 
     const shopName = currentShop?.name || "our shop"
-    // Clean homepage + shop ID — no referral product-detail link.
-    const ctId = currentShop?.unique_id || currentShop?.id || ""
+    // Clean homepage + shop CT-ID (the CT-XXXXX from the cards) — never the
+    // numeric shop id, and no referral product-detail link.
+    const ctId = currentShop?.unique_id || ""
     const onlinePart = ctId
       ? `enter ID ${ctId} at www.ctmerchant.com.ng`
       : `shop online at www.ctmerchant.com.ng`
