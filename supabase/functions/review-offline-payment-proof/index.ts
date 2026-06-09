@@ -13,6 +13,13 @@ const PLAN_OPTIONS = {
   "1_Year":   { amount: 10000, label: "1 Year" },
 } as const
 
+// Staff may backdate a subscription to the date payment was actually received,
+// but only up to this many days. Beyond it the review lag is treated as the
+// platform's fault (payment hung in transit, settlement delay, review backlog)
+// and the effective date is clamped to now, so a slow review never shortens the
+// merchant's paid term.
+const MAX_BACKDATE_DAYS = 7
+
 class HttpError extends Error {
   status: number
   constructor(status: number, message: string) {
@@ -82,7 +89,9 @@ function normalizeNote(value: unknown) {
 /**
  * Parse and validate the effectiveAt timestamp supplied by the caller.
  * Returns the parsed Date, or now() if the field was omitted/empty.
- * Rejects future timestamps (>5-min tolerance).
+ * - Rejects future timestamps (>5-min tolerance).
+ * - Clamps to now() when the date is more than MAX_BACKDATE_DAYS before now,
+ *   so a long review lag (not the merchant's fault) never shortens their term.
  */
 function normalizePaymentEffectiveAt(value: unknown): Date {
   const now = new Date()
@@ -93,6 +102,11 @@ function normalizePaymentEffectiveAt(value: unknown): Date {
   if (parsed.getTime() > now.getTime() + 5 * 60 * 1000) {
     throw new HttpError(400, "Payment date cannot be in the future.")
   }
+  // Inclusive calendar-day cap: a gap of 7 full days still backdates; only a
+  // gap that has rolled past the 7th day is clamped to now.
+  const lagDays = Math.floor((now.getTime() - parsed.getTime()) / (24 * 60 * 60 * 1000))
+  if (lagDays > MAX_BACKDATE_DAYS) return now
+
   return parsed
 }
 
