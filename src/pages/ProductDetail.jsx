@@ -574,7 +574,10 @@ function ProductDetail() {
     const onlinePart = ctId
       ? `enter ID ${ctId} at www.ctmerchant.com.ng`
       : `shop online at www.ctmerchant.com.ng`
-    const text = `🛍️ Check out ${title} for ${priceText} at ${shopName} — ${onlinePart}`
+    const located = currentShop?.address
+      ? `we are located at ${currentShop.address}, or shop online: ${onlinePart}`
+      : onlinePart
+    const text = `🛍️ Check out ${title} for ${priceText} at ${shopName} — ${located}`
 
     // Build the product image first. This is image-or-nothing: if we can't
     // share an image, we do NOT fall back to a text-only / clipboard share.

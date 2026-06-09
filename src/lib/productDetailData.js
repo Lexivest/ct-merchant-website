@@ -25,6 +25,7 @@ async function fetchProductDetailDataDirect({ productId, userId = null }) {
       *,
       shops (
         id,
+        unique_id,
         name,
         whatsapp,
         phone,
