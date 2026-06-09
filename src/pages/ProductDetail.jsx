@@ -570,7 +570,20 @@ function ProductDetail() {
     const shopName = currentShop?.name || "our shop"
     // Clean homepage + shop CT-ID (the CT-XXXXX from the cards) — never the
     // numeric shop id, and no referral product-detail link.
-    const ctId = currentShop?.unique_id || ""
+    // Prefer the CT-XXXXX from the loaded shop; if a cached/prefetched shop
+    // object predates the unique_id select, fetch it directly so the ID never
+    // silently drops from the caption.
+    let ctId = currentShop?.unique_id || ""
+    if (!ctId && currentShop?.id) {
+      try {
+        const { data: shopRow } = await supabase
+          .from("shops")
+          .select("unique_id")
+          .eq("id", currentShop.id)
+          .maybeSingle()
+        ctId = shopRow?.unique_id || ""
+      } catch { /* ignore — fall back to generic online text */ }
+    }
     const onlinePart = ctId
       ? `enter ID ${ctId} at www.ctmerchant.com.ng`
       : `shop online at www.ctmerchant.com.ng`
