@@ -850,7 +850,7 @@ export default function StaffPayments() {
         title: "Subscription payment date",
         type: "info",
         message:
-          "Use the current date/time or adjust it to the actual bank payment time. The subscription expiry and payment record will be calculated from this date, unless an existing active subscription ends later.",
+          "Enter the date payment was received in the account. The subscription term is calculated from this date (unless an existing active plan ends later). Backdating beyond 7 days auto-uses today, so a slow review never shortens the merchant's term.",
         inputLabel: "Payment date and time",
         inputType: "datetime-local",
         defaultValue: defaultPaymentDate,
@@ -948,7 +948,7 @@ export default function StaffPayments() {
           title: "Service payment date",
           type: "info",
           message:
-            "Use the current date/time or enter the actual bank payment time. The subscription expiry and receipt date will follow this payment date, unless the shop already has an active plan ending later.",
+            "Enter the date payment was received in the account. The subscription term is calculated from this date (unless an existing active plan ends later). Backdating beyond 7 days auto-uses today, so a slow review never shortens the merchant's term.",
           inputLabel: "Payment date and time",
           inputType: "datetime-local",
           defaultValue: defaultPaymentDate,
