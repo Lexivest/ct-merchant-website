@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from "react"
+import { useEffect, useCallback, useMemo, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
@@ -205,7 +205,9 @@ function Search() {
   }, [initialQuery])
 
   const matchedShops = data?.shops || []
-  const allProducts = data?.allProducts || []
+  // Memoized so its reference is stable across renders — openShopWithTransition
+  // (below) depends on it, and a fresh [] each render would rebuild that callback.
+  const allProducts = useMemo(() => data?.allProducts || [], [data?.allProducts])
   const matchedProducts = data?.matchedProducts || []
 
   const openShopWithTransition = useCallback(async (shopId) => {

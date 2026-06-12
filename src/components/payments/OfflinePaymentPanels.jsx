@@ -5,7 +5,6 @@
  * Keeping them in one place guarantees the two pages look and behave identically
  * and means bug-fixes or copy changes only need to happen once.
  */
-import { useCallback } from "react"
 import {
   FaBuildingColumns,
   FaCircleCheck,
@@ -13,7 +12,6 @@ import {
   FaCopy,
   FaTriangleExclamation,
 } from "react-icons/fa6"
-import { useGlobalFeedback } from "../common/GlobalFeedbackProvider"
 import { getProofStatusCopy } from "../../lib/offlinePayments"
 import { CTM_BANK_ACCOUNT } from "../../lib/paymentConfig"
 
@@ -110,47 +108,5 @@ export function OfflineBankDetailsPanel({ open, amountLabel, planLabel, onCopy }
         <BankDetailCopyRow label="Account Number"  value={CTM_BANK_ACCOUNT.accountNumber} onCopy={onCopy} />
       </div>
     </div>
-  )
-}
-
-// ─── Clipboard hook ───────────────────────────────────────────────────────────
-
-/**
- * Returns a stable `copyToClipboard(label, value)` function that writes to the
- * clipboard and fires a toast notification with the result.
- */
-export function useCopyToClipboard() {
-  const { notify } = useGlobalFeedback()
-
-  return useCallback(
-    async (label, value) => {
-      const text = String(value || "")
-
-      try {
-        if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(text)
-        } else {
-          // Legacy fallback for older mobile browsers.
-          const ta = document.createElement("textarea")
-          ta.value = text
-          ta.setAttribute("readonly", "")
-          ta.style.cssText = "position:fixed;opacity:0"
-          document.body.appendChild(ta)
-          ta.select()
-          document.execCommand("copy")
-          ta.remove()
-        }
-
-        notify({ kind: "toast", type: "success", title: "Copied", message: `${label} copied.` })
-      } catch {
-        notify({
-          kind: "toast",
-          type: "error",
-          title: "Copy failed",
-          message: "Please copy the payment detail manually.",
-        })
-      }
-    },
-    [notify],
   )
 }

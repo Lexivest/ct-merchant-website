@@ -28,8 +28,8 @@ import {
   BankDetailCopyRow,
   OfflineBankDetailsPanel,
   PaymentStatusCard,
-  useCopyToClipboard,
 } from "../../components/payments/OfflinePaymentPanels"
+import { useCopyToClipboard } from "../../hooks/useCopyToClipboard"
 
 function formatFileSize(bytes) {
   const size = Number(bytes || 0)

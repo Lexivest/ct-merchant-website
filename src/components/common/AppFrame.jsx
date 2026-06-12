@@ -81,16 +81,20 @@ function AppFrame({ children }) {
   const location = useLocation()
   const { hasUpdate } = useVersionCheck()
   const [bannerDismissed, setBannerDismissed] = useState(false)
+  const [lastSeenUpdate, setLastSeenUpdate] = useState(hasUpdate)
   useRouteWarmup({ pathname: location.pathname })
 
   useEffect(() => {
     removeRecoverySearchParam()
   }, [])
 
-  // Reset dismissal when a different (newer) update arrives
-  useEffect(() => {
+  // Reset dismissal when a different (newer) update arrives. Handled during
+  // render via the previous-value pattern rather than an effect — no extra
+  // commit/render and no set-state-in-effect.
+  if (hasUpdate !== lastSeenUpdate) {
+    setLastSeenUpdate(hasUpdate)
     if (hasUpdate) setBannerDismissed(false)
-  }, [hasUpdate])
+  }
 
   return (
     <AppErrorBoundary

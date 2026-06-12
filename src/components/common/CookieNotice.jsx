@@ -1,18 +1,22 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Link } from "react-router-dom"
 
 const STORAGE_KEY = "ctm_cookie_notice_acknowledged"
 
-export default function CookieNotice() {
-  const [visible, setVisible] = useState(false)
+// Show the notice unless it was already acknowledged. Derived once as lazy
+// initial state (client-only SPA) so there's no set-state-in-effect and no
+// first-render flash.
+function readInitialVisible() {
+  try {
+    return !localStorage.getItem(STORAGE_KEY)
+  } catch {
+    // localStorage blocked — don't show the notice
+    return false
+  }
+}
 
-  useEffect(() => {
-    try {
-      if (!localStorage.getItem(STORAGE_KEY)) setVisible(true)
-    } catch {
-      // localStorage blocked — don't show the notice
-    }
-  }, [])
+export default function CookieNotice() {
+  const [visible, setVisible] = useState(readInitialVisible)
 
   function handleAcknowledge() {
     try {
