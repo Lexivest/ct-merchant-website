@@ -510,7 +510,16 @@ function Home() {
       })
 
       try {
-        const prefetchedDashboardData = await preloadDashboardScreen(authState)
+        // The prefetch is an optimization, not a requirement. Cap it so a poor
+        // connection can't hang the overlay, and treat ANY failure as non-fatal:
+        // the user is already authenticated (primeAuthSessionState ran inside
+        // preloadDashboardScreen), so we still open the dashboard — it self-loads
+        // its data with its own retry UI. This is what prevents the post-login
+        // "error widget" screen from appearing on a flaky network.
+        const prefetchedDashboardData = await withLoginTimeout(
+          preloadDashboardScreen(authState),
+          "Opening your dashboard is taking too long. Please try again."
+        )
         navigate("/user-dashboard", {
           replace,
           state: {
@@ -520,15 +529,16 @@ function Home() {
         })
         return true
       } catch (error) {
-        transitionRetryRef.current = retryAction
-        setTransitionState({
-          pending: false,
-          error: getAuthScreenTransitionMessage(
-            error,
-            "We could not open your dashboard right now. Please try again."
-          ),
+        // Dashboard data preload failed or timed out — but authentication has
+        // already succeeded. Navigate to the dashboard anyway rather than
+        // stranding the user on a full-screen error. The dashboard loads its own
+        // data resiliently and recovers when the connection improves.
+        console.warn("Dashboard preload failed; opening dashboard to self-load.", error)
+        navigate("/user-dashboard", {
+          replace,
+          state: { fromAuthTransition: true },
         })
-        return false
+        return true
       }
     },
     [navigate]
@@ -647,35 +657,36 @@ function Home() {
         throw new Error("Google sign-in did not return a valid user.")
       }
 
-      // Step 2 — profile fetch (time-boxed)
-      const currentProfile = await withLoginTimeout(
-        supabase
-          .from("vw_user_profiles")
-          .select("*")
-          .eq("id", signedInUser.id)
-          .maybeSingle(),
-        "Could not load your profile. Please check your connection and try again."
-      )
-
-      if (currentProfile.error) {
-        throw new Error("Could not verify your profile. Please try again.")
+      // Step 2 — profile fetch (best-effort). Authentication has already
+      // succeeded, so a slow or failed profile read must NOT discard the
+      // session. Degrade to a null profile; the dashboard resolves it itself.
+      let prefetchedProfile = null
+      try {
+        const currentProfile = await withLoginTimeout(
+          supabase
+            .from("vw_user_profiles")
+            .select("*")
+            .eq("id", signedInUser.id)
+            .maybeSingle(),
+          "Could not load your profile. Please check your connection and try again."
+        )
+        if (!currentProfile.error) {
+          prefetchedProfile = currentProfile.data || null
+        }
+      } catch (profileError) {
+        console.warn("Profile prefetch failed on Google login; the dashboard will resolve it.", profileError)
       }
 
-      // Step 3 — dashboard preload + navigate (time-boxed)
-      const didOpenDashboard = await withLoginTimeout(
-        openDashboardWithTransition({
-          session: result.auth?.session || null,
-          user: signedInUser,
-          profile: currentProfile.data || null,
-          suspended: false,
-          profileLoaded: true,
-        }),
-        "Opening your dashboard is taking too long. Please try again."
-      )
-
-      if (!didOpenDashboard) {
-        setGoogleLoading(false)
-      }
+      // Step 3 — open the dashboard. openDashboardWithTransition is self-bounded
+      // and always navigates (it never throws), so a slow dashboard load can
+      // never bounce a successfully authenticated user back out to sign in.
+      await openDashboardWithTransition({
+        session: result.auth?.session || null,
+        user: signedInUser,
+        profile: prefetchedProfile,
+        suspended: false,
+        profileLoaded: Boolean(prefetchedProfile),
+      })
 
     } catch (error) {
       // A Supabase request may still be in-flight after a timeout. Sign out
@@ -809,31 +820,33 @@ function Home() {
         throw new Error("Login did not return a valid user session.")
       }
 
-      // Step 2 — profile fetch (time-boxed)
-      const currentProfile = await withLoginTimeout(
-        supabase.from("vw_user_profiles").select("*").eq("id", signedInUser.id).maybeSingle(),
-        "Could not load your profile. Please check your connection and try again."
-      )
-
-      if (currentProfile.error) {
-        throw new Error("Could not verify your profile. Please try again.")
+      // Step 2 — profile fetch (best-effort). Authentication has already
+      // succeeded, so a slow or failed profile read must NOT discard the
+      // session. Degrade to a null profile; the transition and the dashboard
+      // resolve it themselves once the connection allows.
+      let prefetchedProfile = null
+      try {
+        const currentProfile = await withLoginTimeout(
+          supabase.from("vw_user_profiles").select("*").eq("id", signedInUser.id).maybeSingle(),
+          "Could not load your profile. Please check your connection and try again."
+        )
+        if (!currentProfile.error) {
+          prefetchedProfile = currentProfile.data || null
+        }
+      } catch (profileError) {
+        console.warn("Profile prefetch failed on login; the dashboard will resolve it.", profileError)
       }
 
-      // Step 3 — dashboard preload + navigate (time-boxed)
-      const didOpenDashboard = await withLoginTimeout(
-        openDashboardWithTransition({
-          session: result.auth?.session || null,
-          user: signedInUser,
-          profile: currentProfile.data || null,
-          suspended: false,
-          profileLoaded: true,
-        }),
-        "Opening your dashboard is taking too long. Please try again."
-      )
-
-      if (!didOpenDashboard) {
-        setLoginLoading(false)
-      }
+      // Step 3 — open the dashboard. openDashboardWithTransition is self-bounded
+      // and always navigates (it never throws), so it needs no outer timeout and
+      // a slow dashboard load can never bounce the user back out to sign in.
+      await openDashboardWithTransition({
+        session: result.auth?.session || null,
+        user: signedInUser,
+        profile: prefetchedProfile,
+        suspended: false,
+        profileLoaded: Boolean(prefetchedProfile),
+      })
 
     } catch (error) {
       // A Supabase request may still be in-flight after a timeout. Sign out
