@@ -1,9 +1,51 @@
 import { primeCachedFetchStore, readCachedFetchStore } from "../hooks/useCachedFetch"
 import { supabase } from "./supabase"
 import { isServiceCategory, isServiceShop } from "./serviceCategories"
+import { isNetworkError } from "./friendlyErrors"
+import { isNetworkOffline } from "./networkStatus"
 
 const DASHBOARD_CACHE_TTL = 1000 * 60 * 15
 const DASHBOARD_TRANSITION_TIMEOUT = 12000
+
+// Bounded auto-retry for the dashboard payload fetches. A poor connection often
+// drops a single request (connection reset / "failed to fetch") even though the
+// next one would succeed, so we give transient failures a couple of quick,
+// backed-off retries before surfacing an error — letting brief blips heal
+// silently instead of dropping the user onto the dashboard's "Connection Issue"
+// panel right after a successful login.
+const DASHBOARD_FETCH_RETRY_ATTEMPTS = 3
+const DASHBOARD_FETCH_RETRY_BASE_DELAY_MS = 400
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+// Retries `task` only on transient network failures, with exponential backoff
+// (400ms then 800ms). Deterministic failures — permission, bad params, a missing
+// RPC — re-throw immediately so the UI surfaces them without pointless waiting,
+// and retrying stops the moment the device is confirmed offline (nothing to
+// recover until it reconnects, which triggers its own refetch).
+async function withTransientRetry(
+  task,
+  {
+    attempts = DASHBOARD_FETCH_RETRY_ATTEMPTS,
+    baseDelayMs = DASHBOARD_FETCH_RETRY_BASE_DELAY_MS,
+  } = {}
+) {
+  let lastError
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await task()
+    } catch (error) {
+      lastError = error
+      if (attempt === attempts || isNetworkOffline() || !isNetworkError(error)) {
+        throw error
+      }
+      await delay(baseDelayMs * 2 ** (attempt - 1))
+    }
+  }
+  throw lastError
+}
 
 const loadUserDashboardPage = () => import("../pages/UserDashboard")
 
@@ -335,11 +377,13 @@ export async function fetchDashboardBaseData(cityId) {
     }
   }
 
-  const [categoriesRes, areasRes, announcementsRes] = await Promise.all([
-    supabase.from("categories").select("*").order("name"),
-    supabase.from("areas").select("*").eq("city_id", resolvedCityId).order("name"),
-    supabase.from("announcements").select("*").order("created_at", { ascending: false }),
-  ])
+  const [categoriesRes, areasRes, announcementsRes] = await withTransientRetry(() =>
+    Promise.all([
+      supabase.from("categories").select("*").order("name"),
+      supabase.from("areas").select("*").eq("city_id", resolvedCityId).order("name"),
+      supabase.from("announcements").select("*").order("created_at", { ascending: false }),
+    ])
+  )
 
   return {
     categories: unwrapSupabaseResult(categoriesRes) || [],
@@ -366,10 +410,12 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
     }
   }
 
-  const { data, error } = await supabase.rpc("get_dashboard_payload", {
-    p_user_id: userId,
-    p_city_id: resolvedCityId,
-  })
+  const { data, error } = await withTransientRetry(() =>
+    supabase.rpc("get_dashboard_payload", {
+      p_user_id: userId,
+      p_city_id: resolvedCityId,
+    })
+  )
 
   if (error) {
     console.error("Dashboard RPC fetch failed:", error.message)
