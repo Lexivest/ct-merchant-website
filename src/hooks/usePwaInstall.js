@@ -13,9 +13,6 @@ function safeLocalGet(key) {
 function safeLocalSet(key, value) {
   try { window.localStorage.setItem(key, value) } catch { /* quota / private */ }
 }
-function safeLocalRemove(key) {
-  try { window.localStorage.removeItem(key) } catch { /* best effort */ }
-}
 function safeSessionGet(key) {
   try { return window.sessionStorage.getItem(key) } catch { return null }
 }
@@ -58,10 +55,6 @@ function readKnownInstalled() {
 function writeKnownInstalled() {
   safeLocalSet(KNOWN_INSTALL_KEY, "1")
   safeSessionSet(KNOWN_INSTALL_KEY, "1")
-}
-
-function clearKnownInstalled() {
-  safeLocalRemove(KNOWN_INSTALL_KEY)
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────

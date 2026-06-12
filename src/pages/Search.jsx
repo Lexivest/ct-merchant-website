@@ -381,7 +381,6 @@ function Search() {
         </div>
       </div>
     )
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allProducts, openShopWithTransition])
 
   const buildProductCard = useCallback((product) => {
@@ -446,7 +445,6 @@ function Search() {
         </div>
       </div>
     )
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openProductWithTransition])
 
   if (shouldRedirectHome) {

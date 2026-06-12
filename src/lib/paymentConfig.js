@@ -11,7 +11,6 @@ export const REMITA_SCRIPT_URL =
   import.meta.env?.VITE_REMITA_SCRIPT_URL || REMITA_SCRIPT_URL_FALLBACK
 
 if (!import.meta.env?.VITE_REMITA_SCRIPT_URL) {
-  // eslint-disable-next-line no-console
   console.warn(
     "[paymentConfig] VITE_REMITA_SCRIPT_URL is not set. " +
       "Falling back to the Remita DEMO endpoint — this must NOT be used in production.",

@@ -451,7 +451,7 @@ export function useStaffPortalSession() {
   const [staffData, setStaffData] = useState(() => initialMemoryRef.current.staffData)
   const [fetchingStaff, setFetchingStaff] = useState(() => !initialMemoryRef.current.isResolved)
   const [staffError, setStaffError] = useState("")
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [isLoggingOut] = useState(false)
 
   const adminRole = staffData?.admin_role || null
   const hasAdminRole = Boolean(adminRole)

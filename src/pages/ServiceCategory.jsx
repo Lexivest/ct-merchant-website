@@ -263,7 +263,6 @@ export default function ServiceCategory() {
     loading,
     error,
     mutate,
-    isRevalidating,
   } = useCachedFetch(
     cacheKey,
     () => fetchServiceCategoryData({ serviceName, cityId }),

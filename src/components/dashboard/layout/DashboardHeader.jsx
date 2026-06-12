@@ -21,12 +21,9 @@ function DashboardHeader({
   activeTab,
   currentProfile,
   user,
-  sortedAreas = [],
   categories = [],
   shops = [],
   products = [],
-  searchArea = "all",
-  setSearchArea,
   categoryFilter = "all",
   setCategoryFilter,
   searchInputDesktop = "",
@@ -62,14 +59,6 @@ function DashboardHeader({
 
   const desktopAreaRef = useRef(null)
   const mobileAreaRef = useRef(null)
-
-  const selectedAreaLabel = useMemo(() => {
-    if (searchArea === "all") return "All Areas"
-    const found = sortedAreas.find(
-      (area) => String(area.id) === String(searchArea)
-    )
-    return found?.name || "All Areas"
-  }, [searchArea, sortedAreas])
 
   const selectedCategoryLabel = useMemo(() => {
     if (categoryFilter === "all") return "All Categories"
@@ -167,12 +156,6 @@ function DashboardHeader({
   function renderSuggestionIcon(icon) {
     if (icon === "product") return <FaBox />
     return <FaStore />
-  }
-
-  function selectArea(value) {
-    setSearchArea(value)
-    setDesktopAreaOpen(false)
-    setMobileAreaOpen(false)
   }
 
   function selectCategory(value) {

@@ -114,7 +114,6 @@ function SponsoredProductCard({ sponsored, onOpenProduct, onOpenServiceProvider 
   const priceLabel = isServiceSponsor
     ? formatServicePrice(product.price)
     : `N${Number(product.price || 0).toLocaleString()}`
-  const providerName = shopMeta?.name || sponsored?.shop_name || ""
 
   return (
     <div
@@ -769,7 +768,6 @@ function MarketSection({
   onOpenProduct,
   onOpenArea,
   onOpenDiscovery,
-  onOpenServiceCategory,
   loading,
   error,
   onRetry,
